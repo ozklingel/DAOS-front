@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
 class ShimmerLoading extends StatelessWidget {
@@ -40,6 +41,7 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -55,7 +57,7 @@ class ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: onRetry, child: const Text('Try Again')),
+              ElevatedButton(onPressed: onRetry, child: Text(l.tryAgain)),
             ],
           ],
         ),

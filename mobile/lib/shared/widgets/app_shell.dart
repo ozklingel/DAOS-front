@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
@@ -31,6 +32,7 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final index = _currentIndex(context);
     final isTaskDetail = GoRouterState.of(context).matchedLocation.contains('/home/tasks/');
 
@@ -45,26 +47,26 @@ class AppShell extends StatelessWidget {
               child: BottomNavigationBar(
                 currentIndex: index,
                 onTap: (i) => _onTap(context, i),
-                items: const [
+                items: [
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.dashboard_outlined),
-                    activeIcon: Icon(Icons.dashboard),
-                    label: 'Home',
+                    icon: const Icon(Icons.dashboard_outlined),
+                    activeIcon: const Icon(Icons.dashboard),
+                    label: l.navHome,
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.check_circle_outline),
-                    activeIcon: Icon(Icons.check_circle),
-                    label: 'Tasks',
+                    icon: const Icon(Icons.check_circle_outline),
+                    activeIcon: const Icon(Icons.check_circle),
+                    label: l.navTasks,
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.auto_awesome_outlined),
-                    activeIcon: Icon(Icons.auto_awesome),
-                    label: 'Brief',
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                    activeIcon: const Icon(Icons.auto_awesome),
+                    label: l.navBrief,
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.settings_outlined),
-                    activeIcon: Icon(Icons.settings),
-                    label: 'Settings',
+                    icon: const Icon(Icons.settings_outlined),
+                    activeIcon: const Icon(Icons.settings),
+                    label: l.navSettings,
                   ),
                 ],
               ),

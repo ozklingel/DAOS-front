@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
@@ -9,6 +10,7 @@ class TasksFilterSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final filter = ref.watch(tasksFilterProvider);
     final notifier = ref.read(tasksFilterProvider.notifier);
 
@@ -34,21 +36,21 @@ class TasksFilterSheet extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Text('Filter & Sort', style: Theme.of(context).textTheme.titleLarge),
+          Text(l.filterAndSort, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 24),
-          Text('Status', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.status, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
               _OptionChip(
-                label: 'All',
+                label: l.all,
                 selected: filter.status == null,
                 onTap: () => notifier.setStatus(null),
               ),
               ...TaskStatus.values.map(
                 (s) => _OptionChip(
-                  label: s.label,
+                  label: l.taskStatusLabel(s),
                   selected: filter.status == s,
                   onTap: () => notifier.setStatus(s),
                 ),
@@ -56,19 +58,19 @@ class TasksFilterSheet extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text('Priority', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.priority, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
               _OptionChip(
-                label: 'All',
+                label: l.all,
                 selected: filter.priority == null,
                 onTap: () => notifier.setPriority(null),
               ),
               ...TaskPriority.values.map(
                 (p) => _OptionChip(
-                  label: p.label,
+                  label: l.taskPriorityLabel(p),
                   selected: filter.priority == p,
                   onTap: () => notifier.setPriority(p),
                 ),
@@ -76,21 +78,21 @@ class TasksFilterSheet extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text('Sort by', style: Theme.of(context).textTheme.labelLarge),
+          Text(l.sortBy, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           ...TaskSortField.values.map(
             (field) => RadioListTile<TaskSortField>(
               value: field,
               groupValue: filter.sortBy,
               onChanged: (_) => notifier.setSort(field),
-              title: Text(field.label),
+              title: Text(l.taskSortLabel(field)),
               contentPadding: EdgeInsets.zero,
               dense: true,
             ),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Ascending order'),
+            title: Text(l.ascendingOrder),
             value: filter.ascending,
             onChanged: (_) => notifier.toggleSortOrder(),
           ),
@@ -99,7 +101,7 @@ class TasksFilterSheet extends ConsumerWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Apply'),
+              child: Text(l.apply),
             ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskmail/core/utils/date_formatter.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/widgets/priority_badge.dart';
 import 'package:taskmail/shared/widgets/status_badge.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
@@ -21,6 +22,8 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final isOverdue = task.status == TaskStatus.overdue ||
         (task.deadline != null &&
             task.deadline!.isBefore(DateTime.now()) &&
@@ -82,7 +85,7 @@ class TaskCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormatter.formatDeadline(task.deadline),
+                    DateFormatter.formatDeadline(task.deadline, l, locale: locale),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isOverdue ? AppColors.critical : null,
                           fontWeight: isOverdue ? FontWeight.w600 : null,

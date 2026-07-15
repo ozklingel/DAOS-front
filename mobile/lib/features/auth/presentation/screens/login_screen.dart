@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
+import 'package:taskmail/core/locale/locale_provider.dart';
 import 'package:taskmail/core/errors/app_exception.dart';
 import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/services/analytics_service.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
@@ -49,6 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final auth = ref.watch(authStateProvider);
 
     return Scaffold(
@@ -57,6 +60,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(value: 'en', label: Text(l.english)),
+                    ButtonSegment(value: 'he', label: Text(l.hebrew)),
+                  ],
+                  selected: {ref.watch(localeProvider).languageCode},
+                  onSelectionChanged: (selected) {
+                    ref.read(localeProvider.notifier).setLocale(selected.first);
+                  },
+                ),
+              ),
               const Spacer(flex: 2),
               Container(
                 width: 72,
@@ -77,12 +93,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'TaskMail',
+                l.appTitle,
                 style: Theme.of(context).textTheme.displayMedium,
               ),
               const SizedBox(height: 12),
               Text(
-                'Turn your inbox into actionable tasks.\nAI analyzes your emails so you never miss what matters.',
+                l.loginTagline,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.textSecondary,
@@ -91,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const Spacer(flex: 2),
               _OAuthButton(
-                label: 'Continue with Google',
+                label: l.continueWithGoogle,
                 icon: Icons.g_mobiledata,
                 isLoading: _isGoogleLoading,
                 onPressed: auth.isLoading || _isOutlookLoading
@@ -103,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 12),
               _OAuthButton(
-                label: 'Continue with Outlook',
+                label: l.continueWithOutlook,
                 icon: Icons.mail_outline,
                 isLoading: _isOutlookLoading,
                 onPressed: auth.isLoading || _isGoogleLoading || _isDevLoading
@@ -125,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 _OAuthButton(
-                  label: 'Dev Login (skip OAuth)',
+                  label: l.devLogin,
                   icon: Icons.developer_mode,
                   isLoading: _isDevLoading,
                   onPressed: auth.isLoading || _isGoogleLoading || _isOutlookLoading
@@ -148,7 +164,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
               const SizedBox(height: 32),
               Text(
-                'By continuing, you agree to our Terms of Service\nand Privacy Policy',
+                l.loginTerms,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

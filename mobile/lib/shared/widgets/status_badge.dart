@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
@@ -39,6 +40,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -46,7 +48,7 @@ class StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        status.label,
+        l.taskStatusLabel(status),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,

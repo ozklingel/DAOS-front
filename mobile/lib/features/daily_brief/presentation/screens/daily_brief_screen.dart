@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/utils/date_formatter.dart';
 import 'package:taskmail/features/daily_brief/presentation/providers/daily_brief_provider.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
 import 'package:taskmail/shared/widgets/task_card.dart';
 import 'package:taskmail/theme/app_colors.dart';
@@ -11,10 +12,11 @@ class DailyBriefScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final briefAsync = ref.watch(dailyBriefProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Daily Brief')),
+      appBar: AppBar(title: Text(l.dailyBrief)),
       body: briefAsync.when(
         loading: () => const ShimmerLoading(itemCount: 2),
         error: (e, _) => ErrorView(
@@ -50,7 +52,7 @@ class DailyBriefScreen extends ConsumerWidget {
                         Icon(Icons.auto_awesome, color: AppColors.primary),
                         const SizedBox(width: 8),
                         Text(
-                          'AI Summary',
+                          l.aiSummary,
                           style:
                               Theme.of(context).textTheme.labelLarge?.copyWith(
                                     color: AppColors.primary,
@@ -58,7 +60,7 @@ class DailyBriefScreen extends ConsumerWidget {
                         ),
                         const Spacer(),
                         Text(
-                          DateFormatter.formatRelative(brief.generatedAt),
+                          DateFormatter.formatRelative(brief.generatedAt, l),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -84,7 +86,7 @@ class DailyBriefScreen extends ConsumerWidget {
               ),
               if (brief.insights.isNotEmpty) ...[
                 const SizedBox(height: 28),
-                Text('Insights', style: Theme.of(context).textTheme.titleLarge),
+                Text(l.insights, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 12),
                 ...brief.insights.map(
                   (insight) => Padding(
@@ -107,7 +109,7 @@ class DailyBriefScreen extends ConsumerWidget {
               if (brief.highlightedTasks.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 Text(
-                  'Highlighted Tasks',
+                  l.highlightedTasks,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 12),

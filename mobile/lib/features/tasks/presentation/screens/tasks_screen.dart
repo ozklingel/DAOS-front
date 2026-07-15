@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:taskmail/features/tasks/presentation/widgets/tasks_filter_sheet.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
 import 'package:taskmail/shared/widgets/task_card.dart';
 import 'package:taskmail/theme/app_colors.dart';
@@ -40,12 +41,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tasksAsync = ref.watch(tasksListProvider);
     final filter = ref.watch(tasksFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'),
+        title: Text(l.tasks),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune),
@@ -64,7 +66,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search tasks...',
+                hintText: l.searchTasks,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -90,14 +92,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   children: [
                     if (filter.status != null)
                       _FilterChip(
-                        label: filter.status!.label,
+                        label: l.taskStatusLabel(filter.status!),
                         onRemove: () => ref
                             .read(tasksFilterProvider.notifier)
                             .setStatus(null),
                       ),
                     if (filter.priority != null)
                       _FilterChip(
-                        label: filter.priority!.label,
+                        label: l.taskPriorityLabel(filter.priority!),
                         onRemove: () => ref
                             .read(tasksFilterProvider.notifier)
                             .setPriority(null),
@@ -115,9 +117,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               ),
               data: (tasks) {
                 if (tasks.isEmpty) {
-                  return const EmptyStateView(
-                    title: 'No tasks found',
-                    subtitle: 'Try adjusting your filters or search query.',
+                  return EmptyStateView(
+                    title: l.noTasksFound,
+                    subtitle: l.adjustFilters,
                   );
                 }
                 return RefreshIndicator(

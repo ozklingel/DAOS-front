@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
@@ -37,6 +38,7 @@ class PriorityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -44,7 +46,7 @@ class PriorityBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        priority.label,
+        l.taskPriorityLabel(priority),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,

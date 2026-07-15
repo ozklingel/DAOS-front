@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/stat_card.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
 import 'package:taskmail/shared/widgets/task_card.dart';
@@ -13,6 +14,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final dashboardAsync = ref.watch(dashboardProvider);
 
     return Scaffold(
@@ -21,10 +23,10 @@ class DashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _greeting(),
+              _greeting(l),
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const Text('Dashboard'),
+            Text(l.dashboard),
           ],
         ),
         actions: [
@@ -56,7 +58,7 @@ class DashboardScreen extends ConsumerWidget {
                 children: [
                   StatCard(
                     emoji: '🔥',
-                    label: 'Critical Tasks',
+                    label: l.criticalTasks,
                     count: data.stats.criticalCount,
                     color: AppColors.critical,
                     background: AppColors.criticalBg,
@@ -64,7 +66,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   StatCard(
                     emoji: '📋',
-                    label: 'Open Tasks',
+                    label: l.openTasks,
                     count: data.stats.openCount,
                     color: AppColors.info,
                     background: AppColors.infoBg,
@@ -72,7 +74,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   StatCard(
                     emoji: '⏰',
-                    label: 'Overdue Tasks',
+                    label: l.overdueTasks,
                     count: data.stats.overdueCount,
                     color: AppColors.warning,
                     background: AppColors.warningBg,
@@ -80,7 +82,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   StatCard(
                     emoji: '✅',
-                    label: 'Completed This Week',
+                    label: l.completedThisWeek,
                     count: data.stats.completedThisWeek,
                     color: AppColors.success,
                     background: AppColors.successBg,
@@ -90,26 +92,26 @@ class DashboardScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 28),
-              _BriefCard(summary: data.briefSummary),
+              _BriefCard(summary: data.briefSummary, title: l.todaysAiBrief),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'High Priority',
+                    l.highPriority,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   TextButton(
                     onPressed: () => context.go(RouteNames.tasks),
-                    child: const Text('See all'),
+                    child: Text(l.seeAll),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               if (data.recentHighPriorityTasks.isEmpty)
-                const EmptyStateView(
-                  title: 'All caught up',
-                  subtitle: 'No high-priority tasks right now.',
+                EmptyStateView(
+                  title: l.allCaughtUp,
+                  subtitle: l.noHighPriorityTasks,
                   icon: Icons.celebration_outlined,
                 )
               else
@@ -126,18 +128,19 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  String _greeting() {
+  String _greeting(AppLocalizations l) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return l.goodMorning;
+    if (hour < 17) return l.goodAfternoon;
+    return l.goodEvening;
   }
 }
 
 class _BriefCard extends StatelessWidget {
-  const _BriefCard({required this.summary});
+  const _BriefCard({required this.summary, required this.title});
 
   final String summary;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +166,7 @@ class _BriefCard extends StatelessWidget {
               Icon(Icons.auto_awesome, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(
-                "Today's AI Brief",
+                title,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: AppColors.primary,
                     ),

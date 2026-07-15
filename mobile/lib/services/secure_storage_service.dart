@@ -39,4 +39,9 @@ class SecureStorageService {
     await _storage.delete(key: StorageKeys.refreshToken);
     await _storage.delete(key: StorageKeys.userId);
   }
+
+  Future<String?> getLocale() => _storage.read(key: StorageKeys.locale);
+
+  Future<void> saveLocale(String languageCode) =>
+      _storage.write(key: StorageKeys.locale, value: languageCode);
 }

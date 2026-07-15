@@ -95,6 +95,14 @@ flutter run \
 6. **Daily Brief** — AI-generated summary
 7. **Settings** — Connections, notifications, sign out
 
+## Localization
+
+The app supports **English** and **Hebrew** (עברית) with automatic RTL layout for Hebrew.
+
+- Switch language on the **Login** screen (top-right) or in **Settings → Language**
+- Preference is saved locally and synced to your account settings on the backend
+- On first launch, Hebrew is used if the device language is Hebrew; otherwise English
+
 ## OAuth Notes
 
 - **Google**: Configure OAuth client in Google Cloud Console; add SHA-1 for Android

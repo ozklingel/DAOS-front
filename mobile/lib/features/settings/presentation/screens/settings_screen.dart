@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskmail/core/errors/app_exception.dart';
+import 'package:taskmail/core/locale/locale_provider.dart';
 import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
 import 'package:taskmail/features/settings/presentation/providers/settings_provider.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
 import 'package:taskmail/theme/app_colors.dart';
@@ -13,11 +15,12 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final settingsAsync = ref.watch(settingsProvider);
     final user = ref.watch(authStateProvider).user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l.settings)),
       body: settingsAsync.when(
         loading: () => const ShimmerLoading(itemCount: 4),
         error: (e, _) => ErrorView(
@@ -40,48 +43,76 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                title: Text(user.name ?? 'User'),
+                title: Text(user.name ?? l.user),
                 subtitle: Text(user.email),
               ),
               const SizedBox(height: 24),
             ],
             Text(
-              'Email Connections',
+              l.language,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(value: 'en', label: Text(l.english)),
+                ButtonSegment(value: 'he', label: Text(l.hebrew)),
+              ],
+              selected: {settings.language},
+              onSelectionChanged: (selected) async {
+                final code = selected.first;
+                await ref.read(localeProvider.notifier).setLocale(code);
+                await ref.read(settingsProvider.notifier).saveSettings(
+                      settings.copyWith(language: code),
+                    );
+              },
+            ),
+            const SizedBox(height: 24),
+            Text(
+              l.emailConnections,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             _ConnectionTile(
-              provider: 'Gmail',
+              provider: l.gmail,
               icon: Icons.mail,
               connected: user?.gmailConnected ?? false,
-              onConnect: () => _connectGmail(context, ref),
-              onDisconnect: () => _disconnectGmail(context, ref),
+              connectedLabel: l.connected,
+              notConnectedLabel: l.notConnected,
+              connectLabel: l.connect,
+              disconnectLabel: l.disconnect,
+              onConnect: () => _connectGmail(context, ref, l),
+              onDisconnect: () => _disconnectGmail(context, ref, l),
             ),
             _ConnectionTile(
-              provider: 'Outlook',
+              provider: l.outlook,
               icon: Icons.email_outlined,
               connected: user?.outlookConnected ?? false,
-              onConnect: () => _connectOutlook(context, ref),
-              onDisconnect: () => _disconnectOutlook(context, ref),
+              connectedLabel: l.connected,
+              notConnectedLabel: l.notConnected,
+              connectLabel: l.connect,
+              disconnectLabel: l.disconnect,
+              onConnect: () => _connectOutlook(context, ref, l),
+              onDisconnect: () => _disconnectOutlook(context, ref, l),
             ),
             if (user?.gmailConnected == true || user?.outlookConnected == true) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: () => _syncEmails(context, ref),
+                onPressed: () => _syncEmails(context, ref, l),
                 icon: const Icon(Icons.sync, size: 18),
-                label: const Text('Sync emails now'),
+                label: Text(l.syncEmailsNow),
               ),
             ],
             const SizedBox(height: 24),
             Text(
-              'Notifications',
+              l.notifications,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Push notifications'),
-              subtitle: const Text('Get reminded about urgent tasks'),
+              title: Text(l.pushNotifications),
+              subtitle: Text(l.pushNotificationsSubtitle),
               value: settings.pushNotificationsEnabled,
               onChanged: (v) => ref.read(settingsProvider.notifier).saveSettings(
                     settings.copyWith(pushNotificationsEnabled: v),
@@ -89,8 +120,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Daily brief'),
-              subtitle: const Text('Receive AI summary each morning'),
+              title: Text(l.dailyBriefSetting),
+              subtitle: Text(l.dailyBriefSubtitle),
               value: settings.dailyBriefEnabled,
               onChanged: (v) => ref.read(settingsProvider.notifier).saveSettings(
                     settings.copyWith(dailyBriefEnabled: v),
@@ -98,8 +129,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Email sync'),
-              subtitle: const Text('Continuously analyze new emails'),
+              title: Text(l.emailSync),
+              subtitle: Text(l.emailSyncSubtitle),
               value: settings.emailSyncEnabled,
               onChanged: (v) => ref.read(settingsProvider.notifier).saveSettings(
                     settings.copyWith(emailSyncEnabled: v),
@@ -112,7 +143,7 @@ class SettingsScreen extends ConsumerWidget {
                 if (context.mounted) context.go(RouteNames.login);
               },
               icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Sign out'),
+              label: Text(l.signOut),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.critical,
                 side: BorderSide(color: AppColors.critical.withValues(alpha: 0.3)),
@@ -124,12 +155,16 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _connectGmail(BuildContext context, WidgetRef ref) async {
+  Future<void> _connectGmail(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     try {
       await ref.read(authStateProvider.notifier).connectGmail();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gmail connected successfully')),
+          SnackBar(content: Text(l.gmailConnectedSuccess)),
         );
       }
     } on AppException catch (e) {
@@ -141,12 +176,16 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _connectOutlook(BuildContext context, WidgetRef ref) async {
+  Future<void> _connectOutlook(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     try {
       await ref.read(authStateProvider.notifier).connectOutlook();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Outlook connected successfully')),
+          SnackBar(content: Text(l.outlookConnectedSuccess)),
         );
       }
     } on AppException catch (e) {
@@ -158,25 +197,37 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _disconnectGmail(BuildContext context, WidgetRef ref) async {
+  Future<void> _disconnectGmail(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     await ref.read(authStateProvider.notifier).disconnectGmail();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gmail disconnected')),
+        SnackBar(content: Text(l.gmailDisconnected)),
       );
     }
   }
 
-  Future<void> _disconnectOutlook(BuildContext context, WidgetRef ref) async {
+  Future<void> _disconnectOutlook(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     await ref.read(authStateProvider.notifier).disconnectOutlook();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Outlook disconnected')),
+        SnackBar(content: Text(l.outlookDisconnected)),
       );
     }
   }
 
-  Future<void> _syncEmails(BuildContext context, WidgetRef ref) async {
+  Future<void> _syncEmails(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
     try {
       final created = await ref.read(settingsProvider.notifier).syncEmails();
       if (context.mounted) {
@@ -184,8 +235,8 @@ class SettingsScreen extends ConsumerWidget {
           SnackBar(
             content: Text(
               created > 0
-                  ? 'Sync complete — $created new task${created == 1 ? '' : 's'} created'
-                  : 'Sync complete — no new actionable emails found',
+                  ? l.syncCompleteTasks(created)
+                  : l.syncCompleteNoTasks,
             ),
           ),
         );
@@ -205,6 +256,10 @@ class _ConnectionTile extends StatelessWidget {
     required this.provider,
     required this.icon,
     required this.connected,
+    required this.connectedLabel,
+    required this.notConnectedLabel,
+    required this.connectLabel,
+    required this.disconnectLabel,
     required this.onConnect,
     required this.onDisconnect,
   });
@@ -212,6 +267,10 @@ class _ConnectionTile extends StatelessWidget {
   final String provider;
   final IconData icon;
   final bool connected;
+  final String connectedLabel;
+  final String notConnectedLabel;
+  final String connectLabel;
+  final String disconnectLabel;
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
 
@@ -231,7 +290,7 @@ class _ConnectionTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              connected ? 'Connected' : 'Not connected',
+              connected ? connectedLabel : notConnectedLabel,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -242,7 +301,7 @@ class _ConnectionTile extends StatelessWidget {
           const SizedBox(width: 8),
           TextButton(
             onPressed: connected ? onDisconnect : onConnect,
-            child: Text(connected ? 'Disconnect' : 'Connect'),
+            child: Text(connected ? disconnectLabel : connectLabel),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:taskmail/core/locale/locale_provider.dart';
 import 'package:taskmail/core/di/providers.dart';
 import 'package:taskmail/core/errors/app_exception.dart';
 import 'package:taskmail/features/auth/domain/entities/user.dart';
@@ -34,6 +35,10 @@ class AuthState extends ChangeNotifier {
       _isAuthenticated = await repo.hasValidSession();
       if (_isAuthenticated) {
         _user = await repo.getCurrentUser();
+        try {
+          final settings = await _ref.read(settingsRepositoryProvider).getSettings();
+          await _ref.read(localeProvider.notifier).setLocale(settings.language);
+        } catch (_) {}
       }
     } catch (_) {
       _isAuthenticated = false;

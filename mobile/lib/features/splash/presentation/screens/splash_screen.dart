@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -6,6 +7,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
@@ -38,14 +40,14 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'TaskMail',
+              l.appTitle,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'AI-powered email tasks',
+              l.splashTagline,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 48),

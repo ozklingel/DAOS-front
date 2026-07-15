@@ -6,6 +6,7 @@ import 'package:taskmail/core/utils/date_formatter.dart';
 import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
 import 'package:taskmail/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/services/analytics_service.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
@@ -20,6 +21,7 @@ class TaskDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final taskAsync = ref.watch(taskDetailProvider(taskId));
 
     return Scaffold(
@@ -28,7 +30,7 @@ class TaskDetailsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Task Details'),
+        title: Text(l.taskDetails),
       ),
       body: taskAsync.when(
         loading: () => const ShimmerLoading(itemCount: 1),
@@ -76,7 +78,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
   Future<void> _snooze() async {
     final until = await showModalBottomSheet<DateTime>(
       context: context,
-      builder: (context) => _SnoozeSheet(),
+      builder: (context) => const _SnoozeSheet(),
     );
     if (until == null) return;
 
@@ -88,6 +90,8 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final task = widget.task;
     final isActionable = task.status == TaskStatus.open ||
         task.status == TaskStatus.overdue ||
@@ -124,24 +128,24 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
               const SizedBox(height: 24),
               _DetailRow(
                 icon: Icons.schedule,
-                label: 'Deadline',
-                value: DateFormatter.formatDeadline(task.deadline),
+                label: l.deadline,
+                value: DateFormatter.formatDeadline(task.deadline, l, locale: locale),
               ),
               if (task.senderName != null || task.senderEmail != null)
                 _DetailRow(
                   icon: Icons.person_outline,
-                  label: 'Sender',
+                  label: l.sender,
                   value: task.senderName ?? task.senderEmail ?? '',
                 ),
               _DetailRow(
                 icon: Icons.calendar_today_outlined,
-                label: 'Created',
-                value: DateFormatter.formatRelative(task.createdAt),
+                label: l.created,
+                value: DateFormatter.formatRelative(task.createdAt, l),
               ),
               if (task.emailSubject != null) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'Source Email',
+                  l.sourceEmail,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),
@@ -202,7 +206,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
                                     .logTaskDismissed(task.id);
                               }),
                       icon: const Icon(Icons.close, size: 18),
-                      label: const Text('Dismiss'),
+                      label: Text(l.dismiss),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -210,7 +214,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
                     child: OutlinedButton.icon(
                       onPressed: _isActionLoading ? null : _snooze,
                       icon: const Icon(Icons.snooze, size: 18),
-                      label: const Text('Snooze'),
+                      label: Text(l.snooze),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -236,7 +240,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
                               ),
                             )
                           : const Icon(Icons.check, size: 18),
-                      label: const Text('Done'),
+                      label: Text(l.done),
                     ),
                   ),
                 ],
@@ -274,7 +278,13 @@ class _DetailRow extends StatelessWidget {
                 ),
           ),
           const Spacer(),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
         ],
       ),
     );
@@ -282,8 +292,11 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _SnoozeSheet extends StatelessWidget {
+  const _SnoozeSheet();
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final options = [
       ('1 hour', DateTime.now().add(const Duration(hours: 1))),
       ('3 hours', DateTime.now().add(const Duration(hours: 3))),
@@ -297,11 +310,11 @@ class _SnoozeSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Snooze until', style: Theme.of(context).textTheme.titleLarge),
+          Text(l.snoozeUntil, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           ...options.map(
             (o) => ListTile(
-              title: Text(o.$1),
+              title: Text(l.snoozeOption(o.$1)),
               onTap: () => Navigator.pop(context, o.$2),
               contentPadding: EdgeInsets.zero,
             ),
