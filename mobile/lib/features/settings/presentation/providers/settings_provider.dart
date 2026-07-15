@@ -19,4 +19,8 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
       () => ref.read(settingsRepositoryProvider).updateSettings(settings),
     );
   }
+
+  Future<int> syncEmails() async {
+    return ref.read(settingsRepositoryProvider).syncEmails();
+  }
 }

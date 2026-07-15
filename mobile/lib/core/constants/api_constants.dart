@@ -27,6 +27,7 @@ class ApiConstants {
 
   // Settings & notifications
   static const String settings = '/settings';
+  static const String syncEmails = '/emails/sync';
   static const String registerDevice = '/notifications/device';
 
   static const Duration connectTimeout = Duration(seconds: 15);

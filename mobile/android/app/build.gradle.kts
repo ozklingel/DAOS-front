@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+val googleServerClientId = localProperties.getProperty("google.server.client.id") ?: ""
 
 android {
     namespace = "com.taskmail.taskmail"
@@ -28,6 +37,9 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
         manifestPlaceholders["appAuthRedirectScheme"] = "com.taskmail"
+        if (googleServerClientId.isNotEmpty()) {
+            resValue("string", "default_web_client_id", googleServerClientId)
+        }
     }
 
     buildTypes {

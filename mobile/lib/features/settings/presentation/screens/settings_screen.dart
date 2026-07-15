@@ -20,7 +20,10 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: settingsAsync.when(
         loading: () => const ShimmerLoading(itemCount: 4),
-        error: (e, _) => ErrorView(message: e.toString()),
+        error: (e, _) => ErrorView(
+          message: e.toString(),
+          onRetry: () => ref.invalidate(settingsProvider),
+        ),
         data: (settings) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -61,6 +64,14 @@ class SettingsScreen extends ConsumerWidget {
               onConnect: () => _connectOutlook(context, ref),
               onDisconnect: () => _disconnectOutlook(context, ref),
             ),
+            if (user?.gmailConnected == true || user?.outlookConnected == true) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => _syncEmails(context, ref),
+                icon: const Icon(Icons.sync, size: 18),
+                label: const Text('Sync emails now'),
+              ),
+            ],
             const SizedBox(height: 24),
             Text(
               'Notifications',
@@ -162,6 +173,29 @@ class SettingsScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Outlook disconnected')),
       );
+    }
+  }
+
+  Future<void> _syncEmails(BuildContext context, WidgetRef ref) async {
+    try {
+      final created = await ref.read(settingsProvider.notifier).syncEmails();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              created > 0
+                  ? 'Sync complete — $created new task${created == 1 ? '' : 's'} created'
+                  : 'Sync complete — no new actionable emails found',
+            ),
+          ),
+        );
+      }
+    } on AppException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
     }
   }
 }

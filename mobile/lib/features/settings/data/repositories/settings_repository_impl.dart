@@ -24,4 +24,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     });
     return model.toEntity();
   }
+
+  @override
+  Future<int> syncEmails() => _remote.syncEmails();
 }

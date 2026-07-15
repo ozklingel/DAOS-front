@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
@@ -19,6 +21,7 @@ class OAuthService {
               serverClientId: _googleServerClientId.isEmpty
                   ? null
                   : _googleServerClientId,
+              forceCodeForRefreshToken: Platform.isAndroid,
             ),
         _appAuth = appAuth ?? const FlutterAppAuth();
 
@@ -55,7 +58,18 @@ class OAuthService {
       final auth = await account.authentication;
       final idToken = auth.idToken;
       if (idToken == null || idToken.isEmpty) {
-        throw const AuthFailureException('Failed to obtain Google ID token.');
+        if (_googleServerClientId.isEmpty) {
+          throw const AuthFailureException(
+            'Google ID token missing. Set GOOGLE_SERVER_CLIENT_ID to your Web OAuth '
+            'client ID (same as GOOGLE_CLIENT_ID in backend/.env). Add it to '
+            'mobile/android/local.properties as google.server.client.id, or pass '
+            '--dart-define=GOOGLE_SERVER_CLIENT_ID=... when running flutter.',
+          );
+        }
+        throw const AuthFailureException(
+          'Failed to obtain Google ID token. Confirm GOOGLE_SERVER_CLIENT_ID matches '
+          'your Web OAuth client in Google Cloud Console, then fully restart the app.',
+        );
       }
 
       return GoogleSignInCredentials(

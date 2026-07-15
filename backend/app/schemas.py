@@ -121,6 +121,10 @@ class DailyBriefOut(APIModel):
     insights: list[str] = Field(default_factory=list)
 
 
+class EmailSyncOut(APIModel):
+    created: int = 0
+
+
 class SettingsOut(APIModel):
     push_notifications_enabled: bool = True
     daily_brief_enabled: bool = True

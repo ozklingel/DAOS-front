@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, dashboard, notifications, tasks
+from app.api.v1 import auth, dashboard, emails, notifications, tasks
 from app.config import settings
 from app.database import SessionLocal, init_db
 from app.models import User
@@ -94,6 +94,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 api_prefix = settings.api_prefix
 app.include_router(auth.router, prefix=api_prefix)
+app.include_router(emails.router, prefix=api_prefix)
 app.include_router(tasks.router, prefix=api_prefix)
 app.include_router(dashboard.router, prefix=api_prefix)
 app.include_router(notifications.router, prefix=api_prefix)
