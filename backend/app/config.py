@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     whatsapp_graph_api_version: str = "v25.0"
 
     @property
+    def whatsapp_app_secret_effective(self) -> str:
+        value = self.whatsapp_app_secret.strip()
+        if value in {"", "your-app-secret"}:
+            return ""
+        return value
+
+    @property
     def cors_origin_list(self) -> list[str]:
         if self.cors_origins == "*":
             return ["*"]

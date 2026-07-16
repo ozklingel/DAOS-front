@@ -95,12 +95,40 @@ curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
 
 The backend bot replies with **`type: text`** when processing inbound webhook messages (user already wrote first → session is open).
 
-## ngrok (real WhatsApp locally)
+## ngrok — חובה כדי ש-Meta יגיע לבקאנד
+
+Meta **לא יכולה** לשלוח webhook ל-`http://127.0.0.1:8080`. חייבים URL ציבורי ב-HTTPS.
+
+**1. הרץ ngrok** (טרמינל נפרד, בזמן שה-backend רץ):
 
 ```powershell
 ngrok http 8080
-# Use https://xxxx.ngrok.io/webhooks/whatsapp in Meta dashboard
 ```
+
+העתק את ה-URL, למשל: `https://abc123.ngrok-free.app`
+
+**2. Meta Developers → WhatsApp → Configuration → Webhook**
+
+| שדה | ערך |
+|-----|-----|
+| Callback URL | `https://abc123.ngrok-free.app/webhooks/whatsapp` |
+| Verify token | `my-secret-verify-token` (זהה ל-`WHATSAPP_VERIFY_TOKEN` ב-`.env`) |
+
+לחץ **Verify and save** — בטרמinal של uvicorn אמור להופיע:
+```
+WhatsApp webhook verify: mode=subscribe token_match=True
+```
+
+**3. Subscribe to field:** סמן **`messages`**
+
+**4. שלח הודעה שוב** מהטלפון — בטרמinal אמור להופיע:
+```
+WhatsApp webhook POST received (...)
+```
+
+> **אין שום לוג `/webhooks/whatsapp`?** ה-webhook לא מוגדר ב-Meta, או ngrok לא רץ, או URL שגוי.
+
+> **`WHATSAPP_APP_SECRET`:** אם עדיין `your-app-secret` — אימות חתימה מדולג (dev). ב-production שים את ה-App Secret האמיתי מ-Meta → App settings → Basic.
 
 ## API
 

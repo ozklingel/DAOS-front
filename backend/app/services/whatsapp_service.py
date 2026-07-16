@@ -68,12 +68,15 @@ class WhatsAppService:
         return db.query(User).filter(User.whatsapp_phone == normalized).one_or_none()
 
     def verify_signature(self, payload: bytes, signature: str | None) -> bool:
-        if not settings.whatsapp_app_secret:
+        secret = settings.whatsapp_app_secret_effective
+        if not secret:
+            if signature:
+                logger.debug("WhatsApp webhook: skipping signature check (WHATSAPP_APP_SECRET not set)")
             return True
         if not signature or not signature.startswith("sha256="):
             return False
         expected = hmac.new(
-            settings.whatsapp_app_secret.encode(),
+            secret.encode(),
             payload,
             hashlib.sha256,
         ).hexdigest()
