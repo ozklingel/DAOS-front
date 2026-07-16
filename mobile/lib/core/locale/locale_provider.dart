@@ -8,7 +8,6 @@ final localeProvider = NotifierProvider<LocaleNotifier, Locale>(LocaleNotifier.n
 class LocaleNotifier extends Notifier<Locale> {
   @override
   Locale build() {
-    _loadSavedLocale();
     return _deviceLocale();
   }
 
@@ -18,10 +17,13 @@ class LocaleNotifier extends Notifier<Locale> {
     return const Locale('en');
   }
 
-  Future<void> _loadSavedLocale() async {
+  /// Loads persisted locale before the first frame (call from main).
+  Future<void> ensureInitialized() async {
     final saved = await ref.read(secureStorageServiceProvider).getLocale();
     if (saved == 'he' || saved == 'en') {
       state = Locale(saved!);
+    } else {
+      state = _deviceLocale();
     }
   }
 

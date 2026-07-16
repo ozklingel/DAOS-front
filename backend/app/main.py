@@ -6,7 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, dashboard, emails, notifications, tasks
+from app.api.v1 import auth, dashboard, emails, hub, notifications, tasks, whatsapp
+from app.api import webhooks_whatsapp
 from app.config import settings
 from app.database import SessionLocal, init_db
 from app.models import User
@@ -42,7 +43,8 @@ async def scheduled_daily_briefs() -> None:
             if settings_row and not settings_row.daily_brief_enabled:
                 continue
             tasks = [t for t in user.tasks]
-            ai_service.generate_daily_brief(db, user, tasks)
+            language = settings_row.language if settings_row else "en"
+            ai_service.generate_daily_brief(db, user, tasks, language)
     finally:
         db.close()
 
@@ -95,9 +97,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
 api_prefix = settings.api_prefix
 app.include_router(auth.router, prefix=api_prefix)
 app.include_router(emails.router, prefix=api_prefix)
+app.include_router(hub.router, prefix=api_prefix)
 app.include_router(tasks.router, prefix=api_prefix)
 app.include_router(dashboard.router, prefix=api_prefix)
 app.include_router(notifications.router, prefix=api_prefix)
+app.include_router(whatsapp.router, prefix=api_prefix)
+app.include_router(webhooks_whatsapp.router)
 
 
 @app.get("/health")

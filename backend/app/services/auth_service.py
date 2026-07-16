@@ -35,6 +35,36 @@ class AuthService:
 
         raise ValueError("Invalid Google ID token") from last_exc
 
+    async def verify_google_access_token(self, access_token: str) -> dict:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+        if response.status_code != 200:
+            raise ValueError("Invalid Google access token")
+        data = response.json()
+        email = data.get("email")
+        if not email:
+            raise ValueError("Google account has no email")
+        return {
+            "email": email,
+            "name": data.get("name"),
+            "picture": data.get("picture"),
+            "sub": data.get("sub"),
+        }
+
+    async def _resolve_google_identity(
+        self, id_token_str: str | None, access_token_str: str | None
+    ) -> dict:
+        if id_token_str:
+            return self.verify_google_id_token(id_token_str)
+        if access_token_str:
+            return await self.verify_google_access_token(access_token_str)
+        raise ValueError("Google idToken or accessToken is required")
+
     async def verify_outlook_access_token(self, access_token: str) -> dict:
         import httpx
 
@@ -107,12 +137,23 @@ class AuthService:
         refresh_token = tokens.get("refresh_token")
         if refresh_token:
             user.google_refresh_token = refresh_token
-            user.gmail_connected = True
+            user.google_access_token = None
+
+    def _store_google_access_token(self, user: User, access_token_str: str | None) -> None:
+        if access_token_str:
+            user.google_access_token = access_token_str
+
+    def _mark_gmail_connected(self, user: User) -> None:
+        user.gmail_connected = bool(user.google_refresh_token or user.google_access_token)
 
     async def sign_in_google(
-        self, db: Session, id_token_str: str, server_auth_code: str | None = None
+        self,
+        db: Session,
+        id_token_str: str | None = None,
+        access_token_str: str | None = None,
+        server_auth_code: str | None = None,
     ) -> tuple[User, str, str]:
-        info = self.verify_google_id_token(id_token_str)
+        info = await self._resolve_google_identity(id_token_str, access_token_str)
         email = info.get("email")
         if not email:
             raise ValueError("Google account has no email")
@@ -129,7 +170,8 @@ class AuthService:
         except ValueError:
             pass
 
-        user.gmail_connected = bool(user.google_refresh_token)
+        self._store_google_access_token(user, access_token_str)
+        self._mark_gmail_connected(user)
         db.commit()
         db.refresh(user)
         return user, *self.issue_tokens(db, user)
@@ -166,10 +208,11 @@ class AuthService:
         self,
         db: Session,
         user: User,
-        id_token_str: str,
-        server_auth_code: str | None,
+        id_token_str: str | None = None,
+        access_token_str: str | None = None,
+        server_auth_code: str | None = None,
     ) -> User:
-        info = self.verify_google_id_token(id_token_str)
+        info = await self._resolve_google_identity(id_token_str, access_token_str)
         email = info.get("email")
         if not email:
             raise ValueError("Google account has no email")
@@ -177,10 +220,13 @@ class AuthService:
             raise ValueError("Google account email does not match your TaskMail account")
 
         await self._store_google_refresh_token(user, server_auth_code)
-        if not user.google_refresh_token:
-            raise ValueError("Gmail access was not granted. Please try again.")
+        self._store_google_access_token(user, access_token_str)
+        if not user.google_refresh_token and not user.google_access_token:
+            raise ValueError(
+                "Gmail access was not granted. On web, approve Gmail permissions when Google asks."
+            )
 
-        user.gmail_connected = True
+        self._mark_gmail_connected(user)
         db.commit()
         db.refresh(user)
         return user
@@ -211,6 +257,7 @@ class AuthService:
     def disconnect_gmail(self, db: Session, user: User) -> User:
         user.gmail_connected = False
         user.google_refresh_token = None
+        user.google_access_token = None
         db.commit()
         db.refresh(user)
         return user

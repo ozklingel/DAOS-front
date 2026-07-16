@@ -78,6 +78,46 @@ class TasksFilterSheet extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
+          Text(l.category, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              _OptionChip(
+                label: l.all,
+                selected: filter.category == null,
+                onTap: () => notifier.setCategory(null),
+              ),
+              ...TaskCategory.values.map(
+                (c) => _OptionChip(
+                  label: l.taskCategoryLabel(c),
+                  selected: filter.category == c,
+                  onTap: () => notifier.setCategory(c),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(l.energyLevel, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              _OptionChip(
+                label: l.all,
+                selected: filter.energyLevel == null,
+                onTap: () => notifier.setEnergyLevel(null),
+              ),
+              ...EnergyLevel.values.map(
+                (e) => _OptionChip(
+                  label: l.energyLevelLabel(e),
+                  selected: filter.energyLevel == e,
+                  onTap: () => notifier.setEnergyLevel(e),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           Text(l.sortBy, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           ...TaskSortField.values.map(

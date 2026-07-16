@@ -32,11 +32,11 @@ class ShimmerLoading extends StatelessWidget {
 class ErrorView extends StatelessWidget {
   const ErrorView({
     super.key,
-    required this.message,
+    required this.error,
     this.onRetry,
   });
 
-  final String message;
+  final Object error;
   final VoidCallback? onRetry;
 
   @override
@@ -51,7 +51,7 @@ class ErrorView extends StatelessWidget {
             Icon(Icons.error_outline, size: 48, color: AppColors.textTertiary),
             const SizedBox(height: 16),
             Text(
-              message,
+              l.errorMessage(error),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),

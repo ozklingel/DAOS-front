@@ -8,18 +8,29 @@ from app.config import settings
 
 
 class GmailService:
-    def fetch_recent_emails(self, refresh_token: str, max_results: int = 25) -> list[dict]:
+    def fetch_recent_emails(
+        self,
+        *,
+        refresh_token: str | None = None,
+        access_token: str | None = None,
+        max_results: int = 25,
+    ) -> list[dict]:
         if not settings.google_client_id or not settings.google_client_secret:
             raise ValueError("Google OAuth is not configured on the server")
 
-        credentials = Credentials(
-            None,
-            refresh_token=refresh_token,
-            token_uri="https://oauth2.googleapis.com/token",
-            client_id=settings.google_client_id,
-            client_secret=settings.google_client_secret,
-        )
-        credentials.refresh(GoogleRequest())
+        if access_token:
+            credentials = Credentials(token=access_token)
+        elif refresh_token:
+            credentials = Credentials(
+                None,
+                refresh_token=refresh_token,
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=settings.google_client_id,
+                client_secret=settings.google_client_secret,
+            )
+            credentials.refresh(GoogleRequest())
+        else:
+            raise ValueError("Gmail credentials are missing")
 
         service = build("gmail", "v1", credentials=credentials, cache_discovery=False)
         list_response = (

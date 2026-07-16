@@ -8,6 +8,8 @@ class TasksFilterState {
     this.search = '',
     this.status,
     this.priority,
+    this.category,
+    this.energyLevel,
     this.sortBy = TaskSortField.deadline,
     this.ascending = true,
   });
@@ -15,6 +17,8 @@ class TasksFilterState {
   final String search;
   final TaskStatus? status;
   final TaskPriority? priority;
+  final TaskCategory? category;
+  final EnergyLevel? energyLevel;
   final TaskSortField sortBy;
   final bool ascending;
 
@@ -22,6 +26,8 @@ class TasksFilterState {
     String? search,
     TaskStatus? Function()? status,
     TaskPriority? Function()? priority,
+    TaskCategory? Function()? category,
+    EnergyLevel? Function()? energyLevel,
     TaskSortField? sortBy,
     bool? ascending,
   }) {
@@ -29,6 +35,8 @@ class TasksFilterState {
       search: search ?? this.search,
       status: status != null ? status() : this.status,
       priority: priority != null ? priority() : this.priority,
+      category: category != null ? category() : this.category,
+      energyLevel: energyLevel != null ? energyLevel() : this.energyLevel,
       sortBy: sortBy ?? this.sortBy,
       ascending: ascending ?? this.ascending,
     );
@@ -49,6 +57,10 @@ class TasksFilterNotifier extends Notifier<TasksFilterState> {
       state = state.copyWith(status: () => status);
   void setPriority(TaskPriority? priority) =>
       state = state.copyWith(priority: () => priority);
+  void setCategory(TaskCategory? category) =>
+      state = state.copyWith(category: () => category);
+  void setEnergyLevel(EnergyLevel? level) =>
+      state = state.copyWith(energyLevel: () => level);
   void setSort(TaskSortField field) => state = state.copyWith(sortBy: field);
   void toggleSortOrder() =>
       state = state.copyWith(ascending: !state.ascending);
@@ -86,6 +98,8 @@ class TasksListNotifier extends AsyncNotifier<List<Task>> {
           search: filter.search.isEmpty ? null : filter.search,
           status: filter.status,
           priority: filter.priority,
+          category: filter.category,
+          energyLevel: filter.energyLevel,
           sortBy: filter.sortBy,
           ascending: filter.ascending,
         );

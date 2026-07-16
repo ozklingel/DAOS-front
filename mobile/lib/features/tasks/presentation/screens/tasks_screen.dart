@@ -112,7 +112,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             child: tasksAsync.when(
               loading: () => const ShimmerLoading(),
               error: (e, _) => ErrorView(
-                message: e.toString(),
+                error: e,
                 onRetry: () => ref.read(tasksListProvider.notifier).refresh(),
               ),
               data: (tasks) {

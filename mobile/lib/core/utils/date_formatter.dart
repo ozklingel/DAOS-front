@@ -23,7 +23,11 @@ class DateFormatter {
     return DateFormat.yMMMd(locale).format(date);
   }
 
-  static String formatRelative(DateTime date, AppLocalizations l) {
+  static String formatRelative(
+    DateTime date,
+    AppLocalizations l, {
+    String? locale,
+  }) {
     final now = DateTime.now();
     final diff = now.difference(date);
 
@@ -31,6 +35,6 @@ class DateFormatter {
     if (diff.inHours < 1) return l.minutesAgo(diff.inMinutes);
     if (diff.inDays < 1) return l.hoursAgo(diff.inHours);
     if (diff.inDays < 7) return l.daysAgo(diff.inDays);
-    return DateFormat.MMMd().format(date);
+    return DateFormat.MMMd(locale).format(date);
   }
 }

@@ -5,7 +5,11 @@ from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session
 
 from app.deps import start_of_week
-from app.models import DailyBrief, Task, TaskPriority, TaskStatus, User
+from app.models import DailyBrief, EnergyLevel, Task, TaskCategory, TaskPriority, TaskStatus, User
+from app.services.support_services import SettingsService
+from app.services.task_classifier import DAILY_ENERGY_BUDGET, energy_cost
+
+settings_service = SettingsService()
 
 
 class TaskService:
@@ -40,6 +44,8 @@ class TaskService:
         search: str | None,
         status: str | None,
         priority: str | None,
+        category: str | None,
+        energy_level: str | None,
         sort_by: str,
         order: str,
         page: int,
@@ -63,6 +69,10 @@ class TaskService:
             query = query.filter(Task.status == status)
         if priority:
             query = query.filter(Task.priority == priority)
+        if category:
+            query = query.filter(Task.category == category)
+        if energy_level:
+            query = query.filter(Task.energy_level == energy_level)
 
         total = query.count()
         sort_col = self.SORT_FIELDS.get(sort_by, Task.deadline)
@@ -151,7 +161,28 @@ class TaskService:
             .order_by(desc(DailyBrief.generated_at))
             .first()
         )
-        brief_summary = brief.summary if brief else "Your AI brief will appear here once emails are synced."
+        user_settings = settings_service.get_or_create(db, user.id)
+        if brief:
+            brief_summary = brief.summary
+        elif user_settings.language == "he":
+            brief_summary = "סיכום ה-AI שלכם יופיע כאן לאחר סנכרון המיילים."
+        else:
+            brief_summary = "Your AI brief will appear here once emails are synced."
+
+        active_statuses = [TaskStatus.open.value, TaskStatus.overdue.value, TaskStatus.snoozed.value]
+        active_tasks = (
+            db.query(Task)
+            .filter(Task.user_id == user.id, Task.status.in_(active_statuses))
+            .all()
+        )
+
+        used = sum(energy_cost(t.energy_level) for t in active_tasks)
+        high_count = sum(1 for t in active_tasks if t.energy_level == EnergyLevel.high.value)
+        medium_count = sum(1 for t in active_tasks if t.energy_level == EnergyLevel.medium.value)
+        low_count = sum(1 for t in active_tasks if t.energy_level == EnergyLevel.low.value)
+        work_count = sum(1 for t in active_tasks if t.category == TaskCategory.work.value)
+        errands_count = sum(1 for t in active_tasks if t.category == TaskCategory.errands.value)
+        health_count = sum(1 for t in active_tasks if t.category == TaskCategory.health.value)
 
         return {
             "stats": {
@@ -161,5 +192,16 @@ class TaskService:
                 "completed_this_week": completed_this_week,
             },
             "brief_summary": brief_summary,
+            "energy_meter": {
+                "budget": DAILY_ENERGY_BUDGET,
+                "used": used,
+                "remaining": max(0, DAILY_ENERGY_BUDGET - used),
+                "high_count": high_count,
+                "medium_count": medium_count,
+                "low_count": low_count,
+                "work_count": work_count,
+                "errands_count": errands_count,
+                "health_count": health_count,
+            },
             "recent_high_priority_tasks": recent,
         }

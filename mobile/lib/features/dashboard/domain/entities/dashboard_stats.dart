@@ -14,10 +14,26 @@ abstract class DashboardStats with _$DashboardStats {
 }
 
 @freezed
+abstract class EnergyMeter with _$EnergyMeter {
+  const factory EnergyMeter({
+    @Default(100) int budget,
+    @Default(0) int used,
+    @Default(100) int remaining,
+    @Default(0) int highCount,
+    @Default(0) int mediumCount,
+    @Default(0) int lowCount,
+    @Default(0) int workCount,
+    @Default(0) int errandsCount,
+    @Default(0) int healthCount,
+  }) = _EnergyMeter;
+}
+
+@freezed
 abstract class DashboardData with _$DashboardData {
   const factory DashboardData({
     required DashboardStats stats,
     required String briefSummary,
+    required EnergyMeter energyMeter,
     @Default([]) List<Task> recentHighPriorityTasks,
   }) = _DashboardData;
 }

@@ -11,6 +11,8 @@ abstract class Task with _$Task {
     required TaskStatus status,
     required TaskPriority priority,
     required double priorityScore,
+    @Default(TaskCategory.general) TaskCategory category,
+    @Default(EnergyLevel.medium) EnergyLevel energyLevel,
     String? description,
     String? senderName,
     String? senderEmail,

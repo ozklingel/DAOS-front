@@ -11,5 +11,7 @@ abstract class AuthRepository {
   Future<User> connectOutlook();
   Future<User> disconnectGmail();
   Future<User> disconnectOutlook();
+  Future<User> connectWhatsApp(String phone);
+  Future<User> disconnectWhatsApp();
   Future<void> logout();
 }

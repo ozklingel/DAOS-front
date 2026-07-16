@@ -11,9 +11,10 @@ class AppShell extends StatelessWidget {
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith('/home/tasks')) return 1;
-    if (location.startsWith('/home/brief')) return 2;
-    if (location.startsWith('/home/settings')) return 3;
+    if (location.startsWith('/home/info')) return 1;
+    if (location.startsWith('/home/finance')) return 2;
+    if (location.startsWith('/home/calendar')) return 3;
+    if (location.startsWith('/home/settings')) return 4;
     return 0;
   }
 
@@ -22,10 +23,12 @@ class AppShell extends StatelessWidget {
       case 0:
         context.go(RouteNames.dashboard);
       case 1:
-        context.go(RouteNames.tasks);
+        context.go(RouteNames.info);
       case 2:
-        context.go(RouteNames.dailyBrief);
+        context.go(RouteNames.finance);
       case 3:
+        context.go(RouteNames.calendar);
+      case 4:
         context.go(RouteNames.settings);
     }
   }
@@ -35,33 +38,48 @@ class AppShell extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final index = _currentIndex(context);
     final isTaskDetail = GoRouterState.of(context).matchedLocation.contains('/home/tasks/');
+    final hideNav = isTaskDetail || GoRouterState.of(context).matchedLocation.startsWith('/home/profile');
 
     return Scaffold(
+      backgroundColor: AppColors.darkBackground,
       body: child,
-      bottomNavigationBar: isTaskDetail
+      bottomNavigationBar: hideNav
           ? null
           : Container(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: AppColors.darkBackgroundMid,
+                border: Border(
+                  top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                ),
               ),
               child: BottomNavigationBar(
                 currentIndex: index,
                 onTap: (i) => _onTap(context, i),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: AppColors.primary,
+                unselectedItemColor: AppColors.darkTextTertiary,
                 items: [
                   BottomNavigationBarItem(
-                    icon: const Icon(Icons.dashboard_outlined),
-                    activeIcon: const Icon(Icons.dashboard),
+                    icon: const Icon(Icons.home_outlined),
+                    activeIcon: const Icon(Icons.home),
                     label: l.navHome,
                   ),
                   BottomNavigationBarItem(
-                    icon: const Icon(Icons.check_circle_outline),
-                    activeIcon: const Icon(Icons.check_circle),
-                    label: l.navTasks,
+                    icon: const Icon(Icons.article_outlined),
+                    activeIcon: const Icon(Icons.article),
+                    label: l.navInfo,
                   ),
                   BottomNavigationBarItem(
-                    icon: const Icon(Icons.auto_awesome_outlined),
-                    activeIcon: const Icon(Icons.auto_awesome),
-                    label: l.navBrief,
+                    icon: const Icon(Icons.attach_money),
+                    activeIcon: const Icon(Icons.monetization_on),
+                    label: l.navFinance,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.calendar_today_outlined),
+                    activeIcon: const Icon(Icons.calendar_today),
+                    label: l.navCalendar,
                   ),
                   BottomNavigationBarItem(
                     icon: const Icon(Icons.settings_outlined),

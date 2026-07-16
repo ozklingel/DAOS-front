@@ -79,3 +79,20 @@ enum TaskAction {
 
   String get apiValue => name;
 }
+
+enum TaskCategory {
+  work,
+  errands,
+  health,
+  general;
+
+  String get apiValue => name;
+}
+
+enum EnergyLevel {
+  high,
+  medium,
+  low;
+
+  String get apiValue => name;
+}

@@ -4,6 +4,7 @@ import 'package:taskmail/core/locale/locale_provider.dart';
 import 'package:taskmail/core/di/providers.dart';
 import 'package:taskmail/core/errors/app_exception.dart';
 import 'package:taskmail/features/auth/domain/entities/user.dart';
+import 'package:taskmail/services/secure_storage_service.dart';
 
 final authStateProvider = ChangeNotifierProvider<AuthState>((ref) {
   final state = AuthState(ref);
@@ -35,10 +36,7 @@ class AuthState extends ChangeNotifier {
       _isAuthenticated = await repo.hasValidSession();
       if (_isAuthenticated) {
         _user = await repo.getCurrentUser();
-        try {
-          final settings = await _ref.read(settingsRepositoryProvider).getSettings();
-          await _ref.read(localeProvider.notifier).setLocale(settings.language);
-        } catch (_) {}
+        await _syncLocaleWithBackend();
       }
     } catch (_) {
       _isAuthenticated = false;
@@ -57,6 +55,7 @@ class AuthState extends ChangeNotifier {
       final tokens = await _ref.read(authRepositoryProvider).signInWithGoogle();
       _user = tokens.user;
       _isAuthenticated = true;
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       rethrow;
@@ -76,6 +75,7 @@ class AuthState extends ChangeNotifier {
           await _ref.read(authRepositoryProvider).signInWithOutlook();
       _user = tokens.user;
       _isAuthenticated = true;
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       rethrow;
@@ -94,6 +94,7 @@ class AuthState extends ChangeNotifier {
       final tokens = await _ref.read(authRepositoryProvider).signInDev();
       _user = tokens.user;
       _isAuthenticated = true;
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       rethrow;
@@ -152,6 +153,26 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> connectWhatsApp(String phone) async {
+    _error = null;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _user = await _ref.read(authRepositoryProvider).connectWhatsApp(phone);
+    } on AppException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> disconnectWhatsApp() async {
+    _user = await _ref.read(authRepositoryProvider).disconnectWhatsApp();
+    notifyListeners();
+  }
+
   void updateUser(User user) {
     _user = user;
     notifyListeners();
@@ -160,5 +181,30 @@ class AuthState extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<void> _syncLocaleWithBackend() async {
+    try {
+      final settingsRepo = _ref.read(settingsRepositoryProvider);
+      final storage = _ref.read(secureStorageServiceProvider);
+      final settings = await settingsRepo.getSettings();
+      final savedLocale = await storage.getLocale();
+      final localCode = _ref.read(localeProvider).languageCode;
+
+      if (savedLocale == 'he' || savedLocale == 'en') {
+        if (settings.language != savedLocale) {
+          await settingsRepo.updateSettings(
+            settings.copyWith(language: savedLocale!),
+          );
+        }
+        await _ref.read(localeProvider.notifier).setLocale(savedLocale!);
+      } else if (settings.language == 'he' || settings.language == 'en') {
+        await _ref.read(localeProvider.notifier).setLocale(settings.language);
+      } else if (localCode != settings.language) {
+        await settingsRepo.updateSettings(
+          settings.copyWith(language: localCode),
+        );
+      }
+    } catch (_) {}
   }
 }

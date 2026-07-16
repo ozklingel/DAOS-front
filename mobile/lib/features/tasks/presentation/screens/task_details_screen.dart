@@ -35,7 +35,7 @@ class TaskDetailsScreen extends ConsumerWidget {
       body: taskAsync.when(
         loading: () => const ShimmerLoading(itemCount: 1),
         error: (e, _) => ErrorView(
-          message: e.toString(),
+          error: e,
           onRetry: () => ref.invalidate(taskDetailProvider(taskId)),
         ),
         data: (task) => _TaskDetailsBody(task: task),
@@ -67,7 +67,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(AppLocalizations.of(context).errorMessage(e))),
         );
       }
     } finally {
@@ -140,7 +140,7 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
               _DetailRow(
                 icon: Icons.calendar_today_outlined,
                 label: l.created,
-                value: DateFormatter.formatRelative(task.createdAt, l),
+                value: DateFormatter.formatRelative(task.createdAt, l, locale: locale),
               ),
               if (task.emailSubject != null) ...[
                 const SizedBox(height: 24),
@@ -298,10 +298,10 @@ class _SnoozeSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final options = [
-      ('1 hour', DateTime.now().add(const Duration(hours: 1))),
-      ('3 hours', DateTime.now().add(const Duration(hours: 3))),
-      ('Tomorrow 9 AM', _tomorrowAt9()),
-      ('Next week', DateTime.now().add(const Duration(days: 7))),
+      (l.snoozeOneHour, DateTime.now().add(const Duration(hours: 1))),
+      (l.snoozeThreeHours, DateTime.now().add(const Duration(hours: 3))),
+      (l.snoozeTomorrowMorning, _tomorrowAt9()),
+      (l.snoozeNextWeek, DateTime.now().add(const Duration(days: 7))),
     ];
 
     return Padding(
@@ -314,7 +314,7 @@ class _SnoozeSheet extends StatelessWidget {
           const SizedBox(height: 16),
           ...options.map(
             (o) => ListTile(
-              title: Text(l.snoozeOption(o.$1)),
+              title: Text(o.$1),
               onTap: () => Navigator.pop(context, o.$2),
               contentPadding: EdgeInsets.zero,
             ),

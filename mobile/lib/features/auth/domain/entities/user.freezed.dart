@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$User {
 
- String get id; String get email; String? get name; String? get avatarUrl; bool get gmailConnected; bool get outlookConnected;
+ String get id; String get email; String? get name; String? get avatarUrl; bool get gmailConnected; bool get outlookConnected; bool get whatsappConnected; String? get whatsappPhone;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.name, name) || other.name == name)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.gmailConnected, gmailConnected) || other.gmailConnected == gmailConnected)&&(identical(other.outlookConnected, outlookConnected) || other.outlookConnected == outlookConnected));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.name, name) || other.name == name)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.gmailConnected, gmailConnected) || other.gmailConnected == gmailConnected)&&(identical(other.outlookConnected, outlookConnected) || other.outlookConnected == outlookConnected)&&(identical(other.whatsappConnected, whatsappConnected) || other.whatsappConnected == whatsappConnected)&&(identical(other.whatsappPhone, whatsappPhone) || other.whatsappPhone == whatsappPhone));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,email,name,avatarUrl,gmailConnected,outlookConnected);
+int get hashCode => Object.hash(runtimeType,id,email,name,avatarUrl,gmailConnected,outlookConnected,whatsappConnected,whatsappPhone);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, gmailConnected: $gmailConnected, outlookConnected: $outlookConnected)';
+  return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, gmailConnected: $gmailConnected, outlookConnected: $outlookConnected, whatsappConnected: $whatsappConnected, whatsappPhone: $whatsappPhone)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $UserCopyWith<$Res>  {
   factory $UserCopyWith(User value, $Res Function(User) _then) = _$UserCopyWithImpl;
 @useResult
 $Res call({
- String id, String email, String? name, String? avatarUrl, bool gmailConnected, bool outlookConnected
+ String id, String email, String? name, String? avatarUrl, bool gmailConnected, bool outlookConnected, bool whatsappConnected, String? whatsappPhone
 });
 
 
@@ -62,7 +62,7 @@ class _$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? name = freezed,Object? avatarUrl = freezed,Object? gmailConnected = null,Object? outlookConnected = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? name = freezed,Object? avatarUrl = freezed,Object? gmailConnected = null,Object? outlookConnected = null,Object? whatsappConnected = null,Object? whatsappPhone = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,9 @@ as String,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,gmailConnected: null == gmailConnected ? _self.gmailConnected : gmailConnected // ignore: cast_nullable_to_non_nullable
 as bool,outlookConnected: null == outlookConnected ? _self.outlookConnected : outlookConnected // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,whatsappConnected: null == whatsappConnected ? _self.whatsappConnected : whatsappConnected // ignore: cast_nullable_to_non_nullable
+as bool,whatsappPhone: freezed == whatsappPhone ? _self.whatsappPhone : whatsappPhone // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -155,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected,  bool whatsappConnected,  String? whatsappPhone)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected);case _:
+return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected,_that.whatsappConnected,_that.whatsappPhone);case _:
   return orElse();
 
 }
@@ -176,10 +178,10 @@ return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConne
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected,  bool whatsappConnected,  String? whatsappPhone)  $default,) {final _that = this;
 switch (_that) {
 case _User():
-return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected);case _:
+return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected,_that.whatsappConnected,_that.whatsappPhone);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +198,10 @@ return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConne
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String? name,  String? avatarUrl,  bool gmailConnected,  bool outlookConnected,  bool whatsappConnected,  String? whatsappPhone)?  $default,) {final _that = this;
 switch (_that) {
 case _User() when $default != null:
-return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected);case _:
+return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConnected,_that.outlookConnected,_that.whatsappConnected,_that.whatsappPhone);case _:
   return null;
 
 }
@@ -211,7 +213,7 @@ return $default(_that.id,_that.email,_that.name,_that.avatarUrl,_that.gmailConne
 
 
 class _User implements User {
-  const _User({required this.id, required this.email, this.name, this.avatarUrl, this.gmailConnected = false, this.outlookConnected = false});
+  const _User({required this.id, required this.email, this.name, this.avatarUrl, this.gmailConnected = false, this.outlookConnected = false, this.whatsappConnected = false, this.whatsappPhone});
   
 
 @override final  String id;
@@ -220,6 +222,8 @@ class _User implements User {
 @override final  String? avatarUrl;
 @override@JsonKey() final  bool gmailConnected;
 @override@JsonKey() final  bool outlookConnected;
+@override@JsonKey() final  bool whatsappConnected;
+@override final  String? whatsappPhone;
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +235,16 @@ _$UserCopyWith<_User> get copyWith => __$UserCopyWithImpl<_User>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.name, name) || other.name == name)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.gmailConnected, gmailConnected) || other.gmailConnected == gmailConnected)&&(identical(other.outlookConnected, outlookConnected) || other.outlookConnected == outlookConnected));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.name, name) || other.name == name)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.gmailConnected, gmailConnected) || other.gmailConnected == gmailConnected)&&(identical(other.outlookConnected, outlookConnected) || other.outlookConnected == outlookConnected)&&(identical(other.whatsappConnected, whatsappConnected) || other.whatsappConnected == whatsappConnected)&&(identical(other.whatsappPhone, whatsappPhone) || other.whatsappPhone == whatsappPhone));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,email,name,avatarUrl,gmailConnected,outlookConnected);
+int get hashCode => Object.hash(runtimeType,id,email,name,avatarUrl,gmailConnected,outlookConnected,whatsappConnected,whatsappPhone);
 
 @override
 String toString() {
-  return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, gmailConnected: $gmailConnected, outlookConnected: $outlookConnected)';
+  return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, gmailConnected: $gmailConnected, outlookConnected: $outlookConnected, whatsappConnected: $whatsappConnected, whatsappPhone: $whatsappPhone)';
 }
 
 
@@ -251,7 +255,7 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   factory _$UserCopyWith(_User value, $Res Function(_User) _then) = __$UserCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String email, String? name, String? avatarUrl, bool gmailConnected, bool outlookConnected
+ String id, String email, String? name, String? avatarUrl, bool gmailConnected, bool outlookConnected, bool whatsappConnected, String? whatsappPhone
 });
 
 
@@ -268,7 +272,7 @@ class __$UserCopyWithImpl<$Res>
 
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? name = freezed,Object? avatarUrl = freezed,Object? gmailConnected = null,Object? outlookConnected = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? name = freezed,Object? avatarUrl = freezed,Object? gmailConnected = null,Object? outlookConnected = null,Object? whatsappConnected = null,Object? whatsappPhone = freezed,}) {
   return _then(_User(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -276,7 +280,9 @@ as String,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,gmailConnected: null == gmailConnected ? _self.gmailConnected : gmailConnected // ignore: cast_nullable_to_non_nullable
 as bool,outlookConnected: null == outlookConnected ? _self.outlookConnected : outlookConnected // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,whatsappConnected: null == whatsappConnected ? _self.whatsappConnected : whatsappConnected // ignore: cast_nullable_to_non_nullable
+as bool,whatsappPhone: freezed == whatsappPhone ? _self.whatsappPhone : whatsappPhone // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

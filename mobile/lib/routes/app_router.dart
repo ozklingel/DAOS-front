@@ -2,8 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
 import 'package:taskmail/features/auth/presentation/screens/login_screen.dart';
+import 'package:taskmail/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:taskmail/features/daily_brief/presentation/screens/daily_brief_screen.dart';
 import 'package:taskmail/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:taskmail/features/finance/presentation/screens/finance_screen.dart';
+import 'package:taskmail/features/info/presentation/screens/info_screen.dart';
+import 'package:taskmail/features/profile/presentation/screens/profile_screen.dart';
 import 'package:taskmail/features/settings/presentation/screens/settings_screen.dart';
 import 'package:taskmail/features/splash/presentation/screens/splash_screen.dart';
 import 'package:taskmail/features/tasks/presentation/screens/task_details_screen.dart';
@@ -76,15 +80,39 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
-            path: RouteNames.dailyBrief,
+            path: RouteNames.info,
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: DailyBriefScreen(),
+              child: InfoScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.finance,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: FinanceScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.calendar,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: CalendarScreen(),
             ),
           ),
           GoRoute(
             path: RouteNames.settings,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: SettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.profile,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ProfileScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.dailyBrief,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: DailyBriefScreen(),
             ),
           ),
         ],

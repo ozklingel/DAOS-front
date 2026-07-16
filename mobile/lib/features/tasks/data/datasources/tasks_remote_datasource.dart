@@ -12,6 +12,8 @@ class TasksRemoteDataSource {
     String? search,
     TaskStatus? status,
     TaskPriority? priority,
+    TaskCategory? category,
+    EnergyLevel? energyLevel,
     TaskSortField sortBy = TaskSortField.deadline,
     bool ascending = true,
     int page = 1,
@@ -26,6 +28,8 @@ class TasksRemoteDataSource {
     if (search != null && search.isNotEmpty) query['search'] = search;
     if (status != null) query['status'] = status.name;
     if (priority != null) query['priority'] = priority.name;
+    if (category != null) query['category'] = category.apiValue;
+    if (energyLevel != null) query['energyLevel'] = energyLevel.apiValue;
 
     final data = await _client.get<Map<String, dynamic>>(
       ApiConstants.tasks,

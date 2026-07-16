@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "812104653331",
+    "project_id": "daos-15254",
+    "storage_bucket": "daos-15254.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:812104653331:android:cb0eea039a45c2e5a0fde6",
+        "android_client_info": {
+          "package_name": "com.taskmail.taskmail"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB1Y60_izwu9Z_YXe1z6Mc5J6LoEmpUbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

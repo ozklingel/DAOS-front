@@ -34,7 +34,7 @@ class _TaskMailAppState extends ConsumerState<TaskMailApp> {
     return MaterialApp.router(
       title: 'TaskMail',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

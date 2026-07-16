@@ -45,6 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final credentials = await _oauth.signInWithGoogle();
     final response = await _remote.signInWithGoogle(
       idToken: credentials.idToken,
+      accessToken: credentials.accessToken,
       serverAuthCode: credentials.serverAuthCode,
     );
     await _persistTokens(response);
@@ -74,6 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final credentials = await _oauth.signInWithGoogle();
     final model = await _remote.connectGoogle(
       idToken: credentials.idToken,
+      accessToken: credentials.accessToken,
       serverAuthCode: credentials.serverAuthCode,
     );
     return model.toEntity();
@@ -98,6 +100,18 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<User> disconnectOutlook() async {
     final model = await _remote.disconnectOutlook();
+    return model.toEntity();
+  }
+
+  @override
+  Future<User> connectWhatsApp(String phone) async {
+    final model = await _remote.linkWhatsApp(phone);
+    return model.toEntity();
+  }
+
+  @override
+  Future<User> disconnectWhatsApp() async {
+    final model = await _remote.disconnectWhatsApp();
     return model.toEntity();
   }
 

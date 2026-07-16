@@ -35,6 +35,36 @@ class TaskPriority(str, Enum):
     none = "none"
 
 
+class TaskCategory(str, Enum):
+    work = "work"
+    errands = "errands"
+    health = "health"
+    general = "general"
+
+
+class EnergyLevel(str, Enum):
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
+class AssetType(str, Enum):
+    vehicle_test = "vehicle_test"
+    car_insurance = "car_insurance"
+    home_insurance = "home_insurance"
+    document = "document"
+
+
+class BudgetType(str, Enum):
+    home = "home"
+    business = "business"
+
+
+class TransactionType(str, Enum):
+    income = "income"
+    expense = "expense"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -45,7 +75,9 @@ class User(Base):
     gmail_connected: Mapped[bool] = mapped_column(Boolean, default=False)
     outlook_connected: Mapped[bool] = mapped_column(Boolean, default=False)
     google_refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    google_access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     outlook_refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    whatsapp_phone: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -56,6 +88,13 @@ class User(Base):
     settings: Mapped["UserSettings | None"] = relationship(back_populates="user", cascade="all, delete-orphan", uselist=False)
     device_tokens: Mapped[list["DeviceToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     daily_briefs: Mapped[list["DailyBrief"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    budget_plans: Mapped[list["BudgetPlan"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    finance_transactions: Mapped[list["FinanceTransaction"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    asset_reminders: Mapped[list["AssetReminder"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class RefreshToken(Base):
@@ -81,11 +120,14 @@ class Task(Base):
     status: Mapped[str] = mapped_column(String(20), default=TaskStatus.open.value, index=True)
     priority: Mapped[str] = mapped_column(String(20), default=TaskPriority.none.value, index=True)
     priority_score: Mapped[float] = mapped_column(Float, default=0.0)
+    category: Mapped[str] = mapped_column(String(20), default=TaskCategory.general.value, index=True)
+    energy_level: Mapped[str] = mapped_column(String(20), default=EnergyLevel.medium.value, index=True)
     sender_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     sender_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     email_subject: Mapped[str | None] = mapped_column(String(500), nullable=True)
     email_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     email_message_id: Mapped[str | None] = mapped_column(String(512), nullable=True, index=True)
+    whatsapp_message_id: Mapped[str | None] = mapped_column(String(512), nullable=True, index=True)
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     snoozed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -138,3 +180,57 @@ class DailyBrief(Base):
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped[User] = relationship(back_populates="daily_briefs")
+
+
+class BudgetPlan(Base):
+    __tablename__ = "budget_plans"
+    __table_args__ = (UniqueConstraint("user_id", "budget_type", "month", name="uq_user_budget_month"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    budget_type: Mapped[str] = mapped_column(String(20), index=True)
+    month: Mapped[str] = mapped_column(String(7), index=True)
+    expense_budget: Mapped[float] = mapped_column(Float, default=0.0)
+    savings_target: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="budget_plans")
+
+
+class FinanceTransaction(Base):
+    __tablename__ = "finance_transactions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    budget_type: Mapped[str] = mapped_column(String(20), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    amount: Mapped[float] = mapped_column(Float)
+    tx_type: Mapped[str] = mapped_column(String(20), index=True)
+    category: Mapped[str] = mapped_column(String(50), default="general")
+    icon: Mapped[str] = mapped_column(String(30), default="payment")
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship(back_populates="finance_transactions")
+
+
+class AssetReminder(Base):
+    __tablename__ = "asset_reminders"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    asset_type: Mapped[str] = mapped_column(String(30), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    document_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    expiry_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    icon: Mapped[str] = mapped_column(String(30), default="document")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="asset_reminders")

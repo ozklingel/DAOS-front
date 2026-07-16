@@ -8,13 +8,15 @@ class AuthRemoteDataSource {
   final ApiClient _client;
 
   Future<AuthResponseModel> signInWithGoogle({
-    required String idToken,
+    String? idToken,
+    String? accessToken,
     String? serverAuthCode,
   }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.authGoogle,
       data: {
-        'idToken': idToken,
+        if (idToken != null) 'idToken': idToken,
+        if (accessToken != null) 'accessToken': accessToken,
         if (serverAuthCode != null) 'serverAuthCode': serverAuthCode,
       },
       parser: (d) => d as Map<String, dynamic>,
@@ -38,13 +40,15 @@ class AuthRemoteDataSource {
   }
 
   Future<UserModel> connectGoogle({
-    required String idToken,
+    String? idToken,
+    String? accessToken,
     String? serverAuthCode,
   }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.authGoogleConnect,
       data: {
-        'idToken': idToken,
+        if (idToken != null) 'idToken': idToken,
+        if (accessToken != null) 'accessToken': accessToken,
         if (serverAuthCode != null) 'serverAuthCode': serverAuthCode,
       },
       parser: (d) => d as Map<String, dynamic>,
@@ -78,6 +82,23 @@ class AuthRemoteDataSource {
   Future<UserModel> disconnectOutlook() async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.authOutlookDisconnect,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return UserModel.fromJson(data);
+  }
+
+  Future<UserModel> linkWhatsApp(String phone) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authWhatsAppLink,
+      data: {'phone': phone},
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return UserModel.fromJson(data);
+  }
+
+  Future<UserModel> disconnectWhatsApp() async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authWhatsAppDisconnect,
       parser: (d) => d as Map<String, dynamic>,
     );
     return UserModel.fromJson(data);

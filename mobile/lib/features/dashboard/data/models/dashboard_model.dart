@@ -11,17 +11,23 @@ abstract class DashboardModel with _$DashboardModel {
   const factory DashboardModel({
     required DashboardStatsModel stats,
     required String briefSummary,
+    required EnergyMeterModel energyMeter,
     @Default([]) List<TaskModel> recentHighPriorityTasks,
   }) = _DashboardModel;
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
     final tasksJson =
         json['recent_high_priority_tasks'] ?? json['recentHighPriorityTasks'];
+    final energyJson =
+        json['energy_meter'] ?? json['energyMeter'] ?? const <String, dynamic>{};
     return DashboardModel(
       stats: DashboardStatsModel.fromJson(
         json['stats'] as Map<String, dynamic>,
       ),
       briefSummary: (json['brief_summary'] ?? json['briefSummary']) as String,
+      energyMeter: EnergyMeterModel.fromJson(
+        energyJson is Map<String, dynamic> ? energyJson : const {},
+      ),
       recentHighPriorityTasks: tasksJson is List
           ? tasksJson
               .map((e) => TaskModel.fromJson(e as Map<String, dynamic>))
@@ -33,6 +39,7 @@ abstract class DashboardModel with _$DashboardModel {
   DashboardData toEntity() => DashboardData(
         stats: stats.toEntity(),
         briefSummary: briefSummary,
+        energyMeter: energyMeter.toEntity(),
         recentHighPriorityTasks:
             recentHighPriorityTasks.map((t) => t.toEntity()).toList(),
       );
@@ -70,5 +77,51 @@ abstract class DashboardStatsModel with _$DashboardStatsModel {
         openCount: openCount,
         overdueCount: overdueCount,
         completedThisWeek: completedThisWeek,
+      );
+}
+
+@freezed
+abstract class EnergyMeterModel with _$EnergyMeterModel {
+  const EnergyMeterModel._();
+
+  const factory EnergyMeterModel({
+    @Default(100) int budget,
+    @Default(0) int used,
+    @Default(100) int remaining,
+    @Default(0) int highCount,
+    @Default(0) int mediumCount,
+    @Default(0) int lowCount,
+    @Default(0) int workCount,
+    @Default(0) int errandsCount,
+    @Default(0) int healthCount,
+  }) = _EnergyMeterModel;
+
+  factory EnergyMeterModel.fromJson(Map<String, dynamic> json) {
+    return EnergyMeterModel(
+      budget: json['budget'] as int? ?? 100,
+      used: json['used'] as int? ?? 0,
+      remaining: json['remaining'] as int? ?? 100,
+      highCount: json['high_count'] as int? ?? json['highCount'] as int? ?? 0,
+      mediumCount:
+          json['medium_count'] as int? ?? json['mediumCount'] as int? ?? 0,
+      lowCount: json['low_count'] as int? ?? json['lowCount'] as int? ?? 0,
+      workCount: json['work_count'] as int? ?? json['workCount'] as int? ?? 0,
+      errandsCount:
+          json['errands_count'] as int? ?? json['errandsCount'] as int? ?? 0,
+      healthCount:
+          json['health_count'] as int? ?? json['healthCount'] as int? ?? 0,
+    );
+  }
+
+  EnergyMeter toEntity() => EnergyMeter(
+        budget: budget,
+        used: used,
+        remaining: remaining,
+        highCount: highCount,
+        mediumCount: mediumCount,
+        lowCount: lowCount,
+        workCount: workCount,
+        errandsCount: errandsCount,
+        healthCount: healthCount,
       );
 }

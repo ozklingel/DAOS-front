@@ -6,9 +6,11 @@ abstract class TasksRepository {
     String? search,
     TaskStatus? status,
     TaskPriority? priority,
-    TaskSortField sortBy,
-    bool ascending,
-    int page,
+    TaskCategory? category,
+    EnergyLevel? energyLevel,
+    TaskSortField sortBy = TaskSortField.deadline,
+    bool ascending = true,
+    int page = 1,
   });
 
   Future<Task> getTaskById(String id);

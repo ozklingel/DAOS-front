@@ -22,6 +22,7 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
     return DashboardOut(
         stats=data["stats"],
         brief_summary=data["brief_summary"],
+        energy_meter=data["energy_meter"],
         recent_high_priority_tasks=[TaskOut.model_validate(t) for t in data["recent_high_priority_tasks"]],
     )
 
@@ -31,7 +32,8 @@ def get_daily_brief(user: User = Depends(get_current_user), db: Session = Depend
     brief = brief_service.get_latest(db, user.id)
     if not brief:
         tasks = db.query(Task).filter(Task.user_id == user.id).all()
-        brief = ai_service.generate_daily_brief(db, user, tasks)
+        user_settings = settings_service.get_or_create(db, user.id)
+        brief = ai_service.generate_daily_brief(db, user, tasks, user_settings.language)
     payload = brief_service.brief_to_response(db, brief)
     return DailyBriefOut(
         id=payload["id"],

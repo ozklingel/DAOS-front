@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Task {
 
- String get id; String get title; TaskStatus get status; TaskPriority get priority; double get priorityScore; String? get description; String? get senderName; String? get senderEmail; String? get emailSubject; String? get emailSnippet; DateTime? get deadline; DateTime? get snoozedUntil; DateTime? get completedAt; DateTime get createdAt; DateTime get updatedAt;
+ String get id; String get title; TaskStatus get status; TaskPriority get priority; double get priorityScore; TaskCategory get category; EnergyLevel get energyLevel; String? get description; String? get senderName; String? get senderEmail; String? get emailSubject; String? get emailSnippet; DateTime? get deadline; DateTime? get snoozedUntil; DateTime? get completedAt; DateTime get createdAt; DateTime get updatedAt;
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TaskCopyWith<Task> get copyWith => _$TaskCopyWithImpl<Task>(this as Task, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.description, description) || other.description == description)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderEmail, senderEmail) || other.senderEmail == senderEmail)&&(identical(other.emailSubject, emailSubject) || other.emailSubject == emailSubject)&&(identical(other.emailSnippet, emailSnippet) || other.emailSnippet == emailSnippet)&&(identical(other.deadline, deadline) || other.deadline == deadline)&&(identical(other.snoozedUntil, snoozedUntil) || other.snoozedUntil == snoozedUntil)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Task&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.category, category) || other.category == category)&&(identical(other.energyLevel, energyLevel) || other.energyLevel == energyLevel)&&(identical(other.description, description) || other.description == description)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderEmail, senderEmail) || other.senderEmail == senderEmail)&&(identical(other.emailSubject, emailSubject) || other.emailSubject == emailSubject)&&(identical(other.emailSnippet, emailSnippet) || other.emailSnippet == emailSnippet)&&(identical(other.deadline, deadline) || other.deadline == deadline)&&(identical(other.snoozedUntil, snoozedUntil) || other.snoozedUntil == snoozedUntil)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,status,priority,priorityScore,description,senderName,senderEmail,emailSubject,emailSnippet,deadline,snoozedUntil,completedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,status,priority,priorityScore,category,energyLevel,description,senderName,senderEmail,emailSubject,emailSnippet,deadline,snoozedUntil,completedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Task(id: $id, title: $title, status: $status, priority: $priority, priorityScore: $priorityScore, description: $description, senderName: $senderName, senderEmail: $senderEmail, emailSubject: $emailSubject, emailSnippet: $emailSnippet, deadline: $deadline, snoozedUntil: $snoozedUntil, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Task(id: $id, title: $title, status: $status, priority: $priority, priorityScore: $priorityScore, category: $category, energyLevel: $energyLevel, description: $description, senderName: $senderName, senderEmail: $senderEmail, emailSubject: $emailSubject, emailSnippet: $emailSnippet, deadline: $deadline, snoozedUntil: $snoozedUntil, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TaskCopyWith<$Res>  {
   factory $TaskCopyWith(Task value, $Res Function(Task) _then) = _$TaskCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, TaskStatus status, TaskPriority priority, double priorityScore, String? description, String? senderName, String? senderEmail, String? emailSubject, String? emailSnippet, DateTime? deadline, DateTime? snoozedUntil, DateTime? completedAt, DateTime createdAt, DateTime updatedAt
+ String id, String title, TaskStatus status, TaskPriority priority, double priorityScore, TaskCategory category, EnergyLevel energyLevel, String? description, String? senderName, String? senderEmail, String? emailSubject, String? emailSnippet, DateTime? deadline, DateTime? snoozedUntil, DateTime? completedAt, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -62,14 +62,16 @@ class _$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? status = null,Object? priority = null,Object? priorityScore = null,Object? description = freezed,Object? senderName = freezed,Object? senderEmail = freezed,Object? emailSubject = freezed,Object? emailSnippet = freezed,Object? deadline = freezed,Object? snoozedUntil = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? status = null,Object? priority = null,Object? priorityScore = null,Object? category = null,Object? energyLevel = null,Object? description = freezed,Object? senderName = freezed,Object? senderEmail = freezed,Object? emailSubject = freezed,Object? emailSnippet = freezed,Object? deadline = freezed,Object? snoozedUntil = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TaskStatus,priority: null == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as TaskPriority,priorityScore: null == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
-as double,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as double,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as TaskCategory,energyLevel: null == energyLevel ? _self.energyLevel : energyLevel // ignore: cast_nullable_to_non_nullable
+as EnergyLevel,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,senderName: freezed == senderName ? _self.senderName : senderName // ignore: cast_nullable_to_non_nullable
 as String?,senderEmail: freezed == senderEmail ? _self.senderEmail : senderEmail // ignore: cast_nullable_to_non_nullable
 as String?,emailSubject: freezed == emailSubject ? _self.emailSubject : emailSubject // ignore: cast_nullable_to_non_nullable
@@ -164,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  TaskCategory category,  EnergyLevel energyLevel,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Task() when $default != null:
-return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.category,_that.energyLevel,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -185,10 +187,10 @@ return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityS
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  TaskCategory category,  EnergyLevel energyLevel,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Task():
-return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.category,_that.energyLevel,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +207,10 @@ return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityS
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  TaskStatus status,  TaskPriority priority,  double priorityScore,  TaskCategory category,  EnergyLevel energyLevel,  String? description,  String? senderName,  String? senderEmail,  String? emailSubject,  String? emailSnippet,  DateTime? deadline,  DateTime? snoozedUntil,  DateTime? completedAt,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Task() when $default != null:
-return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityScore,_that.category,_that.energyLevel,_that.description,_that.senderName,_that.senderEmail,_that.emailSubject,_that.emailSnippet,_that.deadline,_that.snoozedUntil,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -220,7 +222,7 @@ return $default(_that.id,_that.title,_that.status,_that.priority,_that.priorityS
 
 
 class _Task implements Task {
-  const _Task({required this.id, required this.title, required this.status, required this.priority, required this.priorityScore, this.description, this.senderName, this.senderEmail, this.emailSubject, this.emailSnippet, this.deadline, this.snoozedUntil, this.completedAt, required this.createdAt, required this.updatedAt});
+  const _Task({required this.id, required this.title, required this.status, required this.priority, required this.priorityScore, this.category = TaskCategory.general, this.energyLevel = EnergyLevel.medium, this.description, this.senderName, this.senderEmail, this.emailSubject, this.emailSnippet, this.deadline, this.snoozedUntil, this.completedAt, required this.createdAt, required this.updatedAt});
   
 
 @override final  String id;
@@ -228,6 +230,8 @@ class _Task implements Task {
 @override final  TaskStatus status;
 @override final  TaskPriority priority;
 @override final  double priorityScore;
+@override@JsonKey() final  TaskCategory category;
+@override@JsonKey() final  EnergyLevel energyLevel;
 @override final  String? description;
 @override final  String? senderName;
 @override final  String? senderEmail;
@@ -249,16 +253,16 @@ _$TaskCopyWith<_Task> get copyWith => __$TaskCopyWithImpl<_Task>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.description, description) || other.description == description)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderEmail, senderEmail) || other.senderEmail == senderEmail)&&(identical(other.emailSubject, emailSubject) || other.emailSubject == emailSubject)&&(identical(other.emailSnippet, emailSnippet) || other.emailSnippet == emailSnippet)&&(identical(other.deadline, deadline) || other.deadline == deadline)&&(identical(other.snoozedUntil, snoozedUntil) || other.snoozedUntil == snoozedUntil)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Task&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.status, status) || other.status == status)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.category, category) || other.category == category)&&(identical(other.energyLevel, energyLevel) || other.energyLevel == energyLevel)&&(identical(other.description, description) || other.description == description)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderEmail, senderEmail) || other.senderEmail == senderEmail)&&(identical(other.emailSubject, emailSubject) || other.emailSubject == emailSubject)&&(identical(other.emailSnippet, emailSnippet) || other.emailSnippet == emailSnippet)&&(identical(other.deadline, deadline) || other.deadline == deadline)&&(identical(other.snoozedUntil, snoozedUntil) || other.snoozedUntil == snoozedUntil)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,status,priority,priorityScore,description,senderName,senderEmail,emailSubject,emailSnippet,deadline,snoozedUntil,completedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,status,priority,priorityScore,category,energyLevel,description,senderName,senderEmail,emailSubject,emailSnippet,deadline,snoozedUntil,completedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Task(id: $id, title: $title, status: $status, priority: $priority, priorityScore: $priorityScore, description: $description, senderName: $senderName, senderEmail: $senderEmail, emailSubject: $emailSubject, emailSnippet: $emailSnippet, deadline: $deadline, snoozedUntil: $snoozedUntil, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Task(id: $id, title: $title, status: $status, priority: $priority, priorityScore: $priorityScore, category: $category, energyLevel: $energyLevel, description: $description, senderName: $senderName, senderEmail: $senderEmail, emailSubject: $emailSubject, emailSnippet: $emailSnippet, deadline: $deadline, snoozedUntil: $snoozedUntil, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -269,7 +273,7 @@ abstract mixin class _$TaskCopyWith<$Res> implements $TaskCopyWith<$Res> {
   factory _$TaskCopyWith(_Task value, $Res Function(_Task) _then) = __$TaskCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, TaskStatus status, TaskPriority priority, double priorityScore, String? description, String? senderName, String? senderEmail, String? emailSubject, String? emailSnippet, DateTime? deadline, DateTime? snoozedUntil, DateTime? completedAt, DateTime createdAt, DateTime updatedAt
+ String id, String title, TaskStatus status, TaskPriority priority, double priorityScore, TaskCategory category, EnergyLevel energyLevel, String? description, String? senderName, String? senderEmail, String? emailSubject, String? emailSnippet, DateTime? deadline, DateTime? snoozedUntil, DateTime? completedAt, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -286,14 +290,16 @@ class __$TaskCopyWithImpl<$Res>
 
 /// Create a copy of Task
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? status = null,Object? priority = null,Object? priorityScore = null,Object? description = freezed,Object? senderName = freezed,Object? senderEmail = freezed,Object? emailSubject = freezed,Object? emailSnippet = freezed,Object? deadline = freezed,Object? snoozedUntil = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? status = null,Object? priority = null,Object? priorityScore = null,Object? category = null,Object? energyLevel = null,Object? description = freezed,Object? senderName = freezed,Object? senderEmail = freezed,Object? emailSubject = freezed,Object? emailSnippet = freezed,Object? deadline = freezed,Object? snoozedUntil = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_Task(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TaskStatus,priority: null == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as TaskPriority,priorityScore: null == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
-as double,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as double,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as TaskCategory,energyLevel: null == energyLevel ? _self.energyLevel : energyLevel // ignore: cast_nullable_to_non_nullable
+as EnergyLevel,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,senderName: freezed == senderName ? _self.senderName : senderName // ignore: cast_nullable_to_non_nullable
 as String?,senderEmail: freezed == senderEmail ? _self.senderEmail : senderEmail // ignore: cast_nullable_to_non_nullable
 as String?,emailSubject: freezed == emailSubject ? _self.emailSubject : emailSubject // ignore: cast_nullable_to_non_nullable

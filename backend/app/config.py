@@ -33,6 +33,11 @@ class Settings(BaseSettings):
 
     email_sync_interval_minutes: int = 15
 
+    whatsapp_verify_token: str = ""
+    whatsapp_access_token: str = ""
+    whatsapp_phone_number_id: str = ""
+    whatsapp_app_secret: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         if self.cors_origins == "*":

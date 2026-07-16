@@ -36,7 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on AppException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(AppLocalizations.of(context).errorMessage(e))),
         );
       }
     } finally {
@@ -46,6 +46,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _isOutlookLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _devLogin() async {
+    setState(() => _isDevLoading = true);
+    try {
+      await ref.read(authStateProvider.notifier).signInDev();
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).errorMessage(e)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDevLoading = false);
     }
   }
 
@@ -106,31 +123,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
               ),
               const Spacer(flex: 2),
+              if (kIsWeb && kDebugMode) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: auth.isLoading || _isDevLoading ? null : _devLogin,
+                    icon: _isDevLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.developer_mode),
+                    label: Text(l.devLogin),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               _OAuthButton(
                 label: l.continueWithGoogle,
                 icon: Icons.g_mobiledata,
                 isLoading: _isGoogleLoading,
-                onPressed: auth.isLoading || _isOutlookLoading
+                onPressed: auth.isLoading || _isOutlookLoading || _isDevLoading
                     ? null
                     : () => _signIn(
                           ref.read(authStateProvider.notifier).signInWithGoogle,
                           'google',
                         ),
               ),
-              const SizedBox(height: 12),
-              _OAuthButton(
-                label: l.continueWithOutlook,
-                icon: Icons.mail_outline,
-                isLoading: _isOutlookLoading,
-                onPressed: auth.isLoading || _isGoogleLoading || _isDevLoading
-                    ? null
-                    : () => _signIn(
-                          ref.read(authStateProvider.notifier).signInWithOutlook,
-                          'outlook',
-                        ),
-              ),
+              if (!kIsWeb) ...[
+                const SizedBox(height: 12),
+                _OAuthButton(
+                  label: l.continueWithOutlook,
+                  icon: Icons.mail_outline,
+                  isLoading: _isOutlookLoading,
+                  onPressed: auth.isLoading || _isGoogleLoading || _isDevLoading
+                      ? null
+                      : () => _signIn(
+                            ref.read(authStateProvider.notifier).signInWithOutlook,
+                            'outlook',
+                          ),
+                ),
+              ],
               if (kDebugMode) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Text(
                   'API: ${ApiConstants.baseUrl}',
                   textAlign: TextAlign.center,
@@ -139,28 +175,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontSize: 11,
                       ),
                 ),
-                const SizedBox(height: 12),
-                _OAuthButton(
-                  label: l.devLogin,
-                  icon: Icons.developer_mode,
-                  isLoading: _isDevLoading,
-                  onPressed: auth.isLoading || _isGoogleLoading || _isOutlookLoading
-                      ? null
-                      : () async {
-                          setState(() => _isDevLoading = true);
-                          try {
-                            await ref.read(authStateProvider.notifier).signInDev();
-                          } on AppException catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.message)),
-                              );
-                            }
-                          } finally {
-                            if (mounted) setState(() => _isDevLoading = false);
-                          }
-                        },
-                ),
+                if (!kIsWeb) ...[
+                  const SizedBox(height: 12),
+                  _OAuthButton(
+                    label: l.devLogin,
+                    icon: Icons.developer_mode,
+                    isLoading: _isDevLoading,
+                    onPressed: auth.isLoading || _isGoogleLoading || _isOutlookLoading
+                        ? null
+                        : _devLogin,
+                  ),
+                ],
               ],
               const SizedBox(height: 32),
               Text(

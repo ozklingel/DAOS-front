@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 def to_camel(string: str) -> str:
@@ -20,6 +20,26 @@ class UserOut(APIModel):
     avatar_url: str | None = None
     gmail_connected: bool = False
     outlook_connected: bool = False
+    whatsapp_phone: str | None = None
+
+    @computed_field
+    @property
+    def whatsapp_connected(self) -> bool:
+        return bool(self.whatsapp_phone)
+
+
+class WhatsAppLinkIn(APIModel):
+    phone: str
+
+
+class WhatsAppSimulateIn(APIModel):
+    transcript: str
+
+
+class WhatsAppSimulateOut(APIModel):
+    created: bool
+    task_id: str | None = None
+    message: str
 
 
 class AuthTokensOut(APIModel):
@@ -30,6 +50,7 @@ class AuthTokensOut(APIModel):
 
 class GoogleAuthIn(APIModel):
     id_token: str | None = Field(default=None, alias="idToken")
+    access_token: str | None = Field(default=None, alias="accessToken")
     server_auth_code: str | None = Field(default=None, alias="serverAuthCode")
 
     @model_validator(mode="before")
@@ -38,9 +59,17 @@ class GoogleAuthIn(APIModel):
         if isinstance(data, dict):
             if "id_token" not in data and "idToken" in data:
                 data["id_token"] = data["idToken"]
+            if "access_token" not in data and "accessToken" in data:
+                data["access_token"] = data["accessToken"]
             if "server_auth_code" not in data and "serverAuthCode" in data:
                 data["server_auth_code"] = data["serverAuthCode"]
         return data
+
+    @model_validator(mode="after")
+    def require_google_token(self) -> "GoogleAuthIn":
+        if not self.id_token and not self.access_token:
+            raise ValueError("idToken or accessToken is required")
+        return self
 
 
 class OutlookAuthIn(APIModel):
@@ -68,6 +97,8 @@ class TaskOut(APIModel):
     status: str
     priority: str
     priority_score: float
+    category: str = "general"
+    energy_level: str = "medium"
     description: str | None = None
     sender_name: str | None = None
     sender_email: str | None = None
@@ -106,9 +137,22 @@ class DashboardStatsOut(APIModel):
     completed_this_week: int = 0
 
 
+class EnergyMeterOut(APIModel):
+    budget: int = 100
+    used: int = 0
+    remaining: int = 100
+    high_count: int = 0
+    medium_count: int = 0
+    low_count: int = 0
+    work_count: int = 0
+    errands_count: int = 0
+    health_count: int = 0
+
+
 class DashboardOut(APIModel):
     stats: DashboardStatsOut
     brief_summary: str
+    energy_meter: EnergyMeterOut
     recent_high_priority_tasks: list[TaskOut] = Field(default_factory=list)
 
 
@@ -123,6 +167,28 @@ class DailyBriefOut(APIModel):
 
 class EmailSyncOut(APIModel):
     created: int = 0
+    scanned: int = 0
+    skipped_non_hebrew: int = 0
+
+
+class EmailAiStatusOut(APIModel):
+    ai_enabled: bool
+    model: str
+    hebrew_only: bool = True
+    fallback: str = "hebrew_heuristics"
+
+
+class EmailAnalyzePreviewIn(APIModel):
+    subject: str
+    sender: str = "test@example.com"
+    snippet: str = ""
+
+
+class EmailAnalyzePreviewOut(APIModel):
+    ai_enabled: bool
+    is_hebrew: bool
+    source: str
+    analysis: dict | None = None
 
 
 class SettingsOut(APIModel):
@@ -172,3 +238,118 @@ class DeviceRegisterIn(APIModel):
 class ErrorOut(APIModel):
     message: str
     error: str | None = None
+
+
+class ProfileOut(APIModel):
+    id: str
+    full_name: str
+    email: str
+    date_of_birth: str
+    username: str
+    two_factor_enabled: bool
+    subscription_plan: str
+    subscription_expires: str
+    avatar_url: str | None = None
+
+
+class CalendarDayOut(APIModel):
+    date: str
+    day_number: int
+    is_today: bool
+    is_selected: bool
+    label: str
+
+
+class CalendarEventOut(APIModel):
+    id: str
+    title: str
+    subtitle: str = ""
+    category: str
+    start_time: str
+    end_time: str
+    icon: str
+    source: str = "demo"
+
+
+class CalendarOut(APIModel):
+    selected_date: str
+    month_label: str
+    days: list[CalendarDayOut]
+    events: list[CalendarEventOut]
+
+
+class FinanceTransactionOut(APIModel):
+    id: str
+    title: str
+    time: str
+    amount: float
+    icon: str
+    budget_type: str = "home"
+    category: str = "general"
+    tx_type: str = "expense"
+
+
+class BudgetSummaryOut(APIModel):
+    budget_type: str
+    income: float
+    expenses: float
+    balance: float
+    expense_budget: float
+    budget_remaining: float
+    savings_target: float
+    savings_saved: float
+    savings_progress: float
+
+
+class FinanceOut(APIModel):
+    currency: str = "ILS"
+    month: str
+    month_label: str
+    selected_type: str = "home"
+    total_balance: float
+    income: float
+    expenses: float
+    home: BudgetSummaryOut
+    business: BudgetSummaryOut
+    summary: BudgetSummaryOut
+    transactions: list[FinanceTransactionOut]
+
+
+class FinanceTransactionIn(APIModel):
+    budget_type: str
+    title: str
+    amount: float
+    tx_type: str
+    category: str = "general"
+    icon: str = "payment"
+
+
+class InfoCategoryOut(APIModel):
+    id: str
+    title: str
+    icon: str
+    items: list[str]
+
+
+class AssetReminderOut(APIModel):
+    id: str
+    asset_type: str
+    title: str
+    document_label: str | None = None
+    expiry_date: str
+    days_until: int
+    status: str
+    icon: str = "document"
+    notes: str | None = None
+
+
+class AssetReminderUpdateIn(APIModel):
+    title: str | None = None
+    expiry_date: str | None = None
+    notes: str | None = None
+
+
+class InfoHubOut(APIModel):
+    categories: list[InfoCategoryOut]
+    reminders: list[AssetReminderOut] = Field(default_factory=list)
+    alerts_count: int = 0

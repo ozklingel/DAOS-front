@@ -13,6 +13,7 @@ class DailyBriefScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final briefAsync = ref.watch(dailyBriefProvider);
 
     return Scaffold(
@@ -20,7 +21,7 @@ class DailyBriefScreen extends ConsumerWidget {
       body: briefAsync.when(
         loading: () => const ShimmerLoading(itemCount: 2),
         error: (e, _) => ErrorView(
-          message: e.toString(),
+          error: e,
           onRetry: () => ref.read(dailyBriefProvider.notifier).refresh(),
         ),
         data: (brief) => RefreshIndicator(
@@ -60,14 +61,18 @@ class DailyBriefScreen extends ConsumerWidget {
                         ),
                         const Spacer(),
                         Text(
-                          DateFormatter.formatRelative(brief.generatedAt, l),
+                          DateFormatter.formatRelative(
+                            brief.generatedAt,
+                            l,
+                            locale: locale,
+                          ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      brief.summary,
+                      l.localizedBriefSummary(brief.summary),
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.4,

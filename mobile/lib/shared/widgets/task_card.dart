@@ -6,6 +6,7 @@ import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/widgets/priority_badge.dart';
 import 'package:taskmail/shared/widgets/status_badge.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:taskmail/shared/widgets/task_meta_chips.dart';
 import 'package:taskmail/theme/app_colors.dart';
 
 class TaskCard extends StatelessWidget {
@@ -61,9 +62,19 @@ class TaskCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Row(
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   StatusBadge(status: task.status),
+                  CategoryChip(category: task.category),
+                  EnergyChip(level: task.energyLevel),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
                   const Spacer(),
                   if (task.senderName != null || task.senderEmail != null) ...[
                     Icon(Icons.mail_outline, size: 14, color: AppColors.textTertiary),

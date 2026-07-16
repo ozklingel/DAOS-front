@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/network/api_client_provider.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
+import 'package:taskmail/firebase/firebase_bootstrap.dart';
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(ref);
@@ -15,7 +14,7 @@ class NotificationService {
   NotificationService(this._ref);
 
   final Ref _ref;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -27,11 +26,10 @@ class NotificationService {
   );
 
   Future<void> initialize() async {
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (kIsWeb) {
+      debugPrint('Skipping notifications on web');
+      return;
+    }
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
@@ -45,25 +43,44 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       await _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
     }
 
-    FirebaseMessaging.onMessage.listen(_showForegroundNotification);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+    if (!isFirebaseReady) {
+      debugPrint('Skipping FCM setup — Firebase not configured');
+      return;
+    }
 
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleMessageOpened(initialMessage);
+    _messaging = FirebaseMessaging.instance;
+
+    try {
+      await _messaging!.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      FirebaseMessaging.onMessage.listen(_showForegroundNotification);
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+
+      final initialMessage = await _messaging!.getInitialMessage();
+      if (initialMessage != null) {
+        _handleMessageOpened(initialMessage);
+      }
+    } catch (e) {
+      debugPrint('FCM initialization failed: $e');
     }
   }
 
   Future<void> registerDeviceToken() async {
+    if (!isFirebaseReady || _messaging == null) return;
+
     try {
-      final token = await _messaging.getToken();
+      final token = await _messaging!.getToken();
       if (token == null) return;
 
       final client = _ref.read(apiClientProvider);
@@ -71,7 +88,7 @@ class NotificationService {
         ApiConstants.registerDevice,
         data: {
           'fcmToken': token,
-          'platform': Platform.isIOS ? 'ios' : 'android',
+          'platform': defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
         },
       );
     } catch (e) {

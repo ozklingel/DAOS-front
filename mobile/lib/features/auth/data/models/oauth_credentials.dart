@@ -1,10 +1,19 @@
 class GoogleSignInCredentials {
-  const GoogleSignInCredentials({
-    required this.idToken,
+  GoogleSignInCredentials({
+    this.idToken,
+    this.accessToken,
     this.serverAuthCode,
-  });
+  }) {
+    final hasIdToken = idToken != null && idToken!.isNotEmpty;
+    final hasAccessToken = accessToken != null && accessToken!.isNotEmpty;
+    assert(
+      hasIdToken || hasAccessToken,
+      'GoogleSignInCredentials requires idToken or accessToken',
+    );
+  }
 
-  final String idToken;
+  final String? idToken;
+  final String? accessToken;
   final String? serverAuthCode;
 }
 

@@ -14,6 +14,8 @@ abstract class TaskModel with _$TaskModel {
     required String status,
     required String priority,
     required double priorityScore,
+    @Default('general') String category,
+    @Default('medium') String energyLevel,
     String? description,
     String? senderName,
     String? senderEmail,
@@ -34,6 +36,9 @@ abstract class TaskModel with _$TaskModel {
       priority: json['priority'] as String,
       priorityScore: (json['priority_score'] ?? json['priorityScore'] as num)
           .toDouble(),
+      category: json['category'] as String? ?? 'general',
+      energyLevel:
+          json['energy_level'] as String? ?? json['energyLevel'] as String? ?? 'medium',
       description: json['description'] as String?,
       senderName:
           json['sender_name'] as String? ?? json['senderName'] as String?,
@@ -71,6 +76,8 @@ abstract class TaskModel with _$TaskModel {
         status: _parseStatus(status),
         priority: _parsePriority(priority),
         priorityScore: priorityScore,
+        category: _parseCategory(category),
+        energyLevel: _parseEnergyLevel(energyLevel),
         description: description,
         senderName: senderName,
         senderEmail: senderEmail,
@@ -94,6 +101,20 @@ abstract class TaskModel with _$TaskModel {
     return TaskPriority.values.firstWhere(
       (e) => e.name == value,
       orElse: () => TaskPriority.none,
+    );
+  }
+
+  static TaskCategory _parseCategory(String value) {
+    return TaskCategory.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => TaskCategory.general,
+    );
+  }
+
+  static EnergyLevel _parseEnergyLevel(String value) {
+    return EnergyLevel.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => EnergyLevel.medium,
     );
   }
 }

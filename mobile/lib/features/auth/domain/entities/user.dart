@@ -11,5 +11,7 @@ abstract class User with _$User {
     String? avatarUrl,
     @Default(false) bool gmailConnected,
     @Default(false) bool outlookConnected,
+    @Default(false) bool whatsappConnected,
+    String? whatsappPhone,
   }) = _User;
 }
