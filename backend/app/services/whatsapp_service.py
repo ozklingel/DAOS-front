@@ -14,12 +14,17 @@ from app.services.task_ingest_service import create_task_from_analysis
 
 logger = logging.getLogger(__name__)
 
-GRAPH_API = "https://graph.facebook.com/v21.0"
-
 
 class WhatsAppService:
     def __init__(self) -> None:
         self.ai = AIService()
+
+    @property
+    def graph_api_base(self) -> str:
+        version = settings.whatsapp_graph_api_version.strip() or "v25.0"
+        if not version.startswith("v"):
+            version = f"v{version}"
+        return f"https://graph.facebook.com/{version}"
 
     @property
     def enabled(self) -> bool:
@@ -163,7 +168,7 @@ class WhatsAppService:
         headers = {"Authorization": f"Bearer {settings.whatsapp_access_token}"}
         try:
             async with httpx.AsyncClient(timeout=30) as client:
-                meta = await client.get(f"{GRAPH_API}/{media_id}", headers=headers)
+                meta = await client.get(f"{self.graph_api_base}/{media_id}", headers=headers)
                 meta.raise_for_status()
                 url = meta.json().get("url")
                 if not url:
@@ -180,7 +185,7 @@ class WhatsAppService:
             logger.info("WhatsApp reply (not sent — not configured) to %s: %s", to_phone, body[:120])
             return
 
-        url = f"{GRAPH_API}/{settings.whatsapp_phone_number_id}/messages"
+        url = f"{self.graph_api_base}/{settings.whatsapp_phone_number_id}/messages"
         headers = {
             "Authorization": f"Bearer {settings.whatsapp_access_token}",
             "Content-Type": "application/json",
@@ -195,5 +200,14 @@ class WhatsAppService:
             async with httpx.AsyncClient(timeout=15) as client:
                 response = await client.post(url, headers=headers, json=payload)
                 response.raise_for_status()
+                logger.info("WhatsApp text sent to %s", self.normalize_phone(to_phone))
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text[:500] if exc.response is not None else str(exc)
+            logger.warning(
+                "WhatsApp send failed to %s (%s): %s",
+                to_phone,
+                exc.response.status_code if exc.response is not None else "?",
+                detail,
+            )
         except Exception as exc:
             logger.warning("WhatsApp send failed to %s: %s", to_phone, exc)

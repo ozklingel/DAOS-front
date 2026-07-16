@@ -31,16 +31,69 @@ OPENAI_API_KEY=sk-...   # required for Whisper + AI analysis
 
 ## Local dev (no Meta)
 
-With `DEBUG=true`:
+With `DEBUG=true` in `backend/.env`:
+
+**Step 1 — get a JWT** (app login token, **not** `WHATSAPP_ACCESS_TOKEN`):
 
 ```powershell
-# Link phone first (via app Settings, or API with JWT)
+$auth = Invoke-RestMethod -Uri http://127.0.0.1:8080/api/v1/auth/dev -Method POST
+$token = $auth.access_token
+$token
+```
+
+Or sign in via the app (Dev Login / Google) and copy the access token from network logs.
+
+**Step 2 — simulate a WhatsApp voice transcript:**
+
+```powershell
 Invoke-RestMethod -Uri http://127.0.0.1:8080/api/v1/whatsapp/simulate `
   -Method POST `
-  -Headers @{ Authorization = "Bearer YOUR_ACCESS_TOKEN" } `
+  -Headers @{ Authorization = "Bearer $token" } `
   -ContentType "application/json; charset=utf-8" `
   -Body '{"transcript":"משימה: לשלוח דוח ללקוח עד מחר"}'
 ```
+
+Expected: `created: true` and a new task in the app.
+
+> **401 Unauthorized?** You used the wrong token. `WHATSAPP_ACCESS_TOKEN` is only for Meta Graph API outbound messages. `/whatsapp/simulate` needs the **JWT** from `/auth/dev` or Google sign-in.
+
+## Test outbound send (Meta Graph API)
+
+Your `.env` values must match the working curl:
+
+```env
+WHATSAPP_ACCESS_TOKEN=EAAxxxxx
+WHATSAPP_PHONE_NUMBER_ID=1281218281733444
+WHATSAPP_GRAPH_API_VERSION=v25.0
+```
+
+**Template message** (works anytime — Meta-approved template):
+
+```powershell
+$token = $env:WHATSAPP_ACCESS_TOKEN   # from backend/.env
+$phoneId = $env:WHATSAPP_PHONE_NUMBER_ID
+
+curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
+  -H "Authorization: Bearer $token" `
+  -H "Content-Type: application/json" `
+  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972549247616\",\"type\":\"template\",\"template\":{\"name\":\"YOUR_TEMPLATE\",\"language\":{\"code\":\"en_US\"}}}'
+```
+
+**Free-text reply** (bot uses this after a user messages you — only within Meta’s 24-hour session window):
+
+```powershell
+curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
+  -H "Authorization: Bearer $token" `
+  -H "Content-Type: application/json" `
+  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972549247616\",\"type\":\"text\",\"text\":{\"body\":\"שלום! נוצרה משימה.\"}}'
+```
+
+| Type | When it works |
+|------|----------------|
+| `template` | Anytime (must be approved in Meta Business Manager) |
+| `text` | Only after the user sent you a message in the last 24h |
+
+The backend bot replies with **`type: text`** when processing inbound webhook messages (user already wrote first → session is open).
 
 ## ngrok (real WhatsApp locally)
 

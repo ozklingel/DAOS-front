@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""
     whatsapp_app_secret: str = ""
+    whatsapp_graph_api_version: str = "v25.0"
 
     @property
     def cors_origin_list(self) -> list[str]:
