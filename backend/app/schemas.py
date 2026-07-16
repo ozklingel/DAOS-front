@@ -268,7 +268,7 @@ class CalendarEventOut(APIModel):
     start_time: str
     end_time: str
     icon: str
-    source: str = "demo"
+    source: str = "task"
 
 
 class CalendarOut(APIModel):

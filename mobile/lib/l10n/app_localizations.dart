@@ -54,7 +54,6 @@ abstract class AppLocalizations {
   String get comingSoon;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
-  String get aiInsightDefault;
 
   String get loginTagline;
   String get continueWithGoogle;
@@ -176,6 +175,7 @@ abstract class AppLocalizations {
   String get invalidTransaction;
   String get transactionAdded;
   String get noEventsToday;
+  String get noInfoItems;
   String get user;
   String get emailConnections;
   String get gmail;
@@ -308,9 +308,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String weatherSummary(String temp, String period, String city) =>
       '$temp, $period, $city';
-  @override
-  String get aiInsightDefault =>
-      'Your AI assistant will optimize your schedule and highlight focus time once tasks are synced.';
 
   @override
   String get loginTagline =>
@@ -556,6 +553,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionAdded => 'Transaction added';
   @override
   String get noEventsToday => 'No events for this day';
+  @override
+  String get noInfoItems => 'No reminders yet — add assets in settings or via WhatsApp.';
   @override
   String get user => 'User';
   @override
@@ -840,9 +839,6 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String weatherSummary(String temp, String period, String city) =>
       '$temp, $period, $city';
-  @override
-  String get aiInsightDefault =>
-      'ביצעתי אופטימיזציה ליומן שלך לשעות אחר הצהריים. יש פער של 15 דקות לעבודה עמוקה ב-14:30.';
 
   @override
   String get loginTagline =>
@@ -1088,6 +1084,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get transactionAdded => 'התנועה נוספה';
   @override
   String get noEventsToday => 'אין אירועים ליום זה';
+  @override
+  String get noInfoItems => 'אין תזכורות עדיין — הוסיפו נכסים או שלחו הודעה ב-WhatsApp.';
   @override
   String get user => 'משתמש';
   @override

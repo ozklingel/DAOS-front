@@ -46,6 +46,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
           }).toList();
 
           final categories = hub.categories.where((c) {
+            if (c.items.isEmpty) return false;
             if (_query.isEmpty) return true;
             if (c.title.toLowerCase().contains(_query)) return true;
             return c.items.any((item) => item.toLowerCase().contains(_query));
@@ -54,6 +55,15 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             children: [
+              if (alerts.isEmpty && categories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Text(
+                    l.noInfoItems,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.darkTextSecondary),
+                  ),
+                ),
               if (alerts.isNotEmpty) ...[
                 Text(
                   l.assetAlertsTitle(alerts.length),

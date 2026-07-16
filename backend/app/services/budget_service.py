@@ -90,54 +90,8 @@ class BudgetService:
         return tx
 
     def _ensure_month_data(self, db: Session, user: User, month: str) -> None:
-        has_any = (
-            db.query(FinanceTransaction.id)
-            .filter(FinanceTransaction.user_id == user.id)
-            .limit(1)
-            .one_or_none()
-        )
-        if has_any:
-            for budget_type in (BudgetType.home.value, BudgetType.business.value):
-                self._ensure_plan(db, user.id, budget_type, month)
-            return
-
-        now = datetime.now(UTC)
-        day = now.day
-        seed_rows = [
-            (BudgetType.home.value, "סופרמרקט (מזון)", 450, TransactionType.expense.value, "food", "cart", day, 18, 0),
-            (BudgetType.home.value, "מסעדה (בילויים)", 180, TransactionType.expense.value, "leisure", "restaurant", day, 20, 30),
-            (BudgetType.home.value, "שכר דירה (קבוע)", 3200, TransactionType.expense.value, "housing", "home", 1, 9, 0),
-            (BudgetType.home.value, "משכורת", 12000, TransactionType.income.value, "salary", "salary", 1, 9, 0),
-            (BudgetType.business.value, "תשלום לקוח", 15000, TransactionType.income.value, "client", "salary", day, 11, 0),
-            (BudgetType.business.value, "משרד (שכירות)", 1200, TransactionType.expense.value, "office", "home", 1, 10, 0),
-            (BudgetType.business.value, "מנוי תוכנה", 350, TransactionType.expense.value, "software", "cart", day - 2 if day > 2 else day, 14, 0),
-        ]
-
         for budget_type in (BudgetType.home.value, BudgetType.business.value):
             self._ensure_plan(db, user.id, budget_type, month)
-
-        for row in seed_rows:
-            btype, title, amount, tx_type, category, icon, tx_day, hour, minute = row
-            tx_day = max(1, min(tx_day, 28))
-            occurred = datetime.combine(
-                date.fromisoformat(f"{month}-{tx_day:02d}"),
-                time(hour, minute),
-                tzinfo=UTC,
-            )
-            db.add(
-                FinanceTransaction(
-                    id=new_id(),
-                    user_id=user.id,
-                    budget_type=btype,
-                    title=title,
-                    amount=float(amount),
-                    tx_type=tx_type,
-                    category=category,
-                    icon=icon,
-                    occurred_at=occurred,
-                )
-            )
-        db.commit()
 
     def _ensure_plan(self, db: Session, user_id: str, budget_type: str, month: str) -> BudgetPlan:
         plan = (

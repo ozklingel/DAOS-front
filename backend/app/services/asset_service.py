@@ -1,8 +1,7 @@
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time
 
 from sqlalchemy.orm import Session
 
-from app.core.security import new_id
 from app.models import AssetReminder, AssetType, User
 
 CATEGORY_MAP = {
@@ -12,53 +11,9 @@ CATEGORY_MAP = {
     AssetType.document.value: ("מסמכים", "document"),
 }
 
-SEED_ITEMS = [
-    (
-        AssetType.vehicle_test.value,
-        "טסט רכב",
-        "רישיון רכב / טסט שנתי",
-        14,
-        "car",
-        "מוסך מורשה — רחוב הרצל 12, תל אביב",
-    ),
-    (
-        AssetType.car_insurance.value,
-        "ביטוח רכב",
-        "פוליסת ביטוח חובה + מקיף",
-        45,
-        "car",
-        "חברת ביטוח: הראל",
-    ),
-    (
-        AssetType.home_insurance.value,
-        "ביטוח דירה",
-        "פוליסת ביטוח דירה",
-        21,
-        "finance",
-        "לתאם עם סוכן לפני חידוש",
-    ),
-    (
-        AssetType.document.value,
-        "דרכון",
-        "מסמך זיהוי",
-        400,
-        "document",
-        None,
-    ),
-    (
-        AssetType.document.value,
-        "תעודת זהות",
-        "מסמך זיהוי",
-        1200,
-        "document",
-        None,
-    ),
-]
-
 
 class AssetService:
     def list_reminders(self, db: Session, user: User) -> list[dict]:
-        self._ensure_seed(db, user)
         rows = (
             db.query(AssetReminder)
             .filter(AssetReminder.user_id == user.id)
@@ -127,33 +82,6 @@ class AssetService:
         db.refresh(row)
         return self._to_dict(row)
 
-    def _ensure_seed(self, db: Session, user: User) -> None:
-        exists = (
-            db.query(AssetReminder.id)
-            .filter(AssetReminder.user_id == user.id)
-            .limit(1)
-            .one_or_none()
-        )
-        if exists:
-            return
-
-        today = date.today()
-        for asset_type, title, doc_label, days, icon, notes in SEED_ITEMS:
-            expiry = today + timedelta(days=days)
-            db.add(
-                AssetReminder(
-                    id=new_id(),
-                    user_id=user.id,
-                    asset_type=asset_type,
-                    title=title,
-                    document_label=doc_label,
-                    expiry_date=datetime.combine(expiry, time(hour=9), tzinfo=UTC),
-                    notes=notes,
-                    icon=icon,
-                )
-            )
-        db.commit()
-
     def _build_categories(self, reminders: list[dict]) -> list[dict]:
         grouped: dict[str, list[str]] = {
             "vehicle": [],
@@ -190,18 +118,6 @@ class AssetService:
                 "title": "מסמכים",
                 "icon": "document",
                 "items": grouped["documents"],
-            },
-            {
-                "id": "ideas",
-                "title": "רעיונות ופרויקטים",
-                "icon": "ideas",
-                "items": ["רשימת קניות", "פרויקט בית חכם"],
-            },
-            {
-                "id": "archive",
-                "title": "ארכיון",
-                "icon": "archive",
-                "items": [],
             },
         ]
 

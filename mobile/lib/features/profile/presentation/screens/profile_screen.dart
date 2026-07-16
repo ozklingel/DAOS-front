@@ -44,7 +44,10 @@ class ProfileScreen extends ConsumerWidget {
                     profile.avatarUrl != null ? NetworkImage(profile.avatarUrl!) : null,
                 child: profile.avatarUrl == null
                     ? Text(
-                        profile.fullName.substring(0, 1),
+                        (profile.fullName.isNotEmpty
+                                ? profile.fullName
+                                : profile.email)
+                            .substring(0, 1),
                         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
                       )
                     : null,
@@ -55,8 +58,9 @@ class ProfileScreen extends ConsumerWidget {
               title: l.personalDetails,
               icon: Icons.person_outline,
               subtitleLines: [
-                '${l.fullNameLabel}: ${profile.fullName}',
-                '${l.dateOfBirthLabel}: ${profile.dateOfBirth}',
+                if (profile.fullName.isNotEmpty) '${l.fullNameLabel}: ${profile.fullName}',
+                if (profile.dateOfBirth.isNotEmpty)
+                  '${l.dateOfBirthLabel}: ${profile.dateOfBirth}',
                 '${l.emailLabel}: ${profile.email}',
               ],
             ),
@@ -69,15 +73,19 @@ class ProfileScreen extends ConsumerWidget {
                 '${l.twoFactorLabel}: ${profile.twoFactorEnabled ? l.enabled : l.disabled}',
               ],
             ),
-            const SizedBox(height: 12),
-            HubMenuCard(
-              title: l.subscriptionDetails,
-              icon: Icons.diamond_outlined,
-              subtitleLines: [
-                profile.subscriptionPlan,
-                '${l.expiresLabel}: ${profile.subscriptionExpires}',
-              ],
-            ),
+            if (profile.subscriptionPlan.isNotEmpty ||
+                profile.subscriptionExpires.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              HubMenuCard(
+                title: l.subscriptionDetails,
+                icon: Icons.diamond_outlined,
+                subtitleLines: [
+                  if (profile.subscriptionPlan.isNotEmpty) profile.subscriptionPlan,
+                  if (profile.subscriptionExpires.isNotEmpty)
+                    '${l.expiresLabel}: ${profile.subscriptionExpires}',
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             HubMenuCard(
               title: l.securitySection,

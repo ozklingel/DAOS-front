@@ -53,7 +53,7 @@ class DashboardScreen extends ConsumerWidget {
                       flex: 3,
                       child: _AiInsightsCard(
                         title: l.proactiveAiInsights,
-                        body: _insightText(l, data.briefSummary),
+                        body: l.localizedBriefSummary(data.briefSummary),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -142,14 +142,6 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _insightText(AppLocalizations l, String briefSummary) {
-    final localized = l.localizedBriefSummary(briefSummary);
-    if (localized == l.briefSummaryPlaceholder) {
-      return l.aiInsightDefault;
-    }
-    return localized;
   }
 
   void _showWhatsAppHelp(BuildContext context, AppLocalizations l) {

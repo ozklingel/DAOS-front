@@ -83,7 +83,7 @@ class CalendarEventData {
       startTime: json['start_time'] as String? ?? json['startTime'] as String? ?? '',
       endTime: json['end_time'] as String? ?? json['endTime'] as String? ?? '',
       icon: json['icon'] as String,
-      source: json['source'] as String? ?? 'demo',
+      source: json['source'] as String? ?? '',
     );
   }
 

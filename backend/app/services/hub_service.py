@@ -6,19 +6,19 @@ from app.models import Task, User
 
 
 class HubService:
-    """Mock + task-derived data for DAOS hub pages (profile, calendar, finance, info)."""
+    """Task- and DB-derived data for DAOS hub pages (profile, calendar, finance, info)."""
 
     def get_profile(self, user: User) -> dict:
         username = user.email.split("@")[0] if user.email else "user"
         return {
             "id": user.id,
-            "full_name": user.name or "משתמש DAOS",
+            "full_name": user.name or "",
             "email": user.email,
-            "date_of_birth": "15.05.1990",
+            "date_of_birth": "",
             "username": username,
-            "two_factor_enabled": True,
-            "subscription_plan": "פרימיום (שנתי)",
-            "subscription_expires": "31.12.2026",
+            "two_factor_enabled": False,
+            "subscription_plan": "",
+            "subscription_expires": "",
             "avatar_url": user.avatar_url,
         }
 
@@ -57,9 +57,8 @@ class HubService:
                 }
             )
 
-        demo_events = self._demo_calendar_events(day)
         reminder_events = self._asset_events(db, user, day)
-        events = sorted(demo_events + reminder_events + task_events, key=lambda e: e["start_time"])
+        events = sorted(reminder_events + task_events, key=lambda e: e["start_time"])
 
         days = self._calendar_strip(day)
         return {
@@ -99,42 +98,6 @@ class HubService:
                 }
             )
         return days
-
-    def _demo_calendar_events(self, day: date) -> list[dict]:
-        if day != date.today():
-            return []
-        return [
-            {
-                "id": "demo-3",
-                "title": "להתקשר ליוסי (קשרים) - שיחת עדכון",
-                "subtitle": "",
-                "category": "קשרים",
-                "start_time": "12:00",
-                "end_time": "13:00",
-                "icon": "contacts",
-                "source": "demo",
-            },
-            {
-                "id": "demo-4",
-                "title": "לתאם פגישה עם רו״ח (עבודה)",
-                "subtitle": "",
-                "category": "עבודה",
-                "start_time": "15:00",
-                "end_time": "16:30",
-                "icon": "work",
-                "source": "demo",
-            },
-            {
-                "id": "demo-5",
-                "title": "אימון כושר (בריאות) - חדר כושר",
-                "subtitle": "",
-                "category": "בריאות",
-                "start_time": "17:30",
-                "end_time": "19:00",
-                "icon": "health",
-                "source": "demo",
-            },
-        ]
 
     @staticmethod
     def _hebrew_month(d: date) -> str:
