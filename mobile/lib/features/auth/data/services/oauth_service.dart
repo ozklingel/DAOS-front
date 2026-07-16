@@ -51,6 +51,14 @@ class OAuthService {
 
   Future<GoogleSignInCredentials> signInWithGoogle() async {
     try {
+      if (kIsWeb && _googleServerClientId.startsWith('45773018634-')) {
+        throw const AuthFailureException(
+          'Wrong GOOGLE_SERVER_CLIENT_ID (old client). Stop the app and run: '
+          'cd mobile; .\\scripts\\dev_web.ps1 — do not pass the old ID manually. '
+          'See WEB_OAUTH_FIX.md.',
+        );
+      }
+
       if (_googleServerClientId.isEmpty) {
         debugPrint(
           'GOOGLE_SERVER_CLIENT_ID is not set. Gmail sync requires the Web OAuth client ID.',
@@ -96,8 +104,10 @@ class OAuthService {
       final msg = e.toString();
       if (kIsWeb && (msg.contains('origin') || msg.contains('invalid_client') || msg.contains('popup'))) {
         throw AuthFailureException(
-          'Google Web OAuth: register http://127.0.0.1:5173 and http://localhost:5173 '
-          'as Authorized JavaScript origins on your Web OAuth client in Google Cloud Console.',
+          'Google Web OAuth failed (no registered origin / invalid_client). '
+          'Run .\\scripts\\dev_web.ps1 (port 5173 + client ID from backend/.env). '
+          'In Google Cloud, add http://127.0.0.1:5173 and http://localhost:5173 to '
+          'Authorized JavaScript origins for client 812104653331-... See WEB_OAUTH_FIX.md.',
         );
       }
       if (msg.contains('people.googleapis.com') || msg.contains('People API')) {
