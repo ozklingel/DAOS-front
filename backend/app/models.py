@@ -95,6 +95,26 @@ class User(Base):
     asset_reminders: Mapped[list["AssetReminder"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    whatsapp_inbound_logs: Mapped[list["WhatsAppInboundLog"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class WhatsAppInboundLog(Base):
+    __tablename__ = "whatsapp_inbound_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True)
+    from_phone: Mapped[str] = mapped_column(String(20), index=True)
+    message_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    msg_type: Mapped[str] = mapped_column(String(20), default="text")
+    body_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    task_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    bot_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    user: Mapped[User | None] = relationship(back_populates="whatsapp_inbound_logs")
 
 
 class RefreshToken(Base):

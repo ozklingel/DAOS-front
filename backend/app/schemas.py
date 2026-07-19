@@ -47,6 +47,25 @@ class WhatsAppDevInboundIn(APIModel):
     text: str
 
 
+class WhatsAppInboundOut(APIModel):
+    id: str
+    from_phone: str
+    message_id: str | None = None
+    msg_type: str
+    body_text: str | None = None
+    task_id: str | None = None
+    bot_reply: str | None = None
+    status: str
+    created_at: datetime
+
+
+class WhatsAppInboundStatusOut(APIModel):
+    linked_phone: str | None = None
+    has_messages: bool
+    latest: WhatsAppInboundOut | None = None
+    recent: list[WhatsAppInboundOut] = Field(default_factory=list)
+
+
 class AuthTokensOut(APIModel):
     access_token: str
     refresh_token: str

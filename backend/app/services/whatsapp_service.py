@@ -9,7 +9,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import User
+from app.models import User, WhatsAppInboundLog
 from app.services.ai_service import AIService
 from app.services.task_ingest_service import create_task_from_analysis
 
@@ -74,6 +74,57 @@ class WhatsAppService:
         normalized = self.normalize_phone(phone)
         return db.query(User).filter(User.whatsapp_phone == normalized).one_or_none()
 
+    def _inbound_logs_query(self, db: Session, user: User):
+        q = db.query(WhatsAppInboundLog)
+        if user.whatsapp_phone:
+            q = q.filter(
+                (WhatsAppInboundLog.user_id == user.id)
+                | (WhatsAppInboundLog.from_phone == user.whatsapp_phone)
+            )
+        else:
+            q = q.filter(WhatsAppInboundLog.user_id == user.id)
+        return q.order_by(WhatsAppInboundLog.created_at.desc())
+
+    def get_inbound_status(self, db: Session, user: User, *, recent_limit: int = 10) -> dict:
+        q = self._inbound_logs_query(db, user)
+        recent = q.limit(recent_limit).all()
+        latest = recent[0] if recent else None
+        return {
+            "linked_phone": user.whatsapp_phone,
+            "has_messages": bool(recent),
+            "latest": latest,
+            "recent": recent,
+        }
+
+    def _record_inbound(
+        self,
+        db: Session,
+        *,
+        from_phone: str,
+        message_id: str | None,
+        msg_type: str,
+        body_text: str | None,
+        user_id: str | None,
+        task_id: str | None,
+        bot_reply: str | None,
+        status: str,
+    ) -> WhatsAppInboundLog:
+        log = WhatsAppInboundLog(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            from_phone=self.normalize_phone(from_phone),
+            message_id=message_id or None,
+            msg_type=msg_type or "unknown",
+            body_text=body_text,
+            task_id=task_id,
+            bot_reply=bot_reply,
+            status=status,
+        )
+        db.add(log)
+        db.commit()
+        db.refresh(log)
+        return log
+
     def verify_signature(self, payload: bytes, signature: str | None) -> bool:
         secret = settings.whatsapp_app_secret_effective
         if not secret:
@@ -131,8 +182,8 @@ class WhatsAppService:
 
     async def _handle_inbound_message(self, db: Session, message: dict) -> tuple[object | None, str]:
         phone = message.get("from", "")
-        message_id = message.get("id", "")
-        msg_type = message.get("type", "")
+        message_id = message.get("id", "") or None
+        msg_type = message.get("type", "") or "unknown"
         logger.info("WhatsApp inbound from=%s type=%s id=%s", phone, msg_type, message_id)
 
         user = self.find_user_by_phone(db, phone)
@@ -145,6 +196,17 @@ class WhatsAppService:
             )
             reply = "שלום! כדי ליצור משימות מ-WhatsApp, חברו את מספר הטלפון שלכם בהגדרות → אינטגרציות."
             await self.send_text(phone, reply)
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=None,
+                user_id=None,
+                task_id=None,
+                bot_reply=reply,
+                status="no_user",
+            )
             return None, reply
 
         transcript = ""
@@ -159,17 +221,50 @@ class WhatsAppService:
         else:
             reply = "שלחו הודעת קול או טקסט בעברית כדי ליצור משימה."
             await self.send_text(phone, reply)
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=None,
+                user_id=user.id,
+                task_id=None,
+                bot_reply=reply,
+                status="unsupported_type",
+            )
             return None, reply
 
         if not transcript.strip():
             reply = "לא הצלחתי להבין את ההודעה. נסו שוב."
             await self.send_text(phone, reply)
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=transcript or None,
+                user_id=user.id,
+                task_id=None,
+                bot_reply=reply,
+                status="empty_transcript",
+            )
             return None, reply
 
-        task, reply = self._create_task_from_transcript(
+        task, reply, status = self._create_task_from_transcript(
             db, user, transcript, whatsapp_message_id=message_id
         )
         await self.send_text(phone, reply)
+        self._record_inbound(
+            db,
+            from_phone=phone,
+            message_id=message_id,
+            msg_type=msg_type,
+            body_text=transcript,
+            user_id=user.id,
+            task_id=task.id if task else None,
+            bot_reply=reply,
+            status=status,
+        )
         return task, reply
 
     def _create_task_from_transcript(
@@ -179,12 +274,16 @@ class WhatsAppService:
         transcript: str,
         *,
         whatsapp_message_id: str | None = None,
-    ) -> tuple[object | None, str]:
+    ) -> tuple[object | None, str, str]:
         analysis, source = self.ai.analyze_voice_transcript(transcript)
         if not analysis:
             if source == "skipped_not_hebrew":
-                return None, "רק הודעות בעברית נתמכות כרגע. שלחו משימה בעברית."
-            return None, "לא זוהתה משימה בהודעה. נסו לנסח ברור יותר, למשל: \"משימה: לשלוח דוח\"."
+                return None, "רק הודעות בעברית נתמכות כרגע. שלחו משימה בעברית.", "not_hebrew"
+            return (
+                None,
+                "לא זוהתה משימה בהודעה. נסו לנסח ברור יותר, למשל: \"משימה: לשלוח דוח\".",
+                "no_task_detected",
+            )
 
         task = create_task_from_analysis(
             db,
@@ -197,13 +296,13 @@ class WhatsAppService:
             source_label=f"whatsapp_{source}",
         )
         if not task:
-            return None, "המשימה כבר קיימת."
+            return None, "המשימה כבר קיימת.", "task_duplicate"
 
         title = task.title
-        return task, f"✅ נוצרה משימה ({source}):\n{title}"
+        return task, f"✅ נוצרה משימה ({source}):\n{title}", "task_created"
 
     def simulate_voice_task(self, db: Session, user: User, transcript: str) -> dict:
-        task, reply = self._create_task_from_transcript(db, user, transcript)
+        task, reply, _status = self._create_task_from_transcript(db, user, transcript)
         return {
             "created": task is not None,
             "task_id": task.id if task else None,
