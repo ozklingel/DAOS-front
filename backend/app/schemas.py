@@ -42,6 +42,11 @@ class WhatsAppSimulateOut(APIModel):
     message: str
 
 
+class WhatsAppDevInboundIn(APIModel):
+    phone: str
+    text: str
+
+
 class AuthTokensOut(APIModel):
     access_token: str
     refresh_token: str

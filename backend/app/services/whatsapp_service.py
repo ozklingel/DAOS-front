@@ -3,6 +3,7 @@ import hmac
 import io
 import logging
 import re
+import uuid
 
 import httpx
 from sqlalchemy.orm import Session
@@ -83,27 +84,55 @@ class WhatsAppService:
         return hmac.compare_digest(signature[7:], expected)
 
     async def handle_webhook(self, db: Session, payload: dict) -> None:
-        if payload.get("object") != "whatsapp_business_account":
+        obj = payload.get("object")
+        entries = payload.get("entry", [])
+        logger.info("WhatsApp webhook: object=%s entries=%d", obj, len(entries))
+        if obj != "whatsapp_business_account":
+            logger.warning("WhatsApp webhook ignored: unexpected object=%s", obj)
             return
 
-        for entry in payload.get("entry", []):
+        message_count = 0
+        for entry in entries:
             for change in entry.get("changes", []):
                 value = change.get("value", {})
-                for message in value.get("messages", []):
+                field = change.get("field", "")
+                messages = value.get("messages", [])
+                if not messages:
+                    logger.info(
+                        "WhatsApp webhook change field=%s (no messages — status/delivery?)",
+                        field,
+                    )
+                    continue
+                for message in messages:
+                    message_count += 1
                     await self._handle_inbound_message(db, message)
+        logger.info("WhatsApp webhook processed %d message(s)", message_count)
 
-    async def _handle_inbound_message(self, db: Session, message: dict) -> None:
+    async def dev_inbound_message(self, db: Session, phone: str, text: str) -> dict:
+        normalized = self.normalize_phone(phone)
+        message = {
+            "from": normalized,
+            "id": f"dev-inbound-{uuid.uuid4().hex[:12]}",
+            "type": "text",
+            "text": {"body": text.strip()},
+        }
+        task, reply = await self._handle_inbound_message(db, message)
+        return {
+            "created": task is not None,
+            "task_id": task.id if task else None,
+            "message": reply,
+        }
+
+    async def _handle_inbound_message(self, db: Session, message: dict) -> tuple[object | None, str]:
         phone = message.get("from", "")
         message_id = message.get("id", "")
         msg_type = message.get("type", "")
 
         user = self.find_user_by_phone(db, phone)
         if not user:
-            await self.send_text(
-                phone,
-                "שלום! כדי ליצור משימות מ-WhatsApp, חברו את מספר הטלפון שלכם בהגדרות → אינטגרציות.",
-            )
-            return
+            reply = "שלום! כדי ליצור משימות מ-WhatsApp, חברו את מספר הטלפון שלכם בהגדרות → אינטגרציות."
+            await self.send_text(phone, reply)
+            return None, reply
 
         transcript = ""
         if msg_type == "text":
@@ -115,17 +144,20 @@ class WhatsAppService:
                 if audio_bytes:
                     transcript = self.ai.transcribe_audio(audio_bytes) or ""
         else:
-            await self.send_text(phone, "שלחו הודעת קול או טקסט בעברית כדי ליצור משימה.")
-            return
+            reply = "שלחו הודעת קול או טקסט בעברית כדי ליצור משימה."
+            await self.send_text(phone, reply)
+            return None, reply
 
         if not transcript.strip():
-            await self.send_text(phone, "לא הצלחתי להבין את ההודעה. נסו שוב.")
-            return
+            reply = "לא הצלחתי להבין את ההודעה. נסו שוב."
+            await self.send_text(phone, reply)
+            return None, reply
 
         task, reply = self._create_task_from_transcript(
             db, user, transcript, whatsapp_message_id=message_id
         )
         await self.send_text(phone, reply)
+        return task, reply
 
     def _create_task_from_transcript(
         self,

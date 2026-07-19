@@ -1,5 +1,41 @@
 # WhatsApp Bot — Voice/Text → Task (MVP #4)
 
+## ⚡ הכי מהר — משימה על השרת עכשיו (בלי Meta webhook)
+
+**דרישות:** `DEBUG=true` ב-`.env`, backend רץ, מספר מחובר באפליקציה.
+
+**1. חבר מספר:** הגדרות → אינטגרציות → WhatsApp → `0549247616`
+
+**2. הרץ:**
+```powershell
+cd backend
+.\scripts\whatsapp_task_now.ps1
+```
+
+או:
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:8080/api/v1/whatsapp/dev-inbound -Method POST `
+  -ContentType "application/json; charset=utf-8" `
+  -Body '{"phone":"0549247616","text":"משימה: לשלוח דוח ללקוח"}'
+```
+
+→ `created: true` + משימה באפליקציה. **אותה לוגיקה** כמו webhook אמיתי.
+
+---
+
+## ⚠️ שליחה מאתר Meta ≠ הודעה נכנסת
+
+כש**Meta שולחת אליך** מהדashboard (template) — זה **יוצא** (outbound).  
+**Webhook POST** מגיע רק כש**אתה שולח מהטלפון שלך אל מספר העסק** (inbound):
+
+```
+הטלפון שלך  →  מספר WhatsApp Business של Meta  →  POST /webhooks/whatsapp
+```
+
+לא להפך.
+
+---
+
 Hebrew voice or text messages on WhatsApp create tasks in TaskMail.
 
 ## Flow

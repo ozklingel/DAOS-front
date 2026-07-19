@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,14 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
 
     database_url: str = "sqlite:///./taskmail.db"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        # Render Postgres uses postgres:// — SQLAlchemy expects postgresql://
+        if isinstance(value, str) and value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql://", 1)
+        return value
 
     jwt_secret_key: str = "change-me-in-production-use-openssl-rand-hex-32"
     jwt_algorithm: str = "HS256"
