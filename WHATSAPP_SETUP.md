@@ -4,7 +4,7 @@
 
 **דרישות:** `DEBUG=true` ב-`.env`, backend רץ, מספר מחובר באפליקציה.
 
-**1. חבר מספר:** הגדרות → אינטגרציות → WhatsApp → `0549247616`
+**1. חבר מספר:** הגדרות → אינטגרציות → WhatsApp → המספר שלך (למשל `0501234567`)
 
 **2. הרץ:**
 ```powershell
@@ -16,7 +16,7 @@ cd backend
 ```powershell
 Invoke-RestMethod -Uri http://127.0.0.1:8080/api/v1/whatsapp/dev-inbound -Method POST `
   -ContentType "application/json; charset=utf-8" `
-  -Body '{"phone":"0549247616","text":"משימה: לשלוח דוח ללקוח"}'
+  -Body '{"phone":"0501234567","text":"משימה: לשלוח דוח ללקוח"}'
 ```
 
 → `created: true` + משימה באפליקציה. **אותה לוגיקה** כמו webhook אמיתי.
@@ -112,7 +112,7 @@ $phoneId = $env:WHATSAPP_PHONE_NUMBER_ID
 curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
   -H "Authorization: Bearer $token" `
   -H "Content-Type: application/json" `
-  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972549247616\",\"type\":\"template\",\"template\":{\"name\":\"YOUR_TEMPLATE\",\"language\":{\"code\":\"en_US\"}}}'
+  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972501234567\",\"type\":\"template\",\"template\":{\"name\":\"YOUR_TEMPLATE\",\"language\":{\"code\":\"en_US\"}}}'
 ```
 
 **Free-text reply** (bot uses this after a user messages you — only within Meta’s 24-hour session window):
@@ -121,7 +121,7 @@ curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
 curl.exe -i -X POST "https://graph.facebook.com/v25.0/$phoneId/messages" `
   -H "Authorization: Bearer $token" `
   -H "Content-Type: application/json" `
-  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972549247616\",\"type\":\"text\",\"text\":{\"body\":\"שלום! נוצרה משימה.\"}}'
+  -d '{\"messaging_product\":\"whatsapp\",\"to\":\"972501234567\",\"type\":\"text\",\"text\":{\"body\":\"שלום! נוצרה משימה.\"}}'
 ```
 
 | Type | When it works |

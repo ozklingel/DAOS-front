@@ -55,9 +55,9 @@ Verify token:  DAOS
 ```
 
 2. **Verify and save** → subscribe to **`messages`**
-3. Add test phone `+972549247616` in Meta API Setup
-4. Link phone in app: Settings → Integrations → WhatsApp
-5. Send from your phone **to** the business number:
+3. In Meta **API Setup**, add each test user's phone (Development mode only)
+4. Each user links **their own** phone in app: Settings → Integrations → WhatsApp
+5. User sends from **their** phone **to** the Meta business number:
 
 ```
 משימה: בדיקה מ-Render

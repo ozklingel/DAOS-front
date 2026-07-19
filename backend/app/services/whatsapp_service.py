@@ -45,13 +45,19 @@ class WhatsAppService:
         if len(normalized) < 10:
             raise ValueError("Invalid phone number")
 
+        if user.whatsapp_phone == normalized:
+            return user
+
         other = (
             db.query(User)
             .filter(User.whatsapp_phone == normalized, User.id != user.id)
             .one_or_none()
         )
         if other:
-            raise ValueError("Phone number already linked to another account")
+            raise ValueError(
+                "PHONE_ALREADY_LINKED: This number is linked to another account. "
+                "Sign in with that account or disconnect WhatsApp there first."
+            )
 
         user.whatsapp_phone = normalized
         db.commit()

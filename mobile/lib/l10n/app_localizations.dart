@@ -206,6 +206,7 @@ abstract class AppLocalizations {
   String get connectWhatsAppButton;
   String get disconnectWhatsAppButton;
   String get whatsappLinkedSuccess;
+  String get whatsappPhoneAlreadyLinked;
   String get whatsappVoiceHelpTitle;
   String get whatsappVoiceHelpBody;
   String get openIntegrations;
@@ -616,6 +617,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get whatsappLinkedSuccess => 'WhatsApp number linked';
   @override
+  String get whatsappPhoneAlreadyLinked =>
+      'This number is already linked to another account. Sign in with Google, not Dev Login.';
+  @override
   String get whatsappVoiceHelpTitle => 'Voice tasks via WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
@@ -783,13 +787,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorMessage(Object error) {
+    final msg = error is AppException ? error.message : error.toString();
+    if (msg.contains('PHONE_ALREADY_LINKED') || msg.contains('already linked')) {
+      return whatsappPhoneAlreadyLinked;
+    }
     if (error is NetworkException) return networkError;
     if (error is UnauthorizedException) return sessionExpired;
     if (error is ServerException) return serverError;
     if (error is AuthFailureException) return authFailed;
     if (error is CacheException) return storageError;
-    if (error is AppException) return error.message;
-    return error.toString();
+    if (error is AppException) return msg;
+    return msg;
   }
 }
 
@@ -1147,6 +1155,9 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get whatsappLinkedSuccess => 'מספר WhatsApp חובר';
   @override
+  String get whatsappPhoneAlreadyLinked =>
+      'המספר כבר מחובר לחשבון אחר. התחבר עם Google (לא כניסת מפתח).';
+  @override
   String get whatsappVoiceHelpTitle => 'משימות קוליות ב-WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
@@ -1314,13 +1325,17 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String errorMessage(Object error) {
+    final msg = error is AppException ? error.message : error.toString();
+    if (msg.contains('PHONE_ALREADY_LINKED') || msg.contains('already linked')) {
+      return whatsappPhoneAlreadyLinked;
+    }
     if (error is NetworkException) return networkError;
     if (error is UnauthorizedException) return sessionExpired;
     if (error is ServerException) return serverError;
     if (error is AuthFailureException) return authFailed;
     if (error is CacheException) return storageError;
-    if (error is AppException) return error.message;
-    return error.toString();
+    if (error is AppException) return msg;
+    return msg;
   }
 }
 
