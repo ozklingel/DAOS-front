@@ -133,9 +133,16 @@ class WhatsAppService:
         phone = message.get("from", "")
         message_id = message.get("id", "")
         msg_type = message.get("type", "")
+        logger.info("WhatsApp inbound from=%s type=%s id=%s", phone, msg_type, message_id)
 
         user = self.find_user_by_phone(db, phone)
         if not user:
+            logger.warning(
+                "WhatsApp: no user linked for phone %s (normalized %s). "
+                "Link this number in app: Settings -> Integrations -> WhatsApp",
+                phone,
+                self.normalize_phone(phone),
+            )
             reply = "שלום! כדי ליצור משימות מ-WhatsApp, חברו את מספר הטלפון שלכם בהגדרות → אינטגרציות."
             await self.send_text(phone, reply)
             return None, reply

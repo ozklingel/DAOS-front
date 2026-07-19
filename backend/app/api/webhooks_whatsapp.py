@@ -1,16 +1,26 @@
+import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request, Response
 
 from app.config import settings
-from app.database import get_db
+from app.database import SessionLocal
 from app.services.whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 whatsapp_service = WhatsAppService()
+
+
+async def _process_webhook_payload(payload: dict) -> None:
+    db = SessionLocal()
+    try:
+        await whatsapp_service.handle_webhook(db, payload)
+    except Exception as exc:
+        logger.exception("WhatsApp webhook error: %s", exc)
+    finally:
+        db.close()
 
 
 @router.get("/whatsapp")
@@ -26,17 +36,26 @@ async def verify_whatsapp_webhook(
 
 
 @router.post("/whatsapp")
-async def whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
+async def whatsapp_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256")
     logger.info("WhatsApp webhook POST received (%d bytes)", len(body))
     if not whatsapp_service.verify_signature(body, signature):
-        logger.warning("WhatsApp webhook rejected: invalid signature")
+        logger.warning(
+            "WhatsApp webhook rejected: invalid signature. "
+            "Set WHATSAPP_APP_SECRET on Render to Meta App Secret, or leave empty to skip."
+        )
         raise HTTPException(status_code=403, detail={"message": "Invalid signature"})
 
-    payload = await request.json()
     try:
-        await whatsapp_service.handle_webhook(db, payload)
-    except Exception as exc:
-        logger.exception("WhatsApp webhook error: %s", exc)
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        logger.warning("WhatsApp webhook: invalid JSON body")
+        raise HTTPException(status_code=400, detail={"message": "Invalid JSON"})
+
+    # Return 200 immediately — Meta times out on cold start (Render free tier)
+    background_tasks.add_task(_process_webhook_payload, payload)
     return {"status": "ok"}
