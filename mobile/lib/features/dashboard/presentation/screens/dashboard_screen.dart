@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:taskmail/core/di/providers.dart';
 import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
 import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'package:taskmail/features/dashboard/presentation/widgets/energy_meter_card.dart';
+import 'package:taskmail/features/dashboard/presentation/widgets/weather_card.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
@@ -59,7 +59,7 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       flex: 2,
-                      child: EnergyMeterCard(meter: data.energyMeter),
+                      child: const WeatherCard(),
                     ),
                   ],
                 ),

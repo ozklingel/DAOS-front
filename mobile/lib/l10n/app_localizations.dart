@@ -120,6 +120,18 @@ abstract class AppLocalizations {
   String get energyLow;
   String categoryBreakdown(int work, int errands, int health);
 
+  String get weatherNowTitle;
+  String get weatherDefaultLocation;
+  String get weatherUnavailable;
+  String weatherDetails(int humidity, int windKmh);
+  String get weatherClear;
+  String get weatherCloudy;
+  String get weatherFog;
+  String get weatherRain;
+  String get weatherSnow;
+  String get weatherShowers;
+  String get weatherThunder;
+
   String get settings;
   String get settingsTitle;
   String get searchInSettings;
@@ -440,6 +452,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String categoryBreakdown(int work, int errands, int health) =>
       'Work $work · Errands $errands · Health $health';
+
+  @override
+  String get weatherNowTitle => 'Weather now';
+  @override
+  String get weatherDefaultLocation => 'Tel Aviv';
+  @override
+  String get weatherUnavailable => 'Weather unavailable';
+  @override
+  String weatherDetails(int humidity, int windKmh) =>
+      'Humidity $humidity% · Wind $windKmh km/h';
+  @override
+  String get weatherClear => 'Clear';
+  @override
+  String get weatherCloudy => 'Cloudy';
+  @override
+  String get weatherFog => 'Fog';
+  @override
+  String get weatherRain => 'Rain';
+  @override
+  String get weatherSnow => 'Snow';
+  @override
+  String get weatherShowers => 'Showers';
+  @override
+  String get weatherThunder => 'Thunderstorm';
 
   @override
   String get settings => 'Settings';
@@ -978,6 +1014,30 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String categoryBreakdown(int work, int errands, int health) =>
       'עבודה $work · סידורים $errands · בריאות $health';
+
+  @override
+  String get weatherNowTitle => 'מזג אוויר עכשיו';
+  @override
+  String get weatherDefaultLocation => 'תל אביב';
+  @override
+  String get weatherUnavailable => 'מזג האוויר לא זמין';
+  @override
+  String weatherDetails(int humidity, int windKmh) =>
+      'לחות $humidity% · רוח $windKmh קמ״ש';
+  @override
+  String get weatherClear => 'בהיר';
+  @override
+  String get weatherCloudy => 'מעונן';
+  @override
+  String get weatherFog => 'ערפל';
+  @override
+  String get weatherRain => 'גשם';
+  @override
+  String get weatherSnow => 'שלג';
+  @override
+  String get weatherShowers => 'ממטרים';
+  @override
+  String get weatherThunder => 'סופת רעמים';
 
   @override
   String get settings => 'הגדרות';
