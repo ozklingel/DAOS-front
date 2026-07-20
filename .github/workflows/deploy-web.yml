@@ -55,18 +55,22 @@ jobs:
           set -e
           REPO_NAME="${{ github.event.repository.name }}"
           API_BASE_URL="${API_BASE_URL:-https://daos-api.onrender.com/api/v1}"
-          # Never allow empty — empty dart-define caused live 401 invalid_client
-          if [ -z "$GOOGLE_SERVER_CLIENT_ID" ]; then
-            GOOGLE_SERVER_CLIENT_ID="812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
+          # Prefer hardcoded ID unless a non-empty Actions variable is set.
+          # Important: --dart-define=X= (empty) OVERRIDES Dart defaultValue with "".
+          CLIENT_ID="812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
+          if [ -n "${GOOGLE_SERVER_CLIENT_ID:-}" ]; then
+            CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
           fi
           echo "API_BASE_URL=$API_BASE_URL"
-          echo "GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"
+          echo "GOOGLE_SERVER_CLIENT_ID=$CLIENT_ID"
           flutter build web --release \
             --base-href "/${REPO_NAME}/" \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="$CLIENT_ID"
           cp build/web/index.html build/web/404.html
-          grep -o '812104653331-[a-z0-9]*\.apps\.googleusercontent\.com' build/web/main.dart.js | head -3 || (echo "ERROR: client ID missing from main.dart.js" && exit 1)
+          grep -o '812104653331-[a-z0-9]*\.apps\.googleusercontent\.com' build/web/main.dart.js | sort -u | head -5
+          grep -q 'ur4g34kfo6seil4f6h06igl08ks9ecmt\.apps\.googleusercontent\.com' build/web/main.dart.js \
+            || (echo "ERROR: full client ID missing from main.dart.js" && exit 1)
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

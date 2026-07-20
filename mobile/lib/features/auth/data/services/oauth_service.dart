@@ -16,12 +16,17 @@ class OAuthService {
   GoogleSignIn? _googleSignIn;
   final FlutterAppAuth _appAuth;
 
-  /// Web OAuth client (Firebase project daos-15254). Override via --dart-define if recreated.
-  static const String _googleServerClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com',
-  );
+  /// Set via --dart-define only when non-empty. Empty define must not wipe the fallback.
+  static const String _googleServerClientIdEnv =
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+
+  static const String _googleWebClientIdFallback =
+      '812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com';
+
+  static String get _googleServerClientId =>
+      _googleServerClientIdEnv.isNotEmpty
+          ? _googleServerClientIdEnv
+          : _googleWebClientIdFallback;
 
   static const String _outlookClientId = String.fromEnvironment(
     'OUTLOOK_CLIENT_ID',
