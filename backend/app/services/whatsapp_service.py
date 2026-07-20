@@ -31,6 +31,26 @@ class WhatsAppService:
     def enabled(self) -> bool:
         return bool(settings.whatsapp_access_token and settings.whatsapp_phone_number_id)
 
+    @property
+    def green_api_enabled(self) -> bool:
+        return settings.green_api_enabled
+
+    @property
+    def messaging_enabled(self) -> bool:
+        return self.green_api_enabled or self.enabled
+
+    @property
+    def green_api_base(self) -> str:
+        base = settings.green_api_url.strip().rstrip("/")
+        return base or "https://api.green-api.com"
+
+    @staticmethod
+    def phone_from_chat_id(chat_id: str) -> str:
+        return (chat_id or "").split("@")[0].split(":")[0]
+
+    def phone_to_chat_id(self, phone: str) -> str:
+        return f"{self.normalize_phone(phone)}@c.us"
+
     @staticmethod
     def normalize_phone(raw: str) -> str:
         digits = re.sub(r"\D", "", raw or "")
@@ -165,6 +185,70 @@ class WhatsAppService:
                     await self._handle_inbound_message(db, message)
         logger.info("WhatsApp webhook processed %d message(s)", message_count)
 
+    def parse_green_inbound(self, payload: dict) -> dict | None:
+        if payload.get("typeWebhook") != "incomingMessageReceived":
+            return None
+
+        sender_data = payload.get("senderData") or {}
+        chat_id = sender_data.get("chatId") or ""
+        if chat_id.endswith("@g.us"):
+            logger.info("Green API: ignoring group chatId=%s", chat_id)
+            return None
+
+        sender = sender_data.get("sender") or chat_id
+        phone = self.normalize_phone(self.phone_from_chat_id(sender))
+        message_id = payload.get("idMessage") or f"green-{uuid.uuid4().hex[:12]}"
+        message_data = payload.get("messageData") or {}
+        type_message = message_data.get("typeMessage") or ""
+
+        text = ""
+        audio_url = None
+        msg_type = "text"
+
+        if type_message == "textMessage":
+            text = (message_data.get("textMessageData") or {}).get("textMessage") or ""
+        elif type_message == "extendedTextMessage":
+            text = (message_data.get("extendedTextMessageData") or {}).get("text") or ""
+        elif type_message == "quotedMessage":
+            text = (message_data.get("extendedTextMessageData") or {}).get("text") or ""
+        elif type_message == "audioMessage":
+            msg_type = "audio"
+            audio_url = (message_data.get("fileMessageData") or {}).get("downloadUrl")
+        else:
+            logger.info("Green API: unsupported typeMessage=%s", type_message)
+            return {
+                "from": phone,
+                "id": message_id,
+                "type": "unsupported",
+                "text": "",
+                "audio_url": None,
+            }
+
+        return {
+            "from": phone,
+            "id": message_id,
+            "type": msg_type,
+            "text": text.strip(),
+            "audio_url": audio_url,
+        }
+
+    async def handle_green_webhook(self, db: Session, payload: dict) -> None:
+        parsed = self.parse_green_inbound(payload)
+        if not parsed:
+            return
+
+        message = {
+            "from": parsed["from"],
+            "id": parsed["id"],
+            "type": parsed["type"],
+        }
+        if parsed["type"] == "text":
+            message["text"] = {"body": parsed["text"]}
+        elif parsed["type"] == "audio" and parsed["audio_url"]:
+            message["audio_url"] = parsed["audio_url"]
+
+        await self._handle_inbound_message(db, message)
+
     async def dev_inbound_message(self, db: Session, phone: str, text: str) -> dict:
         normalized = self.normalize_phone(phone)
         message = {
@@ -173,14 +257,16 @@ class WhatsAppService:
             "type": "text",
             "text": {"body": text.strip()},
         }
-        task, reply = await self._handle_inbound_message(db, message)
+        task, reply, _status = await self._handle_inbound_message(db, message)
         return {
             "created": task is not None,
             "task_id": task.id if task else None,
             "message": reply,
         }
 
-    async def _handle_inbound_message(self, db: Session, message: dict) -> tuple[object | None, str]:
+    async def _handle_inbound_message(
+        self, db: Session, message: dict
+    ) -> tuple[object | None, str, str]:
         phone = message.get("from", "")
         message_id = message.get("id", "") or None
         msg_type = message.get("type", "") or "unknown"
@@ -207,17 +293,21 @@ class WhatsAppService:
                 bot_reply=reply,
                 status="no_user",
             )
-            return None, reply
+            return None, reply, "no_user"
 
         transcript = ""
         if msg_type == "text":
             transcript = (message.get("text") or {}).get("body", "").strip()
         elif msg_type == "audio":
-            media_id = (message.get("audio") or {}).get("id")
-            if media_id:
-                audio_bytes = await self._download_media(media_id)
-                if audio_bytes:
-                    transcript = self.ai.transcribe_audio(audio_bytes) or ""
+            audio_bytes = None
+            if message.get("audio_url"):
+                audio_bytes = await self._download_green_media(message["audio_url"])
+            else:
+                media_id = (message.get("audio") or {}).get("id")
+                if media_id:
+                    audio_bytes = await self._download_media(media_id)
+            if audio_bytes:
+                transcript = self.ai.transcribe_audio(audio_bytes) or ""
         else:
             reply = "שלחו הודעת קול או טקסט בעברית כדי ליצור משימה."
             await self.send_text(phone, reply)
@@ -232,7 +322,7 @@ class WhatsAppService:
                 bot_reply=reply,
                 status="unsupported_type",
             )
-            return None, reply
+            return None, reply, "unsupported_type"
 
         if not transcript.strip():
             reply = "לא הצלחתי להבין את ההודעה. נסו שוב."
@@ -248,7 +338,7 @@ class WhatsAppService:
                 bot_reply=reply,
                 status="empty_transcript",
             )
-            return None, reply
+            return None, reply, "empty_transcript"
 
         task, reply, status = self._create_task_from_transcript(
             db, user, transcript, whatsapp_message_id=message_id
@@ -265,7 +355,7 @@ class WhatsAppService:
             bot_reply=reply,
             status=status,
         )
-        return task, reply
+        return task, reply, status
 
     def _create_task_from_transcript(
         self,
@@ -309,6 +399,18 @@ class WhatsAppService:
             "message": reply,
         }
 
+    async def _download_green_media(self, url: str) -> bytes | None:
+        if not url or url.startswith("{{"):
+            return None
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.content
+        except Exception as exc:
+            logger.warning("Green API media download failed: %s", exc)
+            return None
+
     async def _download_media(self, media_id: str) -> bytes | None:
         if not self.enabled:
             return None
@@ -328,6 +430,9 @@ class WhatsAppService:
             return None
 
     async def send_text(self, to_phone: str, body: str) -> None:
+        if self.green_api_enabled:
+            await self._green_send_text(to_phone, body)
+            return
         if not self.enabled:
             logger.info("WhatsApp reply (not sent — not configured) to %s: %s", to_phone, body[:120])
             return
@@ -358,3 +463,27 @@ class WhatsAppService:
             )
         except Exception as exc:
             logger.warning("WhatsApp send failed to %s: %s", to_phone, exc)
+
+    async def _green_send_text(self, to_phone: str, body: str) -> None:
+        instance_id = settings.green_api_id_instance.strip()
+        token = settings.green_api_token.strip()
+        url = f"{self.green_api_base}/waInstance{instance_id}/sendMessage/{token}"
+        payload = {
+            "chatId": self.phone_to_chat_id(to_phone),
+            "message": body[:4096],
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+                logger.info("Green API text sent to %s", self.normalize_phone(to_phone))
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text[:500] if exc.response is not None else str(exc)
+            logger.warning(
+                "Green API send failed to %s (%s): %s",
+                to_phone,
+                exc.response.status_code if exc.response is not None else "?",
+                detail,
+            )
+        except Exception as exc:
+            logger.warning("Green API send failed to %s: %s", to_phone, exc)

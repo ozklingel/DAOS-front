@@ -48,6 +48,15 @@ class Settings(BaseSettings):
     whatsapp_app_secret: str = ""
     whatsapp_graph_api_version: str = "v25.0"
 
+    # Green API (https://green-api.com) — simpler WhatsApp without Meta dashboard
+    green_api_url: str = "https://api.green-api.com"
+    green_api_id_instance: str = ""
+    green_api_token: str = ""
+
+    @property
+    def green_api_enabled(self) -> bool:
+        return bool(self.green_api_id_instance.strip() and self.green_api_token.strip())
+
     @property
     def whatsapp_app_secret_effective(self) -> str:
         value = self.whatsapp_app_secret.strip()

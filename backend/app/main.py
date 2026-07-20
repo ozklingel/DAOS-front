@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1 import auth, dashboard, emails, hub, notifications, tasks, whatsapp
-from app.api import webhooks_whatsapp
+from app.api import webhooks_green_api, webhooks_whatsapp
 from app.config import settings
 from app.database import SessionLocal, init_db
 from app.models import User
@@ -103,6 +103,7 @@ app.include_router(dashboard.router, prefix=api_prefix)
 app.include_router(notifications.router, prefix=api_prefix)
 app.include_router(whatsapp.router, prefix=api_prefix)
 app.include_router(webhooks_whatsapp.router)
+app.include_router(webhooks_green_api.router)
 
 
 @app.get("/health")
