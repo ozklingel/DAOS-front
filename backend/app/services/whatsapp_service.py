@@ -386,8 +386,50 @@ class WhatsAppService:
         if not task:
             return None, "המשימה כבר קיימת.", "task_duplicate"
 
-        title = task.title
-        return task, f"✅ נוצרה משימה ({source}):\n{title}", "task_created"
+        return task, self._format_task_created_reply(task), "task_created"
+
+    def _format_task_created_reply(self, task: object) -> str:
+        priority_he = {
+            "critical": "קריטי",
+            "high": "גבוהה",
+            "medium": "בינונית",
+            "low": "נמוכה",
+            "none": "ללא",
+        }
+        category_he = {
+            "work": "עבודה",
+            "errands": "סידורים",
+            "health": "בריאות",
+            "general": "כללי",
+        }
+
+        lines = [
+            "✅ נוצרה משימה",
+            f"כותרת: {task.title}",
+        ]
+        if getattr(task, "description", None):
+            desc = str(task.description).strip()
+            if desc and desc != task.title:
+                lines.append(f"תיאור: {desc[:300]}")
+
+        priority = getattr(task, "priority", None) or "none"
+        lines.append(f"עדיפות: {priority_he.get(priority, priority)}")
+
+        category = getattr(task, "category", None) or "general"
+        lines.append(f"קטגוריה: {category_he.get(category, category)}")
+
+        deadline = getattr(task, "deadline", None)
+        if deadline:
+            try:
+                lines.append(f"תאריך יעד: {deadline.strftime('%d/%m/%Y %H:%M')}")
+            except Exception:
+                lines.append(f"תאריך יעד: {deadline}")
+
+        task_id = getattr(task, "id", None)
+        if task_id:
+            lines.append(f"מזהה: {task_id}")
+
+        return "\n".join(lines)
 
     def simulate_voice_task(self, db: Session, user: User, transcript: str) -> dict:
         task, reply, _status = self._create_task_from_transcript(db, user, transcript)
