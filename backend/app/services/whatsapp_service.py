@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import User, WhatsAppInboundLog
-from app.services.ai_service import AIService
+from app.services.ai_service import AIService, TASK_KEYWORD
 from app.services.task_ingest_service import create_task_from_analysis
 
 logger = logging.getLogger(__name__)
@@ -336,9 +336,10 @@ class WhatsAppService:
             )
             return None, "", "empty_transcript"
 
-        if "משימה" not in transcript:
+        if TASK_KEYWORD not in transcript:
             logger.info(
-                "WhatsApp: no keyword משימה in message from %s — no reply",
+                "WhatsApp: no keyword %s in message from %s — no reply",
+                TASK_KEYWORD,
                 self.normalize_phone(phone),
             )
             self._record_inbound(

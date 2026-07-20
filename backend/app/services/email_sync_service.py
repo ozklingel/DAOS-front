@@ -24,6 +24,7 @@ class EmailSyncService:
         emails = await self._fetch_emails(db, user)
         created = 0
         skipped_non_hebrew = 0
+        skipped_no_keyword = 0
         for email in emails:
             exists = (
                 db.query(Task)
@@ -35,6 +36,10 @@ class EmailSyncService:
 
             if not self.ai.is_hebrew_email(email["subject"], email["snippet"]):
                 skipped_non_hebrew += 1
+                continue
+
+            if not self.ai.has_task_keyword(email["subject"], email["snippet"]):
+                skipped_no_keyword += 1
                 continue
 
             analysis, source = self.ai.analyze_email_detailed(
@@ -69,16 +74,18 @@ class EmailSyncService:
             db.commit()
 
         logger.info(
-            "Email sync for user %s: scanned=%d created=%d skipped_non_hebrew=%d",
+            "Email sync for user %s: scanned=%d created=%d skipped_non_hebrew=%d skipped_no_keyword=%d",
             user.id,
             len(emails),
             created,
             skipped_non_hebrew,
+            skipped_no_keyword,
         )
         return {
             "created": created,
             "scanned": len(emails),
             "skipped_non_hebrew": skipped_non_hebrew,
+            "skipped_no_keyword": skipped_no_keyword,
         }
 
     async def _fetch_emails(self, db: Session, user: User) -> list[dict]:

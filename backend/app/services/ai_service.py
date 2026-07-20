@@ -46,6 +46,11 @@ class AIService:
             logger.debug("Skipping non-Hebrew email: %r", subject[:120])
             return None, "skipped_not_hebrew"
 
+        # Only process when the Hebrew word משימה appears (emails + WhatsApp transcripts)
+        if not self.has_task_keyword(subject, snippet):
+            logger.debug("Skipping email without keyword '%s': %r", TASK_KEYWORD, subject[:120])
+            return None, "skipped_no_task_keyword"
+
         if self.client:
             try:
                 analysis = self._openai_analysis(subject, sender, snippet)
@@ -68,13 +73,9 @@ class AIService:
             )
             return analysis, "heuristic"
 
-        if self.has_task_keyword(subject, snippet):
-            analysis = self._task_keyword_fallback(subject, snippet)
-            logger.info("Email task detected via keyword '%s': %r", TASK_KEYWORD, subject[:120])
-            return analysis, "task_keyword"
-
-        logger.debug("No Hebrew task detected in email: %r", subject[:120])
-        return None, "no_match"
+        analysis = self._task_keyword_fallback(subject, snippet)
+        logger.info("Email task detected via keyword '%s': %r", TASK_KEYWORD, subject[:120])
+        return analysis, "task_keyword"
 
     def analyze_voice_transcript(self, transcript: str) -> tuple[dict | None, str]:
         text = transcript.strip()
@@ -129,9 +130,8 @@ class AIService:
         }
 
     def _openai_analysis(self, subject: str, sender: str, snippet: str) -> dict:
-        prompt = f"""Analyze this Hebrew email and decide if it contains an actionable task.
-Only treat emails as actionable when they clearly ask the recipient to do something.
-If the email contains the word "משימה", always set is_actionable to true.
+        prompt = f"""Analyze this Hebrew email and extract an actionable task.
+The email already contains the word "משימה" — always set is_actionable to true.
 Write title and description in Hebrew only.
 Return JSON only with keys:
 - is_actionable (boolean)
