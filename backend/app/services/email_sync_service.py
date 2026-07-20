@@ -89,9 +89,7 @@ class EmailSyncService:
                 emails.extend(
                     self.gmail.fetch_recent_emails(
                         refresh_token=user.google_refresh_token,
-                        access_token=user.google_access_token
-                        if not user.google_refresh_token
-                        else None,
+                        access_token=user.google_access_token,
                     )
                 )
             except Exception as exc:
@@ -117,9 +115,20 @@ class EmailSyncService:
     @staticmethod
     def _is_stale_google_token_error(exc: Exception) -> bool:
         text = str(exc).lower()
-        if "unauthorized_client" in text or "invalid_grant" in text:
+        stale_markers = (
+            "unauthorized_client",
+            "invalid_grant",
+            "necessary fields",
+            "refresh the access token",
+            "invalid_client",
+            "token has been expired",
+            "token expired",
+            "invalid credentials",
+            "401",
+        )
+        if any(marker in text for marker in stale_markers):
             return True
         if isinstance(exc, tuple) and len(exc) >= 2 and isinstance(exc[1], dict):
             error = str(exc[1].get("error", "")).lower()
-            return error in {"unauthorized_client", "invalid_grant"}
+            return error in {"unauthorized_client", "invalid_grant", "invalid_client"}
         return False

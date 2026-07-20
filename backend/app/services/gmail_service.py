@@ -17,20 +17,15 @@ class GmailService:
     ) -> list[dict]:
         if not settings.google_client_id or not settings.google_client_secret:
             raise ValueError("Google OAuth is not configured on the server")
+        if settings.google_client_id.startswith("your-") or settings.google_client_secret.startswith(
+            "your-"
+        ):
+            raise ValueError("Google OAuth is not configured on the server")
 
-        if access_token:
-            credentials = Credentials(token=access_token)
-        elif refresh_token:
-            credentials = Credentials(
-                None,
-                refresh_token=refresh_token,
-                token_uri="https://oauth2.googleapis.com/token",
-                client_id=settings.google_client_id,
-                client_secret=settings.google_client_secret,
-            )
-            credentials.refresh(GoogleRequest())
-        else:
-            raise ValueError("Gmail credentials are missing")
+        credentials = self._build_credentials(
+            refresh_token=refresh_token,
+            access_token=access_token,
+        )
 
         service = build("gmail", "v1", credentials=credentials, cache_discovery=False)
         list_response = (
@@ -78,3 +73,33 @@ class GmailService:
             )
 
         return emails
+
+    def _build_credentials(
+        self,
+        *,
+        refresh_token: str | None,
+        access_token: str | None,
+    ) -> Credentials:
+        """Prefer refresh_token so expired access tokens can be renewed."""
+        if refresh_token:
+            credentials = Credentials(
+                token=access_token,
+                refresh_token=refresh_token,
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=settings.google_client_id,
+                client_secret=settings.google_client_secret,
+            )
+            if not credentials.valid:
+                credentials.refresh(GoogleRequest())
+            return credentials
+
+        if access_token:
+            # Short-lived only — cannot refresh; used until Google returns 401.
+            return Credentials(
+                token=access_token,
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=settings.google_client_id,
+                client_secret=settings.google_client_secret,
+            )
+
+        raise ValueError("Gmail credentials are missing")

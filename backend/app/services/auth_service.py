@@ -170,7 +170,10 @@ class AuthService:
         except ValueError:
             pass
 
-        self._store_google_access_token(user, access_token_str)
+        if user.google_refresh_token:
+            user.google_access_token = None
+        else:
+            self._store_google_access_token(user, access_token_str)
         self._mark_gmail_connected(user)
         db.commit()
         db.refresh(user)
@@ -220,7 +223,10 @@ class AuthService:
             raise ValueError("Google account email does not match your TaskMail account")
 
         await self._store_google_refresh_token(user, server_auth_code)
-        self._store_google_access_token(user, access_token_str)
+        if user.google_refresh_token:
+            user.google_access_token = None
+        else:
+            self._store_google_access_token(user, access_token_str)
         if not user.google_refresh_token and not user.google_access_token:
             raise ValueError(
                 "Gmail access was not granted. On web, approve Gmail permissions when Google asks."
