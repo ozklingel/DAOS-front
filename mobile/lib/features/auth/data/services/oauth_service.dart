@@ -16,9 +16,11 @@ class OAuthService {
   GoogleSignIn? _googleSignIn;
   final FlutterAppAuth _appAuth;
 
+  /// Web OAuth client (Firebase project daos-15254). Override via --dart-define if recreated.
   static const String _googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '',
+    defaultValue:
+        '812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com',
   );
 
   static const String _outlookClientId = String.fromEnvironment(
@@ -38,12 +40,9 @@ class OAuthService {
         'profile',
         'https://www.googleapis.com/auth/gmail.readonly',
       ],
-      clientId: kIsWeb && _googleServerClientId.isNotEmpty
-          ? _googleServerClientId
-          : null,
-      serverClientId: !kIsWeb && _googleServerClientId.isNotEmpty
-          ? _googleServerClientId
-          : null,
+      // Web MUST pass clientId — empty/null causes Google 401 invalid_client.
+      clientId: kIsWeb ? _googleServerClientId : null,
+      serverClientId: !kIsWeb ? _googleServerClientId : null,
       forceCodeForRefreshToken:
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
     );
@@ -60,8 +59,8 @@ class OAuthService {
       }
 
       if (_googleServerClientId.isEmpty) {
-        debugPrint(
-          'GOOGLE_SERVER_CLIENT_ID is not set. Gmail sync requires the Web OAuth client ID.',
+        throw const AuthFailureException(
+          'GOOGLE_SERVER_CLIENT_ID is empty. Rebuild with a valid Web OAuth client ID.',
         );
       }
 
