@@ -39,7 +39,7 @@ curl http://127.0.0.1:8080/api/v1/emails/ai-status
 ```
 `ai_enabled: true` = משתמש ב-OpenAI (`OPENAI_API_KEY` ב-`backend/.env`).
 
-**2. בדיקת מייל לדוגמה (DEBUG=true):**
+**2. 2בדיקת מייל לדוגמה (DEBUG=true):**
 ```powershell
 curl -X POST http://127.0.0.1:8080/api/v1/emails/analyze-preview `
   -H "Content-Type: application/json" `
