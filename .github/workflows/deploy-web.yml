@@ -1,14 +1,14 @@
-# CI/CD — Flutter Web frontend
-# Push to main → build → deploy GitHub Pages
+# CI/CD — Flutter Web → GitHub Pages (gh-pages branch)
 #
-# Setup (once):
-# 1. Repo → Settings → Pages → Source: GitHub Actions
-# 2. Settings → Secrets and variables → Actions → Variables:
-#      API_BASE_URL = https://daos-api.onrender.com/api/v1
-#      GOOGLE_SERVER_CLIENT_ID = 812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com
-# 3. Google Cloud → Authorized JavaScript origins → add:
-#      https://<user>.github.io
-#      https://<user>.github.io/<repo>   (if project pages)
+# One-time setup:
+# 1. Repo → Settings → Pages → Build and deployment:
+#      Source: Deploy from a branch
+#      Branch: gh-pages / (root)
+# 2. Google Cloud → OAuth client → Authorized JavaScript origins:
+#      ONLY: https://ozklingel.github.io
+#      (NO path — do NOT add /DAOS-front/)
+# 3. Optional Variables (Actions):
+#      API_BASE_URL, GOOGLE_SERVER_CLIENT_ID
 
 name: Deploy Flutter Web
 
@@ -21,16 +21,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,32 +52,21 @@ jobs:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
           GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
         run: |
+          set -e
+          REPO_NAME="${{ github.event.repository.name }}"
           API_BASE_URL="${API_BASE_URL:-https://daos-api.onrender.com/api/v1}"
           GOOGLE_SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID:-812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com}"
+          echo "Building with base-href=/${REPO_NAME}/"
           flutter build web --release \
-            --base-href "/${{ github.event.repository.name }}/" \
+            --base-href "/${REPO_NAME}/" \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
             --dart-define=GOOGLE_SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
-
-      # SPA fallback for GitHub Pages deep links
-      - name: Prepare Pages artifact
-        run: |
           cp build/web/index.html build/web/404.html
-          mkdir -p ../_site
-          cp -r build/web/. ../_site/
+          ls -la build/web | head
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./mobile/build/web
+          force_orphan: true
