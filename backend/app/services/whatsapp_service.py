@@ -307,8 +307,7 @@ class WhatsAppService:
             if audio_bytes:
                 transcript = self.ai.transcribe_audio(audio_bytes) or ""
         else:
-            reply = "שלחו הודעת קול או טקסט בעברית כדי ליצור משימה."
-            await self.send_text(phone, reply)
+            logger.info("WhatsApp: unsupported type=%s — no reply", msg_type)
             self._record_inbound(
                 db,
                 from_phone=phone,
@@ -317,31 +316,57 @@ class WhatsAppService:
                 body_text=None,
                 user_id=user.id,
                 task_id=None,
-                bot_reply=reply,
+                bot_reply=None,
                 status="unsupported_type",
             )
-            return None, reply, "unsupported_type"
+            return None, "", "unsupported_type"
 
         if not transcript.strip():
-            reply = "לא הצלחתי להבין את ההודעה. נסו שוב."
-            await self.send_text(phone, reply)
+            logger.info("WhatsApp: empty transcript — no reply")
             self._record_inbound(
                 db,
                 from_phone=phone,
                 message_id=message_id,
                 msg_type=msg_type,
-                body_text=transcript or None,
+                body_text=None,
                 user_id=user.id,
                 task_id=None,
-                bot_reply=reply,
+                bot_reply=None,
                 status="empty_transcript",
             )
-            return None, reply, "empty_transcript"
+            return None, "", "empty_transcript"
+
+        if "משימה" not in transcript:
+            logger.info(
+                "WhatsApp: no keyword משימה in message from %s — no reply",
+                self.normalize_phone(phone),
+            )
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=transcript,
+                user_id=user.id,
+                task_id=None,
+                bot_reply=None,
+                status="no_task_keyword",
+            )
+            return None, "", "no_task_keyword"
 
         task, reply, status = self._create_task_from_transcript(
             db, user, transcript, whatsapp_message_id=message_id
         )
-        await self.send_text(phone, reply)
+        # Outbound only when registered user + keyword משימה + task actually created
+        send_reply = status == "task_created" and bool(reply.strip())
+        if send_reply:
+            await self.send_text(phone, reply)
+        else:
+            logger.info(
+                "WhatsApp: no outbound reply (status=%s) for %s",
+                status,
+                self.normalize_phone(phone),
+            )
         self._record_inbound(
             db,
             from_phone=phone,
@@ -350,10 +375,10 @@ class WhatsAppService:
             body_text=transcript,
             user_id=user.id,
             task_id=task.id if task else None,
-            bot_reply=reply,
+            bot_reply=reply if send_reply else None,
             status=status,
         )
-        return task, reply, status
+        return task, reply if send_reply else "", status
 
     def _create_task_from_transcript(
         self,
