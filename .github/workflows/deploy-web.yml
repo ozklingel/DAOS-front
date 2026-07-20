@@ -1,0 +1,84 @@
+# CI/CD — Flutter Web frontend
+# Push to main → build → deploy GitHub Pages
+#
+# Setup (once):
+# 1. Repo → Settings → Pages → Source: GitHub Actions
+# 2. Settings → Secrets and variables → Actions → Variables:
+#      API_BASE_URL = https://daos-api.onrender.com/api/v1
+#      GOOGLE_SERVER_CLIENT_ID = 812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com
+# 3. Google Cloud → Authorized JavaScript origins → add:
+#      https://<user>.github.io
+#      https://<user>.github.io/<repo>   (if project pages)
+
+name: Deploy Flutter Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build web (release)
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+        run: |
+          API_BASE_URL="${API_BASE_URL:-https://daos-api.onrender.com/api/v1}"
+          GOOGLE_SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID:-812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com}"
+          flutter build web --release \
+            --base-href "/${{ github.event.repository.name }}/" \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
+
+      # SPA fallback for GitHub Pages deep links
+      - name: Prepare Pages artifact
+        run: |
+          cp build/web/index.html build/web/404.html
+          mkdir -p ../_site
+          cp -r build/web/. ../_site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
