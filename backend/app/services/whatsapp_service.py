@@ -275,13 +275,11 @@ class WhatsAppService:
         user = self.find_user_by_phone(db, phone)
         if not user:
             logger.warning(
-                "WhatsApp: no user linked for phone %s (normalized %s). "
-                "Link this number in app: Settings -> Integrations -> WhatsApp",
+                "WhatsApp: ignoring message from unregistered phone %s (normalized %s). "
+                "No reply sent. Link number in app: Settings -> Integrations -> WhatsApp",
                 phone,
                 self.normalize_phone(phone),
             )
-            reply = "שלום! כדי ליצור משימות מ-WhatsApp, חברו את מספר הטלפון שלכם בהגדרות → אינטגרציות."
-            await self.send_text(phone, reply)
             self._record_inbound(
                 db,
                 from_phone=phone,
@@ -290,10 +288,10 @@ class WhatsAppService:
                 body_text=None,
                 user_id=None,
                 task_id=None,
-                bot_reply=reply,
+                bot_reply=None,
                 status="no_user",
             )
-            return None, reply, "no_user"
+            return None, "", "no_user"
 
         transcript = ""
         if msg_type == "text":
