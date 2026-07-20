@@ -8,7 +8,7 @@
 #      ONLY: https://ozklingel.github.io
 #      (NO path — do NOT add /DAOS-front/)
 # 3. Optional Variables (Actions):
-#      API_BASE_URL, GOOGLE_SERVER_CLIENT_ID
+#      API_BASE_URL, GOOGLE_SERVER_CLIENT_ID2
 
 name: Deploy Flutter Web
 
