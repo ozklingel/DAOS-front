@@ -26,12 +26,15 @@ async def _process_green_payload(payload: dict) -> None:
 @router.post("/green-api")
 async def green_api_webhook(request: Request, background_tasks: BackgroundTasks):
     """Green API incomingMessageReceived webhook."""
-    if not settings.green_api_enabled:
-        logger.warning("Green API webhook received but GREEN_API_* not configured")
-        return {"status": "ignored"}
-
     body = await request.body()
     logger.info("Green API webhook POST (%d bytes)", len(body))
+
+    if not settings.green_api_enabled:
+        logger.warning(
+            "Green API webhook received but GREEN_API_ID_INSTANCE / GREEN_API_TOKEN "
+            "not set on server — add env vars on Render and redeploy"
+        )
+        return {"status": "ignored", "reason": "green_api_not_configured"}
 
     try:
         payload = json.loads(body)
@@ -40,9 +43,10 @@ async def green_api_webhook(request: Request, background_tasks: BackgroundTasks)
         return {"status": "invalid_json"}
 
     webhook_type = payload.get("typeWebhook", "")
+    logger.info("Green API webhook type=%s", webhook_type)
+
     if webhook_type != "incomingMessageReceived":
-        logger.debug("Green API webhook ignored: type=%s", webhook_type)
-        return {"status": "ignored"}
+        return {"status": "ignored", "reason": "not_incoming_message"}
 
     background_tasks.add_task(_process_green_payload, payload)
     return {"status": "ok"}
