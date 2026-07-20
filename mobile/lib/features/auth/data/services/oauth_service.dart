@@ -102,12 +102,13 @@ class OAuthService {
       if (e is AppException) rethrow;
       debugPrint('Google sign-in error: $e');
       final msg = e.toString();
-      if (kIsWeb && (msg.contains('origin') || msg.contains('invalid_client') || msg.contains('popup'))) {
+      if (kIsWeb && (msg.contains('origin') || msg.contains('invalid_client') || msg.contains('popup') || msg.contains('OAuth client'))) {
         throw AuthFailureException(
-          'Google Web OAuth failed (no registered origin / invalid_client). '
-          'Run .\\scripts\\dev_web.ps1 (port 5173 + client ID from backend/.env). '
-          'In Google Cloud, add http://127.0.0.1:5173 and http://localhost:5173 to '
-          'Authorized JavaScript origins for client 812104653331-... See WEB_OAUTH_FIX.md.',
+          'Google Web OAuth failed (invalid_client / origin). '
+          'In Google Cloud → APIs & Services → Credentials → Web client: '
+          '1) Confirm client ID matches 812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt... '
+          '2) Authorized JavaScript origins must include https://ozklingel.github.io '
+          '(no path) and http://127.0.0.1:5173 for local. See WEB_OAUTH_FIX.md.',
         );
       }
       if (msg.contains('people.googleapis.com') || msg.contains('People API')) {

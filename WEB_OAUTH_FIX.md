@@ -24,14 +24,25 @@ The old ID (`45773018634-5cb346...`) was still in `dev_web.ps1` and `index.html`
    `812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com`  
    (Firebase → Project settings → Your apps → Web app, or OAuth 2.0 Client IDs list)
 
-3. **Authorized JavaScript origins** — add both:
+3. **Authorized JavaScript origins** — add (origins only, **no path**):
 
    ```
    http://127.0.0.1:5173
    http://localhost:5173
+   https://ozklingel.github.io
    ```
 
-4. **Authorized redirect URIs** — add the same two URLs.
+   Do **not** add `https://ozklingel.github.io/DAOS-front/` — Google rejects paths. The origin above covers the GitHub Pages site.
+
+4. **Authorized redirect URIs** — for local + Pages (optional extras):
+
+   ```
+   http://127.0.0.1:5173
+   http://localhost:5173
+   https://ozklingel.github.io
+   https://ozklingel.github.io/DAOS-front
+   https://ozklingel.github.io/DAOS-front/
+   ```
 
 5. **OAuth consent screen** → **Test users** → add `ozklingel@gmail.com`
 
@@ -42,6 +53,20 @@ The old ID (`45773018634-5cb346...`) was still in `dev_web.ps1` and `index.html`
    - [Gmail API](https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=812104653331) — email sync
 
    Click **Enable** on each, wait ~2 minutes, then retry sign-in.
+
+---
+
+## `invalid_client` / "OAuth client was not found" on GitHub Pages
+
+1. Open [Credentials — daos-15254](https://console.cloud.google.com/apis/credentials?project=daos-15254)
+2. Confirm a **Web application** client exists with ID:
+   `812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com`
+3. If missing → **Create credentials → OAuth client ID → Web application**, then update:
+   - `mobile/web/index.html` meta `google-signin-client_id`
+   - GitHub Actions variable `GOOGLE_SERVER_CLIENT_ID`
+   - Render / `backend/.env` → `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
+4. Origins must include `https://ozklingel.github.io` (see above)
+5. If consent screen is **Testing**, your Gmail must be under **Test users**
 
 ---
 
