@@ -106,7 +106,7 @@ class AIService:
             return None, "empty"
         return self.analyze_email_detailed(
             subject=text[:200],
-            sender="WhatsApp",
+            sender="Voice",
             snippet=text,
         )
 

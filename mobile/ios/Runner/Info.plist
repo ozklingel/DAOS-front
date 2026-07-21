@@ -49,6 +49,8 @@
 	<string>האפליקציה צריכה גישה למצלמה כדי לצלם מסמכים ולשמור אותם בדף מידע.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>האפליקציה צריכה גישה לתמונות כדי להעלות מסמכים לדף מידע.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>האפליקציה צריכה גישה למיקרופון כדי להקליט משימות קוליות.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

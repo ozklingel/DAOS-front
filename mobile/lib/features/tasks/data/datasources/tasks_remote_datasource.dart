@@ -80,14 +80,28 @@ class TasksRemoteDataSource {
     return TaskModel.fromJson(data);
   }
 
-  Future<VoiceTaskResult> createFromVoice({required String transcript}) async {
-    final form = FormData.fromMap({'transcript': transcript});
+  Future<VoiceTaskResult> createFromVoice({
+    String? transcript,
+    List<int>? audioBytes,
+    String audioFilename = 'voice.wav',
+  }) async {
+    final map = <String, dynamic>{};
+    if (transcript != null && transcript.trim().isNotEmpty) {
+      map['transcript'] = transcript.trim();
+    }
+    if (audioBytes != null && audioBytes.isNotEmpty) {
+      map['audio'] = MultipartFile.fromBytes(
+        audioBytes,
+        filename: audioFilename,
+      );
+    }
+    final form = FormData.fromMap(map);
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.tasksFromVoice,
       data: form,
       options: Options(
-        sendTimeout: const Duration(seconds: 90),
-        receiveTimeout: const Duration(seconds: 90),
+        sendTimeout: const Duration(seconds: 120),
+        receiveTimeout: const Duration(seconds: 120),
       ),
       parser: (d) => d as Map<String, dynamic>,
     );

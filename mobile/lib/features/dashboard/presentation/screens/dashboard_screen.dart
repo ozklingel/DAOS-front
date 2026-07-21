@@ -7,6 +7,7 @@ import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart
 import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/weather_card.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
+import 'package:taskmail/features/dashboard/presentation/widgets/voice_task_recorder_sheet.dart';
 import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
 import 'package:taskmail/features/info/data/services/document_capture_service.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
@@ -139,7 +140,7 @@ class DashboardScreen extends ConsumerWidget {
                   onAddTask: () => context.go(RouteNames.tasks),
                   onWhatsAppHelp: () => _showWhatsAppHelp(context, l),
                   onTakePhoto: () => _takePhotoAndUpload(context, ref, l),
-                  onVoiceRecord: () => _showVoiceTaskSheet(context, ref, l),
+                  onVoiceRecord: () => showVoiceTaskRecorder(context, ref),
                 ),
               ],
             ),
@@ -167,112 +168,6 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _showVoiceTaskSheet(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l,
-  ) async {
-    final controller = TextEditingController();
-    final submitted = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            16,
-            24,
-            MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.voiceTaskTitle,
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                      color: AppColors.darkTextPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l.voiceTaskHint,
-                style: const TextStyle(color: AppColors.darkTextSecondary),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'משימה: ...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx, false);
-                  _showWhatsAppHelp(context, l);
-                },
-                child: Text(l.whatsappVoiceHelpTitle),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(l.voiceTaskSubmit),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    final text = controller.text.trim();
-    controller.dispose();
-    if (submitted != true || text.isEmpty || !context.mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final result = await ref
-          .read(tasksRemoteDataSourceProvider)
-          .createFromVoice(transcript: text);
-      if (context.mounted) {
-        final nav = Navigator.of(context, rootNavigator: true);
-        if (nav.canPop()) nav.pop();
-      }
-      ref.invalidate(todayTasksProvider);
-      ref.invalidate(dashboardProvider);
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(result.created ? l.voiceTaskCreated : result.message)),
-      );
-      if (result.created) {
-        context.go(RouteNames.tasks);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        final nav = Navigator.of(context, rootNavigator: true);
-        if (nav.canPop()) nav.pop();
-        messenger.showSnackBar(SnackBar(content: Text(l.errorMessage(e))));
-      }
-    }
   }
 
   Future<void> _takePhotoAndUpload(

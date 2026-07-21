@@ -26,17 +26,32 @@ async def create_task_from_voice(
     if audio is not None:
         raw = await audio.read()
         if raw:
-            spoken = ai_service.transcribe_audio(
-                raw,
-                filename=audio.filename or "voice.webm",
-            )
-            if spoken:
-                text = f"{text} {spoken}".strip() if text else spoken
+            try:
+                spoken = ai_service.transcribe_audio(
+                    raw,
+                    filename=audio.filename or "voice.wav",
+                )
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail={"message": f"תמלול נכשל: {exc}"},
+                ) from exc
+            if not spoken:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "message": (
+                            "לא הצלחנו לתמלל את ההקלטה. "
+                            "בדקו שיש קרדיט ב-OpenAI (Whisper) ונסו שוב."
+                        )
+                    },
+                )
+            text = f"{text} {spoken}".strip() if text else spoken
 
     if not text:
         raise HTTPException(
             status_code=400,
-            detail={"message": "חסר טקסט או הקלטה. כתבו משימה או העלו קובץ אודיו."},
+            detail={"message": "חסרה הקלטה תקינה."},
         )
 
     # Ensure the Hebrew task keyword so analysis accepts the message

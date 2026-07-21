@@ -69,6 +69,12 @@ abstract class AppLocalizations {
   String get voiceTaskHint;
   String get voiceTaskSubmit;
   String get voiceTaskCreated;
+  String get voiceRecordHint;
+  String get voiceTapToStart;
+  String get voiceTapToStop;
+  String get voiceProcessing;
+  String get voiceMicDenied;
+  String get voiceRecordFailed;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
 
@@ -371,7 +377,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get documentDeleted => 'Document deleted';
   @override
-  String get voiceTaskTitle => 'Voice / quick task';
+  String get voiceTaskTitle => 'Voice task';
   @override
   String get voiceTaskHint =>
       'Type what you would say, e.g. משימה: להתקשר לרופא מחר';
@@ -379,6 +385,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceTaskSubmit => 'Create task';
   @override
   String get voiceTaskCreated => 'Task created';
+  @override
+  String get voiceRecordHint =>
+      'Tap the mic, say your task (include the word משימה), then tap stop.';
+  @override
+  String get voiceTapToStart => 'Tap to start recording';
+  @override
+  String get voiceTapToStop => 'Tap to stop and create task';
+  @override
+  String get voiceProcessing => 'Transcribing and creating task…';
+  @override
+  String get voiceMicDenied => 'Microphone permission denied';
+  @override
+  String get voiceRecordFailed => 'Recording failed — try again';
   @override
   String get noTasksToday => 'No tasks for today — sync your email to get started.';
   @override
@@ -989,7 +1008,7 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get documentDeleted => 'המסמך נמחק';
   @override
-  String get voiceTaskTitle => 'משימה קולית / מהירה';
+  String get voiceTaskTitle => 'משימה קולית';
   @override
   String get voiceTaskHint =>
       'כתבו מה הייתם אומרים, למשל: משימה: להתקשר לרופא מחר';
@@ -997,6 +1016,19 @@ class AppLocalizationsHe extends AppLocalizations {
   String get voiceTaskSubmit => 'צור משימה';
   @override
   String get voiceTaskCreated => 'המשימה נוצרה';
+  @override
+  String get voiceRecordHint =>
+      'לחצו על המיקרופון, אמרו את המשימה (עם המילה משימה), ואז לחצו עצור.';
+  @override
+  String get voiceTapToStart => 'לחצו להתחלת הקלטה';
+  @override
+  String get voiceTapToStop => 'לחצו לעצור וליצור משימה';
+  @override
+  String get voiceProcessing => 'מתמלל ויוצר משימה…';
+  @override
+  String get voiceMicDenied => 'אין הרשאה למיקרופון';
+  @override
+  String get voiceRecordFailed => 'ההקלטה נכשלה — נסו שוב';
   @override
   String get noTasksToday => 'אין משימות להיום — סנכרנו מיילים כדי להתחיל.';
   @override
