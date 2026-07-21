@@ -53,7 +53,19 @@ class Settings(BaseSettings):
     green_api_id_instance: str = ""
     green_api_token: str = ""
 
-    # Salt Edge — Israeli Open Finance aggregator (https://www.saltedge.com / saltedge.co.il)
+    # Finanda Smart Aggregation — primary Israeli Open Banking
+    # https://www.finanda.com/open-banking/  |  docs: https://docs.finanda.com
+    finanda_api_url: str = ""
+    finanda_client_id: str = ""
+    finanda_client_secret: str = ""
+    finanda_api_key: str = ""
+    finanda_return_url: str = "https://ozklingel.github.io/DAOS-front/#/finance"
+    finanda_consent_path: str = "/v1/consents"
+    finanda_token_path: str = "/v1/oauth/token"
+    finanda_accounts_path: str = "/v1/accounts"
+    finanda_transactions_path: str = "/v1/accounts/{account_id}/transactions"
+
+    # Salt Edge — optional fallback aggregator
     salt_edge_app_id: str = ""
     salt_edge_secret: str = ""
     salt_edge_api_url: str = "https://www.saltedge.com"
@@ -63,6 +75,16 @@ class Settings(BaseSettings):
     @property
     def green_api_enabled(self) -> bool:
         return bool(self.green_api_id_instance.strip() and self.green_api_token.strip())
+
+    @property
+    def finanda_enabled(self) -> bool:
+        return bool(
+            self.finanda_api_url.strip()
+            and (
+                self.finanda_api_key.strip()
+                or (self.finanda_client_id.strip() and self.finanda_client_secret.strip())
+            )
+        )
 
     @property
     def salt_edge_enabled(self) -> bool:

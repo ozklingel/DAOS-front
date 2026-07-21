@@ -601,7 +601,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bankAccountsTitle => 'Bank accounts';
   @override
   String get bankDemoModeHint =>
-      'Demo mode: sample balances until Salt Edge credentials are configured.';
+      'Uses Finanda Open Banking. Add FINANDA_API_URL + keys from finanda.com/docs.';
   @override
   String get bankConnectedSuccess => 'Bank connected';
   @override
@@ -1182,7 +1182,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get bankAccountsTitle => 'חשבונות בנק';
   @override
   String get bankDemoModeHint =>
-      'מצב הדגמה: יתרות לדוגמה עד להגדרת מפתחות Salt Edge.';
+      'חיבור דרך Finanda. הוסיפו FINANDA_API_URL ומפתחות מ־finanda.com / docs.finanda.com.';
   @override
   String get bankConnectedSuccess => 'הבנק חובר בהצלחה';
   @override

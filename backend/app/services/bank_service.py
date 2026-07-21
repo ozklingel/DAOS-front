@@ -1,8 +1,8 @@
-"""Israeli bank linking via Salt Edge Account Information API (v5) or local demo.
+"""Israeli bank linking via Finanda Smart Aggregation (primary) or Salt Edge / demo.
 
-Without SALT_EDGE_APP_ID + SALT_EDGE_SECRET → demo balances only.
-With keys (new accounts): Fake Bank works immediately; real Israeli banks need
-Salt Edge Test/Live approval (Request Test Access + Israel sales).
+Primary: https://www.finanda.com/open-banking/  (docs: https://docs.finanda.com)
+Requires FINANDA_API_URL + credentials from Finanda onboarding.
+Finanda clients typically need an Israeli financial-information license/approval.
 """
 
 from __future__ import annotations
@@ -18,10 +18,11 @@ from app.config import settings
 from app.core.security import new_id
 from app.models import BankAccount, BankConnection, FinanceTransaction, TransactionType, User
 from app.services.budget_service import BudgetService
+from app.services.finanda_client import FINANDA_BANKS, FinandaClient
 
 logger = logging.getLogger(__name__)
 
-# Curated UI list for demo mode (not Salt Edge provider codes)
+# Curated UI list for demo mode
 ISRAELI_BANKS: list[dict[str, str]] = [
     {"code": "leumi", "name": "בנק לאומי", "name_en": "Bank Leumi"},
     {"code": "hapoalim", "name": "בנק הפועלים", "name_en": "Bank Hapoalim"},
@@ -33,17 +34,11 @@ ISRAELI_BANKS: list[dict[str, str]] = [
     {"code": "isracard", "name": "ישראכרט", "name_en": "Isracard"},
 ]
 
-# Always available once Salt Edge keys exist (pending / test accounts)
 SALTEDGE_TEST_BANKS: list[dict[str, str]] = [
     {
-        "code": "fakebank_simple_xf",
-        "name": "Fake Bank (בדיקת Salt Edge)",
-        "name_en": "Fake Bank Simple — use username/secret from screen",
-    },
-    {
         "code": "saltedge_pick",
-        "name": "בחירה במסך Salt Edge (ישראל)",
-        "name_en": "Pick any bank in Salt Edge Connect (IL when approved)",
+        "name": "הבנק שלי (בחירה במסך Salt Edge)",
+        "name_en": "My bank — pick in Salt Edge (needs Test Access for Israel)",
     },
 ]
 
@@ -86,31 +81,40 @@ _DEMO_TX: list[dict[str, Any]] = [
 
 class BankService:
     def providers(self) -> dict[str, Any]:
-        if settings.salt_edge_enabled:
-            providers = list(SALTEDGE_TEST_BANKS)
-            try:
-                providers.extend(self._fetch_saltedge_il_providers())
-            except Exception:
-                logger.exception("Could not list Salt Edge IL providers")
+        if settings.finanda_enabled:
             return {
                 "country": "IL",
                 "currency": "ILS",
-                "mode": "saltedge",
-                "providers": providers,
-                "hint": (
-                    "New Salt Edge accounts can only connect Fake Bank until "
-                    "Test Access is approved for Israeli banks."
-                ),
+                "mode": "finanda",
+                "providers": [
+                    {
+                        "code": b["code"],
+                        "name": b["name"],
+                        "name_en": b["name_en"],
+                    }
+                    for b in FINANDA_BANKS
+                ],
+                "hint": "Connected via Finanda Smart Aggregation (Israeli Open Banking).",
             }
+
+        # Finanda is preferred: show Israeli banks even before credentials
         return {
             "country": "IL",
             "currency": "ILS",
-            "mode": "demo",
+            "mode": "finanda_setup",
             "providers": [
-                {"code": b["code"], "name": b["name"], "name_en": b["name_en"]}
-                for b in ISRAELI_BANKS
+                {
+                    "code": b["code"],
+                    "name": b["name"],
+                    "name_en": b["name_en"],
+                }
+                for b in FINANDA_BANKS
             ],
-            "hint": "Configure SALT_EDGE_APP_ID and SALT_EDGE_SECRET for live Open Finance.",
+            "hint": (
+                "Set FINANDA_API_URL + FINANDA_API_KEY (or client id/secret) from "
+                "https://www.finanda.com/open-banking/ and https://docs.finanda.com. "
+                "Finanda usually requires an Israeli financial-information license."
+            ),
         }
 
     def list_accounts(self, db: Session, user: User) -> list[dict[str, Any]]:
@@ -139,41 +143,29 @@ class BankService:
         provider_code: str,
         budget_type: str = "home",
         return_url: str | None = None,
+        psu_id: str | None = None,
     ) -> dict[str, Any]:
         if budget_type not in {"home", "business"}:
             budget_type = "home"
 
         code = provider_code.strip().lower()
 
-        if settings.salt_edge_enabled:
-            bank = self._resolve_saltedge_bank(code)
-            return self._start_saltedge_connect(
-                db, user, bank=bank, budget_type=budget_type, return_url=return_url
+        # Primary: Finanda
+        if settings.finanda_enabled:
+            return self._start_finanda_connect(
+                db,
+                user,
+                provider_code=code,
+                budget_type=budget_type,
+                return_url=return_url,
+                psu_id=psu_id,
             )
 
-        bank = self._find_demo_bank(code)
-        if not bank:
-            raise ValueError("Unknown Israeli bank provider")
-
-        existing = (
-            db.query(BankConnection)
-            .filter(
-                BankConnection.user_id == user.id,
-                BankConnection.provider_code == bank["code"],
-                BankConnection.status == "active",
-            )
-            .first()
+        raise ValueError(
+            "Finanda credentials missing. Join https://www.finanda.com/open-banking/ "
+            "waitlist, get API URL + keys from https://docs.finanda.com, set FINANDA_* "
+            "in backend/.env, restart backend, then connect again."
         )
-        if existing:
-            return {
-                "status": "already_connected",
-                "mode": existing.mode,
-                "connection": self._connection_to_dict(existing),
-                "accounts": [self._account_to_dict(a) for a in existing.accounts],
-                "connect_url": None,
-                "imported_transactions": 0,
-            }
-        return self._demo_connect(db, user, bank=bank, budget_type=budget_type)
 
     def sync_connection(self, db: Session, user: User, connection_id: str) -> dict[str, Any]:
         conn = (
@@ -184,9 +176,10 @@ class BankService:
         if not conn:
             raise ValueError("Bank connection not found")
 
-        if conn.mode == "saltedge" and settings.salt_edge_enabled:
+        if conn.mode == "finanda":
+            imported = self._sync_finanda(db, user, conn)
+        elif conn.mode == "saltedge" and settings.salt_edge_enabled:
             if not conn.external_connection_id:
-                # Try to discover connection from Salt Edge by customer
                 discovered = self._discover_external_connection(conn)
                 if discovered:
                     conn.external_connection_id = discovered
@@ -395,6 +388,290 @@ class BankService:
                 external_id=external_id,
             )
             imported += 1
+        return imported
+
+    def _start_finanda_connect(
+        self,
+        db: Session,
+        user: User,
+        *,
+        provider_code: str,
+        budget_type: str,
+        return_url: str | None,
+        psu_id: str | None,
+    ) -> dict[str, Any]:
+        bank = next((b for b in FINANDA_BANKS if b["code"] == provider_code), None)
+        if not bank:
+            bank = {
+                "code": provider_code,
+                "name": provider_code,
+                "name_en": provider_code,
+                "finanda_code": provider_code,
+            }
+
+        existing = (
+            db.query(BankConnection)
+            .filter(
+                BankConnection.user_id == user.id,
+                BankConnection.provider_code == bank["code"],
+                BankConnection.status == "active",
+                BankConnection.mode == "finanda",
+            )
+            .first()
+        )
+        if existing:
+            return {
+                "status": "already_connected",
+                "mode": "finanda",
+                "connection": self._connection_to_dict(existing),
+                "accounts": [self._account_to_dict(a) for a in existing.accounts],
+                "connect_url": None,
+                "imported_transactions": 0,
+            }
+
+        conn = BankConnection(
+            id=new_id(),
+            user_id=user.id,
+            provider_code=bank["code"],
+            provider_name=bank["name"],
+            status="pending",
+            mode="finanda",
+            consent_expires_at=datetime.now(UTC) + timedelta(days=180),
+        )
+        db.add(conn)
+        db.commit()
+        db.refresh(conn)
+
+        callback = (return_url or settings.finanda_return_url).replace("127.0.0.1", "localhost")
+        sep = "&" if "?" in callback else "?"
+        return_to = f"{callback}{sep}daos_connection_id={conn.id}"
+
+        client = FinandaClient()
+        try:
+            result = client.create_consent(
+                provider_code=bank.get("finanda_code", bank["code"]),
+                psu_id=psu_id,
+                return_url=return_to,
+                custom_fields={
+                    "daos_connection_id": conn.id,
+                    "budget_type": budget_type,
+                    "user_id": user.id,
+                },
+            )
+        except Exception as exc:
+            logger.exception("Finanda consent failed")
+            conn.status = "error"
+            db.commit()
+            raise ValueError(f"Finanda connect failed: {exc}") from exc
+
+        if result.get("consent_id"):
+            conn.external_connection_id = str(result["consent_id"])
+            db.commit()
+            db.refresh(conn)
+
+        return {
+            "status": "pending",
+            "mode": "finanda",
+            "connection": self._connection_to_dict(conn),
+            "accounts": [],
+            "connect_url": result["connect_url"],
+            "imported_transactions": 0,
+        }
+
+    def complete_finanda_callback(
+        self,
+        db: Session,
+        user: User,
+        *,
+        connection_id: str,
+        consent_id: str | None = None,
+        code: str | None = None,
+    ) -> dict[str, Any]:
+        conn = (
+            db.query(BankConnection)
+            .filter(BankConnection.id == connection_id, BankConnection.user_id == user.id)
+            .first()
+        )
+        if not conn:
+            raise ValueError("Bank connection not found")
+        if consent_id:
+            conn.external_connection_id = consent_id
+        conn.status = "active"
+        db.commit()
+
+        client = FinandaClient()
+        if conn.external_connection_id:
+            try:
+                token_data = client.exchange_token(
+                    consent_id=conn.external_connection_id, code=code
+                )
+                access_token = (
+                    token_data.get("access_token")
+                    or token_data.get("accessToken")
+                    or token_data.get("token")
+                )
+                if access_token:
+                    conn.external_customer_id = str(access_token)[:128]
+                    db.commit()
+            except Exception:
+                logger.exception("Finanda token exchange skipped/failed")
+
+        return self.sync_connection(db, user, conn.id)
+
+    def _sync_finanda(self, db: Session, user: User, conn: BankConnection) -> int:
+        if not conn.external_connection_id:
+            raise ValueError(
+                "Finanda consent not completed yet — finish bank login, then tap Sync"
+            )
+        if not settings.finanda_enabled:
+            raise ValueError("Finanda credentials are not configured")
+
+        client = FinandaClient()
+        access_token = conn.external_customer_id
+        accounts = client.list_accounts(
+            consent_id=conn.external_connection_id, access_token=access_token
+        )
+        budget = BudgetService()
+        imported = 0
+        existing_by_ext = {
+            a.external_account_id: a for a in conn.accounts if a.external_account_id
+        }
+
+        for item in accounts:
+            ext_id = str(
+                item.get("id")
+                or item.get("accountId")
+                or item.get("resourceId")
+                or item.get("account_id")
+                or ""
+            )
+            if not ext_id:
+                continue
+            balance_raw = item.get("balance")
+            if isinstance(balance_raw, dict):
+                balance = float(
+                    balance_raw.get("amount")
+                    or balance_raw.get("value")
+                    or (balance_raw.get("balanceAmount") or {}).get("amount")
+                    or 0
+                )
+            else:
+                balances = item.get("balances") or []
+                if balances and isinstance(balances[0], dict):
+                    ba = balances[0].get("balanceAmount") or balances[0]
+                    balance = float(ba.get("amount") or ba.get("value") or 0)
+                else:
+                    balance = float(balance_raw or item.get("availableBalance") or 0)
+
+            name = str(
+                item.get("name")
+                or item.get("product")
+                or item.get("displayName")
+                or "חשבון"
+            )
+            acc = existing_by_ext.get(ext_id)
+            if not acc:
+                acc = BankAccount(
+                    id=new_id(),
+                    user_id=user.id,
+                    connection_id=conn.id,
+                    provider_code=conn.provider_code,
+                    provider_name=conn.provider_name,
+                    name=name,
+                    account_type=str(
+                        item.get("cashAccountType") or item.get("nature") or "checking"
+                    ),
+                    currency=str(item.get("currency") or item.get("currencyCode") or "ILS"),
+                    balance=balance,
+                    iban_masked=self._mask_iban(item.get("iban") or item.get("IBAN")),
+                    external_account_id=ext_id,
+                    budget_type="home",
+                )
+                db.add(acc)
+                db.flush()
+            else:
+                acc.balance = balance
+                acc.name = name
+
+            try:
+                txs = client.list_transactions(
+                    account_id=ext_id,
+                    consent_id=conn.external_connection_id,
+                    access_token=access_token,
+                )
+            except Exception:
+                logger.exception("Finanda transactions fetch failed for %s", ext_id)
+                txs = []
+
+            for tx in txs:
+                ext_tx = str(
+                    tx.get("id") or tx.get("transactionId") or tx.get("entryReference") or ""
+                )
+                if not ext_tx:
+                    continue
+                exists = (
+                    db.query(FinanceTransaction)
+                    .filter(
+                        FinanceTransaction.user_id == user.id,
+                        FinanceTransaction.external_id == ext_tx,
+                    )
+                    .first()
+                )
+                if exists:
+                    continue
+                amount_info = tx.get("transactionAmount") or tx.get("amount") or {}
+                if isinstance(amount_info, dict):
+                    raw_amount = float(amount_info.get("amount") or amount_info.get("value") or 0)
+                else:
+                    raw_amount = float(amount_info or 0)
+                amount = abs(raw_amount)
+                if amount <= 0:
+                    continue
+                made_on = (
+                    tx.get("bookingDate")
+                    or tx.get("valueDate")
+                    or tx.get("made_on")
+                    or tx.get("date")
+                )
+                occurred = (
+                    datetime.fromisoformat(f"{str(made_on)[:10]}T12:00:00+00:00")
+                    if made_on
+                    else datetime.now(UTC)
+                )
+                credit_debit = str(tx.get("creditDebitIndicator") or "").upper()
+                if credit_debit == "DBIT":
+                    tx_type = TransactionType.expense.value
+                elif credit_debit == "CRDT":
+                    tx_type = TransactionType.income.value
+                else:
+                    tx_type = (
+                        TransactionType.income.value
+                        if raw_amount >= 0
+                        else TransactionType.expense.value
+                    )
+                title = str(
+                    tx.get("remittanceInformationUnstructured")
+                    or tx.get("description")
+                    or tx.get("additionalInformation")
+                    or "תנועה בנקאית"
+                )[:255]
+                budget.create_transaction(
+                    db,
+                    user,
+                    budget_type=acc.budget_type,
+                    title=title,
+                    amount=amount,
+                    tx_type=tx_type,
+                    category="bank",
+                    icon="account_balance",
+                    occurred_at=occurred,
+                    bank_account_id=acc.id,
+                    external_id=ext_tx,
+                )
+                imported += 1
+
+        conn.status = "active"
+        db.commit()
         return imported
 
     def _start_saltedge_connect(

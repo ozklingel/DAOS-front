@@ -42,6 +42,16 @@ services:
         sync: false
       - key: GREEN_API_TOKEN
         sync: false
+      - key: FINANDA_API_URL
+        sync: false
+      - key: FINANDA_API_KEY
+        sync: false
+      - key: FINANDA_CLIENT_ID
+        sync: false
+      - key: FINANDA_CLIENT_SECRET
+        sync: false
+      - key: FINANDA_RETURN_URL
+        value: https://ozklingel.github.io/DAOS-front/#/finance
       - key: SALT_EDGE_APP_ID
         sync: false
       - key: SALT_EDGE_SECRET

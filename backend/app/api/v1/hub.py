@@ -12,6 +12,7 @@ from app.schemas import (
     BankConnectIn,
     BankConnectOut,
     BankConnectionOut,
+    BankFinandaCallbackIn,
     BankProvidersOut,
     BankSaltEdgeCallbackIn,
     BankSyncOut,
@@ -104,6 +105,7 @@ def connect_bank(
             provider_code=body.provider_code,
             budget_type=body.budget_type,
             return_url=body.return_url,
+            psu_id=body.psu_id,
         )
         return BankConnectOut.model_validate(result)
     except ValueError as exc:
@@ -130,6 +132,26 @@ def disconnect_bank(
 ):
     try:
         bank_service.disconnect(db, user, connection_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.post("/banks/finanda/callback", response_model=BankSyncOut)
+def finanda_callback(
+    body: BankFinandaCallbackIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        return BankSyncOut.model_validate(
+            bank_service.complete_finanda_callback(
+                db,
+                user,
+                connection_id=body.connection_id,
+                consent_id=body.consent_id,
+                code=body.code,
+            )
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 

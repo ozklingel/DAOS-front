@@ -367,6 +367,7 @@ class BankConnectIn(APIModel):
     provider_code: str
     budget_type: str = "home"
     return_url: str | None = None
+    psu_id: str | None = None
 
 
 class BankConnectOut(APIModel):
@@ -387,6 +388,12 @@ class BankSyncOut(APIModel):
 class BankSaltEdgeCallbackIn(APIModel):
     connection_id: str
     external_connection_id: str
+
+
+class BankFinandaCallbackIn(APIModel):
+    connection_id: str
+    consent_id: str | None = None
+    code: str | None = None
 
 
 class FinanceOut(APIModel):
