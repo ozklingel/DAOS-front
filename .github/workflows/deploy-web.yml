@@ -15,9 +15,7 @@ name: Deploy Flutter Web
 on:
   push:
     branches: [main]
-    paths:
-      - "mobile/**"
-      - ".github/workflows/deploy-web.yml"
+    # No paths filter — force-push / history reset must still trigger deploy.
   workflow_dispatch:
 
 permissions:
@@ -61,6 +59,7 @@ jobs:
           echo "Using Web OAuth client ID (hardcoded for CI)"
           flutter build web --release \
             --base-href "/${REPO_NAME}/" \
+            --pwa-strategy=none \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
             --dart-define=GOOGLE_SERVER_CLIENT_ID="$CLIENT_ID"
           cp build/web/index.html build/web/404.html
