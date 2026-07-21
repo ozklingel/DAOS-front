@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.security import new_id
-from app.models import DailyBrief, Task, TaskPriority, TaskStatus, User
+from app.models import DailyBrief, InfoDocCategory, Task, TaskPriority, TaskStatus, User
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +110,126 @@ class AIService:
         except Exception as exc:
             logger.warning("Whisper transcription failed: %s", exc)
             return None
+
+    def analyze_document_image(
+        self,
+        *,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg",
+        filename: str | None = None,
+    ) -> dict:
+        """Classify a document photo into an Info hub category."""
+        if self.client and image_bytes:
+            try:
+                return self._openai_document_analysis(image_bytes, mime_type)
+            except Exception as exc:
+                logger.warning("OpenAI document analysis failed, using heuristics: %s", exc)
+        return self._heuristic_document_analysis(filename=filename)
+
+    def _openai_document_analysis(self, image_bytes: bytes, mime_type: str) -> dict:
+        import base64
+
+        b64 = base64.b64encode(image_bytes).decode("ascii")
+        data_url = f"data:{mime_type};base64,{b64}"
+        prompt = """Analyze this document photo for a Hebrew personal info hub.
+Return JSON only with keys:
+- category: one of personal_docs | ideas | summaries | links | archive | vehicle | insurance
+- title: short Hebrew title (e.g. דרכון, תעודת זהות, רשימת קניות)
+- summary: 1 short Hebrew sentence describing the document
+- extracted_text: key text visible on the document (Hebrew/English), or empty string
+- expiry_date: YYYY-MM-DD if an expiry/due date is visible, else null
+- confidence: 0-1 float
+
+Category rules:
+- passport, ID card, license, contract, certificate → personal_docs
+- shopping list, project notes, ideas, sketches → ideas
+- book notes, meeting notes, summaries, notebooks → summaries
+- screenshot with URL, QR, article link → links
+- vehicle test / רשיון רכב / טסט → vehicle
+- insurance policy / ביטוח → insurance
+- unclear / old / misc → archive
+
+Respond with valid JSON only."""
+        response = self.client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You classify personal documents from photos. "
+                        "Respond with valid JSON only. Titles and summaries in Hebrew."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                },
+            ],
+            temperature=0.1,
+            max_tokens=800,
+        )
+        content = response.choices[0].message.content or "{}"
+        # Strip markdown fences if the model wraps JSON
+        content = content.strip()
+        if content.startswith("```"):
+            content = re.sub(r"^```(?:json)?\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+        data = json.loads(content)
+        return self._normalize_document_analysis(data)
+
+    def _heuristic_document_analysis(self, *, filename: str | None = None) -> dict:
+        name = (filename or "").lower()
+        category = InfoDocCategory.personal_docs.value
+        title = "מסמך שצולם"
+        if any(w in name for w in ("passport", "דרכון", "id", "זהות")):
+            category = InfoDocCategory.personal_docs.value
+            title = "מסמך אישי"
+        elif any(w in name for w in ("idea", "רעיון", "shopping", "קניות")):
+            category = InfoDocCategory.ideas.value
+            title = "רעיון / פרויקט"
+        elif any(w in name for w in ("note", "summary", "סיכום")):
+            category = InfoDocCategory.summaries.value
+            title = "סיכום"
+        elif any(w in name for w in ("link", "url", "קישור")):
+            category = InfoDocCategory.links.value
+            title = "קישור"
+        elif any(w in name for w in ("insurance", "ביטוח")):
+            category = InfoDocCategory.insurance.value
+            title = "ביטוח"
+        elif any(w in name for w in ("car", "vehicle", "טסט", "רכב")):
+            category = InfoDocCategory.vehicle.value
+            title = "רכב"
+        return {
+            "category": category,
+            "title": title,
+            "summary": "מסמך שנוסף מצילום (ניתוח בסיסי ללא AI).",
+            "extracted_text": "",
+            "expiry_date": None,
+            "confidence": 0.35,
+        }
+
+    @staticmethod
+    def _normalize_document_analysis(data: dict) -> dict:
+        allowed = {c.value for c in InfoDocCategory}
+        category = str(data.get("category") or InfoDocCategory.archive.value)
+        if category not in allowed:
+            category = InfoDocCategory.archive.value
+        confidence = data.get("confidence", 0.7)
+        try:
+            confidence = float(confidence)
+        except (TypeError, ValueError):
+            confidence = 0.5
+        return {
+            "category": category,
+            "title": (str(data.get("title") or "מסמך").strip()[:255] or "מסמך"),
+            "summary": (str(data.get("summary") or "").strip() or None),
+            "extracted_text": (str(data.get("extracted_text") or "").strip() or None),
+            "expiry_date": data.get("expiry_date") or None,
+            "confidence": max(0.0, min(1.0, confidence)),
+        }
 
     def _apply_task_keyword_override(
         self, subject: str, snippet: str, analysis: dict

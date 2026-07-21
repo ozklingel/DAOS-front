@@ -46,7 +46,6 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
           }).toList();
 
           final categories = hub.categories.where((c) {
-            if (c.items.isEmpty) return false;
             if (_query.isEmpty) return true;
             if (c.title.toLowerCase().contains(_query)) return true;
             return c.items.any((item) => item.toLowerCase().contains(_query));
@@ -127,6 +126,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
           (r) => r.assetType == 'car_insurance' || r.assetType == 'home_insurance',
         );
       case 'documents':
+      case 'personal_docs':
         filtered = reminders.where((r) => r.assetType == 'document');
       default:
         return null;

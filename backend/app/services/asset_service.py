@@ -2,7 +2,8 @@ from datetime import UTC, date, datetime, time
 
 from sqlalchemy.orm import Session
 
-from app.models import AssetReminder, AssetType, User
+from app.models import AssetReminder, AssetType, InfoDocCategory, User
+from app.services.info_document_service import INFO_CATEGORY_META, InfoDocumentService
 
 CATEGORY_MAP = {
     AssetType.vehicle_test.value: ("רכב", "car"),
@@ -10,6 +11,17 @@ CATEGORY_MAP = {
     AssetType.home_insurance.value: ("ביטוח דירה", "finance"),
     AssetType.document.value: ("מסמכים", "document"),
 }
+
+# Order matches the Info hub design (מידע page)
+INFO_HUB_CATEGORY_ORDER = [
+    InfoDocCategory.personal_docs.value,
+    InfoDocCategory.ideas.value,
+    InfoDocCategory.summaries.value,
+    InfoDocCategory.links.value,
+    InfoDocCategory.vehicle.value,
+    InfoDocCategory.insurance.value,
+    InfoDocCategory.archive.value,
+]
 
 
 class AssetService:
@@ -24,11 +36,13 @@ class AssetService:
 
     def get_info_hub(self, db: Session, user: User) -> dict:
         reminders = self.list_reminders(db, user)
-        categories = self._build_categories(reminders)
+        documents = InfoDocumentService().list_documents(db, user)
+        categories = self._build_categories(reminders, documents)
         alert_count = sum(1 for r in reminders if r["status"] in {"overdue", "urgent", "warning"})
         return {
             "categories": categories,
             "reminders": reminders,
+            "documents": documents,
             "alerts_count": alert_count,
         }
 
@@ -82,44 +96,55 @@ class AssetService:
         db.refresh(row)
         return self._to_dict(row)
 
-    def _build_categories(self, reminders: list[dict]) -> list[dict]:
-        grouped: dict[str, list[str]] = {
-            "vehicle": [],
-            "insurance": [],
-            "documents": [],
-        }
+    def _build_categories(self, reminders: list[dict], documents: list[dict]) -> list[dict]:
+        grouped: dict[str, list[str]] = {key: [] for key in INFO_HUB_CATEGORY_ORDER}
+
+        for doc in documents:
+            cat = doc.get("category") or InfoDocCategory.archive.value
+            if cat not in grouped:
+                cat = InfoDocCategory.archive.value
+            title = doc.get("title") or "מסמך"
+            if title not in grouped[cat]:
+                grouped[cat].append(title)
+
         for item in reminders:
             label = self._item_label(item)
             if item["asset_type"] == AssetType.vehicle_test.value:
-                grouped["vehicle"].append(label)
+                if label not in grouped["vehicle"]:
+                    grouped["vehicle"].append(label)
             elif item["asset_type"] in {
                 AssetType.car_insurance.value,
                 AssetType.home_insurance.value,
             }:
-                grouped["insurance"].append(label)
+                if label not in grouped["insurance"]:
+                    grouped["insurance"].append(label)
             elif item["asset_type"] == AssetType.document.value:
-                grouped["documents"].append(label)
+                if label not in grouped["personal_docs"]:
+                    grouped["personal_docs"].append(label)
 
-        return [
-            {
-                "id": "vehicle",
-                "title": "רכב",
-                "icon": "car",
-                "items": grouped["vehicle"],
-            },
-            {
-                "id": "insurance",
-                "title": "ביטוח",
-                "icon": "finance",
-                "items": grouped["insurance"],
-            },
-            {
-                "id": "documents",
-                "title": "מסמכים",
-                "icon": "document",
-                "items": grouped["documents"],
-            },
-        ]
+        categories = []
+        for cat_id in INFO_HUB_CATEGORY_ORDER:
+            title, icon = INFO_CATEGORY_META[cat_id]
+            items = grouped[cat_id]
+            # Always show the five primary hub cards; show vehicle/insurance only with items
+            is_primary = cat_id in {
+                InfoDocCategory.personal_docs.value,
+                InfoDocCategory.ideas.value,
+                InfoDocCategory.summaries.value,
+                InfoDocCategory.links.value,
+                InfoDocCategory.archive.value,
+            }
+            if not items and not is_primary:
+                continue
+            categories.append(
+                {
+                    "id": cat_id,
+                    "title": title,
+                    "icon": icon,
+                    "items": items,
+                }
+            )
+        return categories
 
     @staticmethod
     def _item_label(item: dict) -> str:

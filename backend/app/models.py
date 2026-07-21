@@ -55,6 +55,16 @@ class AssetType(str, Enum):
     document = "document"
 
 
+class InfoDocCategory(str, Enum):
+    personal_docs = "personal_docs"
+    ideas = "ideas"
+    summaries = "summaries"
+    links = "links"
+    archive = "archive"
+    vehicle = "vehicle"
+    insurance = "insurance"
+
+
 class BudgetType(str, Enum):
     home = "home"
     business = "business"
@@ -99,6 +109,9 @@ class User(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     asset_reminders: Mapped[list["AssetReminder"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    info_documents: Mapped[list["InfoDocument"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
     whatsapp_inbound_logs: Mapped[list["WhatsAppInboundLog"]] = relationship(
@@ -314,3 +327,24 @@ class AssetReminder(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="asset_reminders")
+
+
+class InfoDocument(Base):
+    __tablename__ = "info_documents"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    category: Mapped[str] = mapped_column(String(40), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mime_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    image_data: Mapped[str | None] = mapped_column(Text, nullable=True)
+    expiry_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="info_documents")

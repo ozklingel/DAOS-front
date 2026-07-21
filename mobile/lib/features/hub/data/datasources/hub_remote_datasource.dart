@@ -1,6 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
 import 'package:taskmail/core/network/api_client.dart';
 import 'package:taskmail/features/hub/data/models/hub_models.dart';
+import 'package:taskmail/features/info/data/services/document_capture_service.dart';
 
 class HubRemoteDataSource {
   HubRemoteDataSource(this._client);
@@ -95,6 +97,26 @@ class HubRemoteDataSource {
       parser: (d) => d as Map<String, dynamic>,
     );
     return InfoHubData.fromJson(data);
+  }
+
+  Future<InfoDocumentData> uploadInfoDocument(CapturedImage image) async {
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        image.bytes,
+        filename: image.filename,
+      ),
+    });
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.infoDocuments,
+      data: form,
+      options: Options(
+        sendTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 90),
+      ),
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    final document = data['document'] as Map<String, dynamic>? ?? data;
+    return InfoDocumentData.fromJson(document);
   }
 
   Future<AssetReminderData> updateAsset({

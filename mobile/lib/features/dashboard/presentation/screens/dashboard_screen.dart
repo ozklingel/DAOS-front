@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,8 @@ import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart
 import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/weather_card.dart';
 import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
+import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
+import 'package:taskmail/features/info/data/services/document_capture_service.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
@@ -135,6 +138,7 @@ class DashboardScreen extends ConsumerWidget {
                   l: l,
                   onAddTask: () => context.go(RouteNames.tasks),
                   onWhatsAppHelp: () => _showWhatsAppHelp(context, l),
+                  onTakePhoto: () => _takePhotoAndUpload(context, ref, l),
                 ),
               ],
             ),
@@ -162,6 +166,71 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _takePhotoAndUpload(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final capture = DocumentCaptureService();
+      final preferGallery = kIsWeb;
+      var image = await capture.captureDocument(preferGallery: preferGallery);
+      if (image == null && !preferGallery && context.mounted) {
+        final useGallery = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l.takePhoto),
+            content: Text(l.photoCaptureFailed),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.dismiss)),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l.pickFromGallery),
+              ),
+            ],
+          ),
+        );
+        if (useGallery == true) {
+          image = await capture.captureDocument(preferGallery: true);
+        }
+      }
+      if (image == null || !context.mounted) return;
+
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Expanded(child: Text(l.analyzingDocument)),
+            ],
+          ),
+        ),
+      );
+
+      final doc = await ref.read(hubRemoteDataSourceProvider).uploadInfoDocument(image);
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+      ref.invalidate(infoHubProvider);
+
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.documentSavedTo(doc.categoryTitle))),
+      );
+      context.go(RouteNames.info);
+      } catch (e) {
+      if (context.mounted) {
+        final nav = Navigator.of(context, rootNavigator: true);
+        if (nav.canPop()) nav.pop();
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.errorMessage(e))),
+        );
+      }
+    }
   }
 
   Future<void> _toggleTask(WidgetRef ref, Task task) async {
@@ -314,11 +383,13 @@ class _QuickActions extends StatelessWidget {
     required this.l,
     required this.onAddTask,
     required this.onWhatsAppHelp,
+    required this.onTakePhoto,
   });
 
   final AppLocalizations l;
   final VoidCallback onAddTask;
   final VoidCallback onWhatsAppHelp;
+  final VoidCallback onTakePhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -340,13 +411,15 @@ class _QuickActions extends StatelessWidget {
               child: InkWell(
                 onTap: isPrimary
                     ? onAddTask
-                    : (label == l.voiceRecord || label == l.writeMessage)
-                        ? onWhatsAppHelp
-                        : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l.comingSoon)),
-                            );
-                          },
+                    : label == l.takePhoto
+                        ? onTakePhoto
+                        : (label == l.voiceRecord || label == l.writeMessage)
+                            ? onWhatsAppHelp
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(l.comingSoon)),
+                                );
+                              },
                 borderRadius: BorderRadius.circular(16),
                 child: Ink(
                   height: 88,

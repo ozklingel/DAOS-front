@@ -45,6 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>האפליקציה צריכה גישה למצלמה כדי לצלם מסמכים ולשמור אותם בדף מידע.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>האפליקציה צריכה גישה לתמונות כדי להעלות מסמכים לדף מידע.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

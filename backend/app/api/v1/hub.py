@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -20,6 +20,8 @@ from app.schemas import (
     FinanceOut,
     FinanceTransactionIn,
     FinanceTransactionOut,
+    InfoDocumentOut,
+    InfoDocumentUploadOut,
     InfoHubOut,
     ProfileOut,
 )
@@ -27,12 +29,14 @@ from app.services.asset_service import AssetService
 from app.services.bank_service import BankService
 from app.services.budget_service import BudgetService
 from app.services.hub_service import HubService
+from app.services.info_document_service import InfoDocumentService
 
 router = APIRouter(tags=["hub"])
 hub_service = HubService()
 budget_service = BudgetService()
 asset_service = AssetService()
 bank_service = BankService()
+info_document_service = InfoDocumentService()
 
 
 @router.get("/profile", response_model=ProfileOut)
@@ -178,6 +182,29 @@ def saltedge_callback(
 @router.get("/info", response_model=InfoHubOut)
 def get_info_hub(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return InfoHubOut.model_validate(hub_service.get_info_hub(db, user))
+
+
+@router.post("/info/documents", response_model=InfoDocumentUploadOut)
+async def upload_info_document(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    raw = await file.read()
+    try:
+        doc = info_document_service.create_from_image(
+            db,
+            user,
+            image_bytes=raw,
+            mime_type=file.content_type or "image/jpeg",
+            filename=file.filename,
+        )
+        return InfoDocumentUploadOut(
+            document=InfoDocumentOut.model_validate(doc),
+            message=f"נשמר תחת {doc.get('category_title', 'מידע')}",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 
 
 @router.get("/assets", response_model=list[AssetReminderOut])

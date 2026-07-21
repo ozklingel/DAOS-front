@@ -37,6 +37,7 @@ class ApiConstants {
   static const String bankConnections = '/banks/connections';
   static const String bankConnect = '/banks/connect';
   static const String infoHub = '/info';
+  static const String infoDocuments = '/info/documents';
   static const String assets = '/assets';
 
   // Settings & notifications
@@ -45,5 +46,5 @@ class ApiConstants {
   static const String registerDevice = '/notifications/device';
 
   static const Duration connectTimeout = Duration(seconds: 15);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 90);
 }

@@ -52,6 +52,10 @@ abstract class AppLocalizations {
   String get takePhoto;
   String get writeMessage;
   String get comingSoon;
+  String get analyzingDocument;
+  String documentSavedTo(String category);
+  String get photoCaptureFailed;
+  String get pickFromGallery;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
 
@@ -325,6 +329,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get writeMessage => 'Write message';
   @override
   String get comingSoon => 'Coming soon';
+  @override
+  String get analyzingDocument => 'Analyzing document…';
+  @override
+  String documentSavedTo(String category) => 'Saved under $category';
+  @override
+  String get photoCaptureFailed => 'Could not open camera. Try picking from gallery.';
+  @override
+  String get pickFromGallery => 'Choose from gallery';
   @override
   String get noTasksToday => 'No tasks for today — sync your email to get started.';
   @override
@@ -906,6 +918,14 @@ class AppLocalizationsHe extends AppLocalizations {
   String get writeMessage => 'רשום הודעה';
   @override
   String get comingSoon => 'בקרוב';
+  @override
+  String get analyzingDocument => 'מנתח את המסמך…';
+  @override
+  String documentSavedTo(String category) => 'נשמר תחת $category';
+  @override
+  String get photoCaptureFailed => 'לא ניתן לפתוח את המצלמה. נסו לבחור מהגלריה.';
+  @override
+  String get pickFromGallery => 'בחר מהגלריה';
   @override
   String get noTasksToday => 'אין משימות להיום — סנכרנו מיילים כדי להתחיל.';
   @override

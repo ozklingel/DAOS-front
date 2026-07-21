@@ -449,4 +449,23 @@ class AssetReminderUpdateIn(APIModel):
 class InfoHubOut(APIModel):
     categories: list[InfoCategoryOut]
     reminders: list[AssetReminderOut] = Field(default_factory=list)
+    documents: list["InfoDocumentOut"] = Field(default_factory=list)
     alerts_count: int = 0
+
+
+class InfoDocumentOut(APIModel):
+    id: str
+    category: str
+    category_title: str
+    title: str
+    summary: str | None = None
+    extracted_text: str | None = None
+    expiry_date: str | None = None
+    confidence: float = 0.0
+    icon: str = "document"
+    created_at: str | None = None
+
+
+class InfoDocumentUploadOut(APIModel):
+    document: InfoDocumentOut
+    message: str = "Document saved"

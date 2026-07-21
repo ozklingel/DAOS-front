@@ -440,6 +440,7 @@ class InfoHubData {
   const InfoHubData({
     required this.categories,
     this.reminders = const [],
+    this.documents = const [],
     this.alertsCount = 0,
   });
 
@@ -451,15 +452,62 @@ class InfoHubData {
       reminders: (json['reminders'] as List<dynamic>? ?? [])
           .map((e) => AssetReminderData.fromJson(e as Map<String, dynamic>))
           .toList(),
+      documents: (json['documents'] as List<dynamic>? ?? [])
+          .map((e) => InfoDocumentData.fromJson(e as Map<String, dynamic>))
+          .toList(),
       alertsCount: json['alerts_count'] as int? ?? json['alertsCount'] as int? ?? 0,
     );
   }
 
   final List<InfoCategoryData> categories;
   final List<AssetReminderData> reminders;
+  final List<InfoDocumentData> documents;
   final int alertsCount;
 
   List<AssetReminderData> get activeAlerts => reminders
       .where((r) => r.status == 'overdue' || r.status == 'urgent' || r.status == 'warning')
       .toList();
+}
+
+class InfoDocumentData {
+  const InfoDocumentData({
+    required this.id,
+    required this.category,
+    required this.categoryTitle,
+    required this.title,
+    this.summary,
+    this.extractedText,
+    this.expiryDate,
+    this.confidence = 0,
+    this.icon = 'document',
+    this.createdAt,
+  });
+
+  factory InfoDocumentData.fromJson(Map<String, dynamic> json) {
+    return InfoDocumentData(
+      id: json['id'] as String,
+      category: json['category'] as String? ?? 'archive',
+      categoryTitle:
+          json['category_title'] as String? ?? json['categoryTitle'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      summary: json['summary'] as String?,
+      extractedText:
+          json['extracted_text'] as String? ?? json['extractedText'] as String?,
+      expiryDate: json['expiry_date'] as String? ?? json['expiryDate'] as String?,
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+      icon: json['icon'] as String? ?? 'document',
+      createdAt: json['created_at'] as String? ?? json['createdAt'] as String?,
+    );
+  }
+
+  final String id;
+  final String category;
+  final String categoryTitle;
+  final String title;
+  final String? summary;
+  final String? extractedText;
+  final String? expiryDate;
+  final double confidence;
+  final String icon;
+  final String? createdAt;
 }
