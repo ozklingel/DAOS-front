@@ -23,6 +23,7 @@ class ApiConstants {
 
   // Tasks
   static const String tasks = '/tasks';
+  static const String tasksFromVoice = '/tasks/from-voice';
 
   // Dashboard & brief
   static const String dashboard = '/dashboard';

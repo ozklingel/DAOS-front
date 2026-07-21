@@ -35,6 +35,8 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+    # Set false on corporate networks that intercept HTTPS with a self-signed proxy cert
+    openai_ssl_verify: bool = True
 
     firebase_credentials_path: str = ""
 

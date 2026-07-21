@@ -139,6 +139,7 @@ class DashboardScreen extends ConsumerWidget {
                   onAddTask: () => context.go(RouteNames.tasks),
                   onWhatsAppHelp: () => _showWhatsAppHelp(context, l),
                   onTakePhoto: () => _takePhotoAndUpload(context, ref, l),
+                  onVoiceRecord: () => _showVoiceTaskSheet(context, ref, l),
                 ),
               ],
             ),
@@ -166,6 +167,112 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showVoiceTaskSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l,
+  ) async {
+    final controller = TextEditingController();
+    final submitted = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.darkSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.voiceTaskTitle,
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                      color: AppColors.darkTextPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l.voiceTaskHint,
+                style: const TextStyle(color: AppColors.darkTextSecondary),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'משימה: ...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx, false);
+                  _showWhatsAppHelp(context, l);
+                },
+                child: Text(l.whatsappVoiceHelpTitle),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l.voiceTaskSubmit),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    final text = controller.text.trim();
+    controller.dispose();
+    if (submitted != true || text.isEmpty || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await ref
+          .read(tasksRemoteDataSourceProvider)
+          .createFromVoice(transcript: text);
+      if (context.mounted) {
+        final nav = Navigator.of(context, rootNavigator: true);
+        if (nav.canPop()) nav.pop();
+      }
+      ref.invalidate(todayTasksProvider);
+      ref.invalidate(dashboardProvider);
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(result.created ? l.voiceTaskCreated : result.message)),
+      );
+      if (result.created) {
+        context.go(RouteNames.tasks);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final nav = Navigator.of(context, rootNavigator: true);
+        if (nav.canPop()) nav.pop();
+        messenger.showSnackBar(SnackBar(content: Text(l.errorMessage(e))));
+      }
+    }
   }
 
   Future<void> _takePhotoAndUpload(
@@ -384,12 +491,14 @@ class _QuickActions extends StatelessWidget {
     required this.onAddTask,
     required this.onWhatsAppHelp,
     required this.onTakePhoto,
+    required this.onVoiceRecord,
   });
 
   final AppLocalizations l;
   final VoidCallback onAddTask;
   final VoidCallback onWhatsAppHelp;
   final VoidCallback onTakePhoto;
+  final VoidCallback onVoiceRecord;
 
   @override
   Widget build(BuildContext context) {
@@ -403,23 +512,30 @@ class _QuickActions extends StatelessWidget {
     return Row(
       children: actions.map((action) {
         final (label, icon, isPrimary) = action;
+        VoidCallback? onTap;
+        if (isPrimary) {
+          onTap = onAddTask;
+        } else if (label == l.takePhoto) {
+          onTap = onTakePhoto;
+        } else if (label == l.voiceRecord) {
+          onTap = onVoiceRecord;
+        } else if (label == l.writeMessage) {
+          onTap = onWhatsAppHelp;
+        } else {
+          onTap = () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l.comingSoon)),
+            );
+          };
+        }
+
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: isPrimary
-                    ? onAddTask
-                    : label == l.takePhoto
-                        ? onTakePhoto
-                        : (label == l.voiceRecord || label == l.writeMessage)
-                            ? onWhatsAppHelp
-                            : () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(l.comingSoon)),
-                                );
-                              },
+                onTap: onTap,
                 borderRadius: BorderRadius.circular(16),
                 child: Ink(
                   height: 88,

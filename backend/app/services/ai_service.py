@@ -19,7 +19,26 @@ TASK_KEYWORD = "משימה"
 
 class AIService:
     def __init__(self) -> None:
-        self.client = OpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else None
+        self.client = None
+        if settings.openai_api_key:
+            try:
+                if settings.openai_ssl_verify:
+                    self.client = OpenAI(api_key=settings.openai_api_key, timeout=90.0)
+                else:
+                    import httpx
+
+                    http_client = httpx.Client(verify=False, timeout=90.0)
+                    self.client = OpenAI(
+                        api_key=settings.openai_api_key,
+                        http_client=http_client,
+                        timeout=90.0,
+                    )
+                    logger.warning(
+                        "OpenAI SSL verification is disabled (OPENAI_SSL_VERIFY=false)"
+                    )
+            except Exception as exc:
+                logger.error("Failed to init OpenAI client: %s", exc)
+                self.client = None
 
     @property
     def ai_enabled(self) -> bool:
@@ -124,6 +143,21 @@ class AIService:
                 return self._openai_document_analysis(image_bytes, mime_type)
             except Exception as exc:
                 logger.warning("OpenAI document analysis failed, using heuristics: %s", exc)
+                fallback = self._heuristic_document_analysis(filename=filename)
+                err = str(exc)
+                if "insufficient_quota" in err or "429" in err:
+                    fallback["summary"] = (
+                        "ניתוח AI נכשל: אין מכסה/חיוב בחשבון OpenAI. "
+                        "הוסיפו קרדיט ב-platform.openai.com/settings/organization/billing"
+                    )
+                elif "CERTIFICATE" in err.upper() or "SSL" in err.upper() or "Connection" in err:
+                    fallback["summary"] = (
+                        "ניתוח AI נכשל: בעיית SSL/רשת. "
+                        "הגדירו OPENAI_SSL_VERIFY=false ב-.env והפעילו מחדש את השרת"
+                    )
+                else:
+                    fallback["summary"] = f"ניתוח AI נכשל ({type(exc).__name__}). נשמר סיווג בסיסי."
+                return fallback
         return self._heuristic_document_analysis(filename=filename)
 
     def _openai_document_analysis(self, image_bytes: bytes, mime_type: str) -> dict:

@@ -1,7 +1,22 @@
+import 'package:dio/dio.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
 import 'package:taskmail/core/network/api_client.dart';
 import 'package:taskmail/features/tasks/data/models/task_model.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
+
+class VoiceTaskResult {
+  const VoiceTaskResult({
+    required this.created,
+    required this.message,
+    this.task,
+    this.transcript,
+  });
+
+  final bool created;
+  final String message;
+  final TaskModel? task;
+  final String? transcript;
+}
 
 class TasksRemoteDataSource {
   TasksRemoteDataSource(this._client);
@@ -63,5 +78,25 @@ class TasksRemoteDataSource {
       parser: (d) => d as Map<String, dynamic>,
     );
     return TaskModel.fromJson(data);
+  }
+
+  Future<VoiceTaskResult> createFromVoice({required String transcript}) async {
+    final form = FormData.fromMap({'transcript': transcript});
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.tasksFromVoice,
+      data: form,
+      options: Options(
+        sendTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 90),
+      ),
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    final taskJson = data['task'] as Map<String, dynamic>?;
+    return VoiceTaskResult(
+      created: data['created'] as bool? ?? false,
+      message: data['message'] as String? ?? '',
+      transcript: data['transcript'] as String?,
+      task: taskJson != null ? TaskModel.fromJson(taskJson) : null,
+    );
   }
 }

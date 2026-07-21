@@ -65,6 +65,10 @@ abstract class AppLocalizations {
   String get deleteDocument;
   String get deleteDocumentConfirm;
   String get documentDeleted;
+  String get voiceTaskTitle;
+  String get voiceTaskHint;
+  String get voiceTaskSubmit;
+  String get voiceTaskCreated;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
 
@@ -366,6 +370,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteDocumentConfirm => 'Delete this document permanently?';
   @override
   String get documentDeleted => 'Document deleted';
+  @override
+  String get voiceTaskTitle => 'Voice / quick task';
+  @override
+  String get voiceTaskHint =>
+      'Type what you would say, e.g. משימה: להתקשר לרופא מחר';
+  @override
+  String get voiceTaskSubmit => 'Create task';
+  @override
+  String get voiceTaskCreated => 'Task created';
   @override
   String get noTasksToday => 'No tasks for today — sync your email to get started.';
   @override
@@ -975,6 +988,15 @@ class AppLocalizationsHe extends AppLocalizations {
   String get deleteDocumentConfirm => 'למחוק את המסמך לצמיתות?';
   @override
   String get documentDeleted => 'המסמך נמחק';
+  @override
+  String get voiceTaskTitle => 'משימה קולית / מהירה';
+  @override
+  String get voiceTaskHint =>
+      'כתבו מה הייתם אומרים, למשל: משימה: להתקשר לרופא מחר';
+  @override
+  String get voiceTaskSubmit => 'צור משימה';
+  @override
+  String get voiceTaskCreated => 'המשימה נוצרה';
   @override
   String get noTasksToday => 'אין משימות להיום — סנכרנו מיילים כדי להתחיל.';
   @override

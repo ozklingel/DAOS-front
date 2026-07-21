@@ -154,6 +154,14 @@ class TaskUpdateIn(APIModel):
         return data
 
 
+class VoiceTaskOut(APIModel):
+    created: bool
+    task: TaskOut | None = None
+    transcript: str | None = None
+    message: str
+    analysis_source: str | None = None
+
+
 class DashboardStatsOut(APIModel):
     critical_count: int = 0
     open_count: int = 0
