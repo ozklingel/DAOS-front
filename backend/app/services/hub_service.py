@@ -1,8 +1,11 @@
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
 from app.models import Task, User
+
+ISRAEL_TZ = ZoneInfo("Asia/Jerusalem")
 
 
 class HubService:
@@ -23,7 +26,7 @@ class HubService:
         }
 
     def get_calendar(self, db: Session, user: User, day: date) -> dict:
-        start = datetime.combine(day, time.min, tzinfo=UTC)
+        start = datetime.combine(day, time.min, tzinfo=ISRAEL_TZ)
         end = start + timedelta(days=1)
 
         task_events = []
@@ -84,7 +87,7 @@ class HubService:
         return AssetService().calendar_events(db, user, day)
 
     def _calendar_strip(self, center: date) -> list[dict]:
-        today = date.today()
+        today = datetime.now(ISRAEL_TZ).date()
         days = []
         for offset in range(-3, 4):
             d = center + timedelta(days=offset)

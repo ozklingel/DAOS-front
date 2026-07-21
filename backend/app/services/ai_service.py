@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from datetime import UTC, datetime
+from app.services.date_extract import extract_deadline_iso, israel_now, israel_today
 
 from openai import OpenAI
 from sqlalchemy.orm import Session
@@ -55,6 +56,7 @@ class AIService:
             try:
                 analysis = self._openai_analysis(subject, sender, snippet)
                 analysis = self._apply_task_keyword_override(subject, snippet, analysis)
+                analysis = self._enrich_deadline(subject, snippet, analysis)
                 if analysis.get("is_actionable", True):
                     logger.info(
                         "Email task detected via OpenAI (%s): %r",
@@ -67,6 +69,7 @@ class AIService:
 
         analysis = self._heuristic_analysis(subject, sender, snippet)
         if analysis:
+            analysis = self._enrich_deadline(subject, snippet, analysis)
             logger.info(
                 "Email task detected via Hebrew heuristics: %r",
                 analysis.get("title", subject)[:120],
@@ -74,6 +77,7 @@ class AIService:
             return analysis, "heuristic"
 
         analysis = self._task_keyword_fallback(subject, snippet)
+        analysis = self._enrich_deadline(subject, snippet, analysis)
         logger.info("Email task detected via keyword '%s': %r", TASK_KEYWORD, subject[:120])
         return analysis, "task_keyword"
 
@@ -129,17 +133,40 @@ class AIService:
             "deadline": None,
         }
 
+    def _enrich_deadline(self, subject: str, snippet: str, analysis: dict) -> dict:
+        text = f"{subject} {snippet}"
+        if not analysis.get("deadline"):
+            extracted = extract_deadline_iso(text, reference=israel_today())
+            if extracted:
+                analysis["deadline"] = extracted
+                logger.info("Extracted task deadline from text: %s", extracted)
+            return analysis
+
+        try:
+            parsed = datetime.fromisoformat(str(analysis["deadline"]).replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=UTC)
+            analysis["deadline"] = parsed.isoformat()
+        except ValueError:
+            extracted = extract_deadline_iso(text, reference=israel_today())
+            analysis["deadline"] = extracted
+        return analysis
+
     def _openai_analysis(self, subject: str, sender: str, snippet: str) -> dict:
+        today = israel_now().strftime("%Y-%m-%d")
+        weekday_names = ["שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון"]
+        weekday = weekday_names[israel_today().weekday()]
         prompt = f"""Analyze this Hebrew email and extract an actionable task.
 The email already contains the word "משימה" — always set is_actionable to true.
 Write title and description in Hebrew only.
+Today's date in Israel is {today} ({weekday}). Resolve relative dates like "מחר", "יום שישי", "21/07" against this date.
 Return JSON only with keys:
 - is_actionable (boolean)
 - title (string, short action item in Hebrew)
 - description (string in Hebrew)
 - priority (critical|high|medium|low|none)
 - priority_score (0-100 float)
-- deadline (ISO8601 string or null)
+- deadline (ISO8601 string with timezone, or null if no date mentioned)
 
 Email:
 From: {sender}

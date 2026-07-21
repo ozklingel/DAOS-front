@@ -36,6 +36,16 @@ class _TaskMailAppState extends ConsumerState<TaskMailApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       locale: locale,
+      localeResolutionCallback: (deviceLocale, supported) {
+        if (deviceLocale != null) {
+          for (final supportedLocale in supported) {
+            if (supportedLocale.languageCode == deviceLocale.languageCode) {
+              return supportedLocale;
+            }
+          }
+        }
+        return const Locale('he');
+      },
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,

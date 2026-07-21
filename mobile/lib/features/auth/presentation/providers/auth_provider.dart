@@ -189,7 +189,6 @@ class AuthState extends ChangeNotifier {
       final storage = _ref.read(secureStorageServiceProvider);
       final settings = await settingsRepo.getSettings();
       final savedLocale = await storage.getLocale();
-      final localCode = _ref.read(localeProvider).languageCode;
 
       if (savedLocale == 'he' || savedLocale == 'en') {
         if (settings.language != savedLocale) {
@@ -198,12 +197,13 @@ class AuthState extends ChangeNotifier {
           );
         }
         await _ref.read(localeProvider.notifier).setLocale(savedLocale!);
-      } else if (settings.language == 'he' || settings.language == 'en') {
-        await _ref.read(localeProvider.notifier).setLocale(settings.language);
-      } else if (localCode != settings.language) {
-        await settingsRepo.updateSettings(
-          settings.copyWith(language: localCode),
-        );
+      } else if (settings.language == 'he') {
+        await _ref.read(localeProvider.notifier).setLocale('he');
+      } else {
+        await _ref.read(localeProvider.notifier).setLocale('he');
+        if (settings.language != 'he') {
+          await settingsRepo.updateSettings(settings.copyWith(language: 'he'));
+        }
       }
     } catch (_) {}
   }

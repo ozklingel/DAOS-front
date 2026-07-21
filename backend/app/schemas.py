@@ -220,7 +220,7 @@ class SettingsOut(APIModel):
     daily_brief_enabled: bool = True
     email_sync_enabled: bool = True
     daily_brief_time: str = "09:00"
-    language: str = "en"
+    language: str = "he"
 
 
 class SettingsUpdateIn(APIModel):

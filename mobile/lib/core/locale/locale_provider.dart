@@ -1,20 +1,15 @@
-import 'dart:ui';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/services/secure_storage_service.dart';
 
 final localeProvider = NotifierProvider<LocaleNotifier, Locale>(LocaleNotifier.new);
 
 class LocaleNotifier extends Notifier<Locale> {
+  static const defaultLocale = Locale('he');
+
   @override
   Locale build() {
-    return _deviceLocale();
-  }
-
-  Locale _deviceLocale() {
-    final code = PlatformDispatcher.instance.locale.languageCode;
-    if (code == 'he') return const Locale('he');
-    return const Locale('en');
+    return defaultLocale;
   }
 
   /// Loads persisted locale before the first frame (call from main).
@@ -23,7 +18,7 @@ class LocaleNotifier extends Notifier<Locale> {
     if (saved == 'he' || saved == 'en') {
       state = Locale(saved!);
     } else {
-      state = _deviceLocale();
+      state = defaultLocale;
     }
   }
 

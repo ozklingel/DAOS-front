@@ -173,7 +173,7 @@ class UserSettings(Base):
     daily_brief_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     email_sync_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     daily_brief_time: Mapped[str] = mapped_column(String(5), default="09:00")
-    language: Mapped[str] = mapped_column(String(10), default="en")
+    language: Mapped[str] = mapped_column(String(10), default="he")
 
     user: Mapped[User] = relationship(back_populates="settings")
 
