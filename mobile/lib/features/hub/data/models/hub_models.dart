@@ -210,6 +210,8 @@ class FinanceData {
     required this.home,
     required this.business,
     required this.summary,
+    this.bankAccounts = const [],
+    this.bankTotalBalance = 0,
   });
 
   factory FinanceData.fromJson(Map<String, dynamic> json) {
@@ -234,6 +236,11 @@ class FinanceData {
       transactions: (json['transactions'] as List<dynamic>? ?? [])
           .map((e) => FinanceTransactionData.fromJson(e as Map<String, dynamic>))
           .toList(),
+      bankAccounts: (json['bank_accounts'] as List<dynamic>? ?? json['bankAccounts'] as List<dynamic>? ?? [])
+          .map((e) => BankAccountData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      bankTotalBalance:
+          (json['bank_total_balance'] as num? ?? json['bankTotalBalance'] as num? ?? 0).toDouble(),
     );
   }
 
@@ -248,6 +255,123 @@ class FinanceData {
   final BudgetSummaryData home;
   final BudgetSummaryData business;
   final BudgetSummaryData summary;
+  final List<BankAccountData> bankAccounts;
+  final double bankTotalBalance;
+}
+
+class BankAccountData {
+  const BankAccountData({
+    required this.id,
+    required this.connectionId,
+    required this.providerCode,
+    required this.providerName,
+    required this.name,
+    required this.balance,
+    this.accountType = 'checking',
+    this.currency = 'ILS',
+    this.ibanMasked,
+    this.budgetType = 'home',
+  });
+
+  factory BankAccountData.fromJson(Map<String, dynamic> json) {
+    return BankAccountData(
+      id: json['id'] as String,
+      connectionId: json['connection_id'] as String? ?? json['connectionId'] as String? ?? '',
+      providerCode: json['provider_code'] as String? ?? json['providerCode'] as String? ?? '',
+      providerName: json['provider_name'] as String? ?? json['providerName'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      accountType: json['account_type'] as String? ?? json['accountType'] as String? ?? 'checking',
+      currency: json['currency'] as String? ?? 'ILS',
+      balance: (json['balance'] as num? ?? 0).toDouble(),
+      ibanMasked: json['iban_masked'] as String? ?? json['ibanMasked'] as String?,
+      budgetType: json['budget_type'] as String? ?? json['budgetType'] as String? ?? 'home',
+    );
+  }
+
+  final String id;
+  final String connectionId;
+  final String providerCode;
+  final String providerName;
+  final String name;
+  final String accountType;
+  final String currency;
+  final double balance;
+  final String? ibanMasked;
+  final String budgetType;
+}
+
+class BankProviderData {
+  const BankProviderData({
+    required this.code,
+    required this.name,
+    required this.nameEn,
+  });
+
+  factory BankProviderData.fromJson(Map<String, dynamic> json) {
+    return BankProviderData(
+      code: json['code'] as String,
+      name: json['name'] as String? ?? '',
+      nameEn: json['name_en'] as String? ?? json['nameEn'] as String? ?? '',
+    );
+  }
+
+  final String code;
+  final String name;
+  final String nameEn;
+}
+
+class BankProvidersData {
+  const BankProvidersData({
+    required this.mode,
+    required this.providers,
+    this.country = 'IL',
+    this.currency = 'ILS',
+  });
+
+  factory BankProvidersData.fromJson(Map<String, dynamic> json) {
+    return BankProvidersData(
+      country: json['country'] as String? ?? 'IL',
+      currency: json['currency'] as String? ?? 'ILS',
+      mode: json['mode'] as String? ?? 'demo',
+      providers: (json['providers'] as List<dynamic>? ?? [])
+          .map((e) => BankProviderData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  final String country;
+  final String currency;
+  final String mode;
+  final List<BankProviderData> providers;
+}
+
+class BankConnectionData {
+  const BankConnectionData({
+    required this.id,
+    required this.providerCode,
+    required this.providerName,
+    required this.status,
+    this.mode = 'demo',
+    this.accountCount = 0,
+  });
+
+  factory BankConnectionData.fromJson(Map<String, dynamic> json) {
+    return BankConnectionData(
+      id: json['id'] as String,
+      providerCode: json['provider_code'] as String? ?? json['providerCode'] as String? ?? '',
+      providerName: json['provider_name'] as String? ?? json['providerName'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      mode: json['mode'] as String? ?? 'demo',
+      accountCount: json['account_count'] as int? ?? json['accountCount'] as int? ?? 0,
+    );
+  }
+
+  final String id;
+  final String providerCode;
+  final String providerName;
+  final String status;
+  final String mode;
+  final int accountCount;
 }
 
 class AssetReminderData {

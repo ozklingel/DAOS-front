@@ -9,6 +9,12 @@ from app.models import User
 from app.schemas import (
     AssetReminderOut,
     AssetReminderUpdateIn,
+    BankConnectIn,
+    BankConnectOut,
+    BankConnectionOut,
+    BankProvidersOut,
+    BankSaltEdgeCallbackIn,
+    BankSyncOut,
     CalendarOut,
     FinanceOut,
     FinanceTransactionIn,
@@ -17,6 +23,7 @@ from app.schemas import (
     ProfileOut,
 )
 from app.services.asset_service import AssetService
+from app.services.bank_service import BankService
 from app.services.budget_service import BudgetService
 from app.services.hub_service import HubService
 
@@ -24,6 +31,7 @@ router = APIRouter(tags=["hub"])
 hub_service = HubService()
 budget_service = BudgetService()
 asset_service = AssetService()
+bank_service = BankService()
 
 
 @router.get("/profile", response_model=ProfileOut)
@@ -69,6 +77,78 @@ def create_finance_transaction(
             icon=body.icon,
         )
         return FinanceTransactionOut.model_validate(budget_service._tx_to_dict(tx))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.get("/banks/providers", response_model=BankProvidersOut)
+def list_bank_providers(user: User = Depends(get_current_user)):
+    return BankProvidersOut.model_validate(bank_service.providers())
+
+
+@router.get("/banks/connections", response_model=list[BankConnectionOut])
+def list_bank_connections(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return [BankConnectionOut.model_validate(c) for c in bank_service.list_connections(db, user)]
+
+
+@router.post("/banks/connect", response_model=BankConnectOut)
+def connect_bank(
+    body: BankConnectIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        result = bank_service.connect(
+            db,
+            user,
+            provider_code=body.provider_code,
+            budget_type=body.budget_type,
+            return_url=body.return_url,
+        )
+        return BankConnectOut.model_validate(result)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.post("/banks/connections/{connection_id}/sync", response_model=BankSyncOut)
+def sync_bank_connection(
+    connection_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        return BankSyncOut.model_validate(bank_service.sync_connection(db, user, connection_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.delete("/banks/connections/{connection_id}", status_code=204)
+def disconnect_bank(
+    connection_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        bank_service.disconnect(db, user, connection_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.post("/banks/saltedge/callback", response_model=BankSyncOut)
+def saltedge_callback(
+    body: BankSaltEdgeCallbackIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        return BankSyncOut.model_validate(
+            bank_service.complete_saltedge_callback(
+                db,
+                user,
+                connection_id=body.connection_id,
+                external_connection_id=body.external_connection_id,
+            )
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 

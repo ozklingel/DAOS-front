@@ -36,6 +36,11 @@ class BudgetService:
         selected = home if selected_type == BudgetType.home.value else business
         transactions = self._list_transactions(db, user, selected_type, month)
 
+        from app.services.bank_service import BankService
+
+        bank_accounts = BankService().list_accounts(db, user)
+        bank_total = sum(float(a.get("balance") or 0) for a in bank_accounts)
+
         return {
             "currency": "ILS",
             "month": month,
@@ -45,6 +50,8 @@ class BudgetService:
             "business": business,
             "summary": selected,
             "total_balance": home["balance"] + business["balance"],
+            "bank_accounts": bank_accounts,
+            "bank_total_balance": bank_total,
             "income": selected["income"],
             "expenses": selected["expenses"],
             "transactions": transactions,
@@ -62,6 +69,8 @@ class BudgetService:
         category: str = "general",
         icon: str = "payment",
         occurred_at: datetime | None = None,
+        bank_account_id: str | None = None,
+        external_id: str | None = None,
     ) -> FinanceTransaction:
         if budget_type not in {BudgetType.home.value, BudgetType.business.value}:
             raise ValueError("Invalid budget type")
@@ -82,6 +91,8 @@ class BudgetService:
             tx_type=tx_type,
             category=category,
             icon=icon,
+            bank_account_id=bank_account_id,
+            external_id=external_id,
             occurred_at=occurred_at or datetime.now(UTC),
         )
         db.add(tx)

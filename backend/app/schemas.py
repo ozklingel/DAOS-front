@@ -325,18 +325,84 @@ class BudgetSummaryOut(APIModel):
     savings_progress: float
 
 
+class BankAccountOut(APIModel):
+    id: str
+    connection_id: str
+    provider_code: str
+    provider_name: str
+    name: str
+    account_type: str = "checking"
+    currency: str = "ILS"
+    balance: float = 0.0
+    iban_masked: str | None = None
+    budget_type: str = "home"
+
+
+class BankConnectionOut(APIModel):
+    id: str
+    provider_code: str
+    provider_name: str
+    status: str
+    mode: str = "demo"
+    consent_expires_at: str | None = None
+    last_synced_at: str | None = None
+    account_count: int = 0
+
+
+class BankProviderOut(APIModel):
+    code: str
+    name: str
+    name_en: str
+
+
+class BankProvidersOut(APIModel):
+    country: str = "IL"
+    currency: str = "ILS"
+    mode: str = "demo"
+    providers: list[BankProviderOut]
+    hint: str | None = None
+
+
+class BankConnectIn(APIModel):
+    provider_code: str
+    budget_type: str = "home"
+    return_url: str | None = None
+
+
+class BankConnectOut(APIModel):
+    status: str
+    mode: str
+    connection: BankConnectionOut
+    accounts: list[BankAccountOut] = []
+    connect_url: str | None = None
+    imported_transactions: int = 0
+
+
+class BankSyncOut(APIModel):
+    connection: BankConnectionOut
+    accounts: list[BankAccountOut] = []
+    imported_transactions: int = 0
+
+
+class BankSaltEdgeCallbackIn(APIModel):
+    connection_id: str
+    external_connection_id: str
+
+
 class FinanceOut(APIModel):
     currency: str = "ILS"
     month: str
     month_label: str
     selected_type: str = "home"
     total_balance: float
+    bank_total_balance: float = 0.0
     income: float
     expenses: float
     home: BudgetSummaryOut
     business: BudgetSummaryOut
     summary: BudgetSummaryOut
     transactions: list[FinanceTransactionOut]
+    bank_accounts: list[BankAccountOut] = []
 
 
 class FinanceTransactionIn(APIModel):

@@ -9,6 +9,7 @@ import 'package:taskmail/shared/widgets/daos_page_scaffold.dart';
 import 'package:taskmail/shared/widgets/hub_menu_card.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
 import 'package:taskmail/theme/app_colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -141,6 +142,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 12),
+              _BankAccountsSection(
+                accounts: finance.bankAccounts,
+                bankTotal: finance.bankTotalBalance,
+                budgetType: _selectedType,
+                l: l,
+                onChanged: () => ref.invalidate(financeProvider(_selectedType)),
               ),
               const SizedBox(height: 20),
               Text(
@@ -498,6 +507,253 @@ class _SavingsCard extends StatelessWidget {
             '${summary.savingsProgress.toStringAsFixed(0)}%',
             style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w600),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BankAccountsSection extends ConsumerStatefulWidget {
+  const _BankAccountsSection({
+    required this.accounts,
+    required this.bankTotal,
+    required this.budgetType,
+    required this.l,
+    required this.onChanged,
+  });
+
+  final List<BankAccountData> accounts;
+  final double bankTotal;
+  final String budgetType;
+  final AppLocalizations l;
+  final VoidCallback onChanged;
+
+  @override
+  ConsumerState<_BankAccountsSection> createState() => _BankAccountsSectionState();
+}
+
+class _BankAccountsSectionState extends ConsumerState<_BankAccountsSection> {
+  bool _busy = false;
+
+  Future<void> _connectBank() async {
+    final l = widget.l;
+    final ds = ref.read(hubRemoteDataSourceProvider);
+    setState(() => _busy = true);
+    try {
+      final providers = await ds.getBankProviders();
+      if (!mounted) return;
+      final selected = await showModalBottomSheet<BankProviderData>(
+        context: context,
+        backgroundColor: AppColors.darkSurface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) {
+          return SafeArea(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              children: [
+                Text(
+                  l.selectBank,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkTextPrimary,
+                  ),
+                ),
+                if (providers.mode == 'demo') ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l.bankDemoModeHint,
+                    style: const TextStyle(fontSize: 12, color: AppColors.darkTextSecondary),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                ...providers.providers.map(
+                  (p) => ListTile(
+                    leading: const Icon(Icons.account_balance_outlined, color: AppColors.primary),
+                    title: Text(p.name, style: const TextStyle(color: AppColors.darkTextPrimary)),
+                    subtitle: Text(p.nameEn, style: const TextStyle(color: AppColors.darkTextSecondary)),
+                    onTap: () => Navigator.pop(ctx, p),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+      if (selected == null) return;
+
+      final result = await ds.connectBank(
+        providerCode: selected.code,
+        budgetType: widget.budgetType,
+      );
+      final connectUrl = result['connect_url'] as String?;
+      if (connectUrl != null && connectUrl.isNotEmpty) {
+        final uri = Uri.parse(connectUrl);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.bankConnectedSuccess)),
+      );
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _sync(String connectionId) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(hubRemoteDataSourceProvider).syncBankConnection(connectionId);
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _disconnect(String connectionId) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(hubRemoteDataSourceProvider).disconnectBank(connectionId);
+      widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = widget.l;
+    final accounts = widget.accounts;
+    final connectionIds = accounts.map((a) => a.connectionId).toSet().toList();
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_outlined, size: 18, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  l.bankAccountsTitle,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkTextPrimary,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _busy ? null : _connectBank,
+                icon: _busy
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_link, size: 18),
+                label: Text(l.connectIsraeliBank),
+              ),
+            ],
+          ),
+          if (accounts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                l.bankDemoModeHint,
+                style: const TextStyle(fontSize: 12, color: AppColors.darkTextSecondary),
+              ),
+            )
+          else ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(l.bankTotalBalance, style: const TextStyle(color: AppColors.darkTextSecondary)),
+                const Spacer(),
+                Text(
+                  formatIls(widget.bankTotal),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkTextPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...accounts.map(
+              (acc) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.account_balance_outlined, color: AppColors.primary, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            acc.providerName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.darkTextPrimary,
+                            ),
+                          ),
+                          Text(
+                            acc.ibanMasked == null ? acc.name : '${acc.name} · ${acc.ibanMasked}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.darkTextSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      formatIls(acc.balance),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: acc.balance >= 0 ? AppColors.success : AppColors.critical,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (connectionIds.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: _busy ? null : () => _sync(connectionIds.first),
+                    child: Text(l.syncBank),
+                  ),
+                  TextButton(
+                    onPressed: _busy ? null : () => _disconnect(connectionIds.first),
+                    child: Text(l.disconnectBank),
+                  ),
+                ],
+              ),
+          ],
         ],
       ),
     );

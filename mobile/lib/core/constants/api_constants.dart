@@ -33,6 +33,9 @@ class ApiConstants {
   static const String calendar = '/calendar';
   static const String finance = '/finance';
   static const String financeTransactions = '/finance/transactions';
+  static const String bankProviders = '/banks/providers';
+  static const String bankConnections = '/banks/connections';
+  static const String bankConnect = '/banks/connect';
   static const String infoHub = '/info';
   static const String assets = '/assets';
 

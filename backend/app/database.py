@@ -41,6 +41,14 @@ def _migrate_sqlite() -> None:
     if "whatsapp_phone" not in user_columns:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN whatsapp_phone VARCHAR(20)"))
+    if "finance_transactions" in inspector.get_table_names():
+        tx_columns = {col["name"] for col in inspector.get_columns("finance_transactions")}
+        if "bank_account_id" not in tx_columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE finance_transactions ADD COLUMN bank_account_id VARCHAR(36)"))
+        if "external_id" not in tx_columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE finance_transactions ADD COLUMN external_id VARCHAR(128)"))
 
 
 def init_db() -> None:

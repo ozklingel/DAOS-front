@@ -53,9 +53,20 @@ class Settings(BaseSettings):
     green_api_id_instance: str = ""
     green_api_token: str = ""
 
+    # Salt Edge — Israeli Open Finance aggregator (https://www.saltedge.com / saltedge.co.il)
+    salt_edge_app_id: str = ""
+    salt_edge_secret: str = ""
+    salt_edge_api_url: str = "https://www.saltedge.com"
+    salt_edge_return_url: str = "http://localhost:5173/"
+    salt_edge_api_prefix: str = "/api/v6"
+
     @property
     def green_api_enabled(self) -> bool:
         return bool(self.green_api_id_instance.strip() and self.green_api_token.strip())
+
+    @property
+    def salt_edge_enabled(self) -> bool:
+        return bool(self.salt_edge_app_id.strip() and self.salt_edge_secret.strip())
 
     @property
     def whatsapp_app_secret_effective(self) -> str:

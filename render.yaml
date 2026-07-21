@@ -42,6 +42,14 @@ services:
         sync: false
       - key: GREEN_API_TOKEN
         sync: false
+      - key: SALT_EDGE_APP_ID
+        sync: false
+      - key: SALT_EDGE_SECRET
+        sync: false
+      - key: SALT_EDGE_API_URL
+        value: https://www.saltedge.com
+      - key: SALT_EDGE_RETURN_URL
+        value: https://ozklingel.github.io/DAOS-front/#/finance
       - key: CORS_ORIGINS
         value: "*"
 

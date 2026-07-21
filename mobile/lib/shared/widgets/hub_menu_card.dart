@@ -101,6 +101,10 @@ IconData hubIconForKey(String key) {
       return Icons.home_outlined;
     case 'salary':
       return Icons.payments_outlined;
+    case 'account_balance':
+      return Icons.account_balance_outlined;
+    case 'payment':
+      return Icons.payment_outlined;
     default:
       return Icons.task_alt_outlined;
   }

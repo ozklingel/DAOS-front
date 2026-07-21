@@ -184,6 +184,15 @@ abstract class AppLocalizations {
   String get transactionIncome;
   String get transactionExpense;
   String get noTransactions;
+  String get connectedBanks;
+  String get connectIsraeliBank;
+  String get bankAccountsTitle;
+  String get bankDemoModeHint;
+  String get bankConnectedSuccess;
+  String get syncBank;
+  String get disconnectBank;
+  String get selectBank;
+  String get bankTotalBalance;
   String get invalidTransaction;
   String get transactionAdded;
   String get noEventsToday;
@@ -584,6 +593,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionExpense => 'Expense';
   @override
   String get noTransactions => 'No transactions this month';
+  @override
+  String get connectedBanks => 'Connected banks';
+  @override
+  String get connectIsraeliBank => 'Connect Israeli bank';
+  @override
+  String get bankAccountsTitle => 'Bank accounts';
+  @override
+  String get bankDemoModeHint =>
+      'Demo mode: sample balances until Salt Edge credentials are configured.';
+  @override
+  String get bankConnectedSuccess => 'Bank connected';
+  @override
+  String get syncBank => 'Sync';
+  @override
+  String get disconnectBank => 'Disconnect';
+  @override
+  String get selectBank => 'Choose a bank';
+  @override
+  String get bankTotalBalance => 'Bank total';
   @override
   String get invalidTransaction => 'Enter a valid title and amount';
   @override
@@ -1146,6 +1174,25 @@ class AppLocalizationsHe extends AppLocalizations {
   String get transactionExpense => 'הוצאה';
   @override
   String get noTransactions => 'אין תנועות החודש';
+  @override
+  String get connectedBanks => 'בנקים מחוברים';
+  @override
+  String get connectIsraeliBank => 'חיבור לבנק ישראלי';
+  @override
+  String get bankAccountsTitle => 'חשבונות בנק';
+  @override
+  String get bankDemoModeHint =>
+      'מצב הדגמה: יתרות לדוגמה עד להגדרת מפתחות Salt Edge.';
+  @override
+  String get bankConnectedSuccess => 'הבנק חובר בהצלחה';
+  @override
+  String get syncBank => 'סנכרון';
+  @override
+  String get disconnectBank => 'ניתוק';
+  @override
+  String get selectBank => 'בחרו בנק';
+  @override
+  String get bankTotalBalance => 'סה״כ בבנקים';
   @override
   String get invalidTransaction => 'הזינו תיאור וסכום תקינים';
   @override

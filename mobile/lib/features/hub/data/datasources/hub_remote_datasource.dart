@@ -56,6 +56,39 @@ class HubRemoteDataSource {
     return FinanceTransactionData.fromJson(data);
   }
 
+  Future<BankProvidersData> getBankProviders() async {
+    final data = await _client.get<Map<String, dynamic>>(
+      ApiConstants.bankProviders,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return BankProvidersData.fromJson(data);
+  }
+
+  Future<Map<String, dynamic>> connectBank({
+    required String providerCode,
+    String budgetType = 'home',
+  }) async {
+    return _client.post<Map<String, dynamic>>(
+      ApiConstants.bankConnect,
+      data: {
+        'provider_code': providerCode,
+        'budget_type': budgetType,
+      },
+      parser: (d) => d as Map<String, dynamic>,
+    );
+  }
+
+  Future<Map<String, dynamic>> syncBankConnection(String connectionId) async {
+    return _client.post<Map<String, dynamic>>(
+      '${ApiConstants.bankConnections}/$connectionId/sync',
+      parser: (d) => d as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> disconnectBank(String connectionId) async {
+    await _client.delete('${ApiConstants.bankConnections}/$connectionId');
+  }
+
   Future<InfoHubData> getInfoHub() async {
     final data = await _client.get<Map<String, dynamic>>(
       ApiConstants.infoHub,

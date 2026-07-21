@@ -92,6 +92,12 @@ class User(Base):
     finance_transactions: Mapped[list["FinanceTransaction"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    bank_connections: Mapped[list["BankConnection"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    bank_accounts: Mapped[list["BankAccount"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     asset_reminders: Mapped[list["AssetReminder"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
@@ -231,10 +237,64 @@ class FinanceTransaction(Base):
     tx_type: Mapped[str] = mapped_column(String(20), index=True)
     category: Mapped[str] = mapped_column(String(50), default="general")
     icon: Mapped[str] = mapped_column(String(30), default="payment")
+    bank_account_id: Mapped[str | None] = mapped_column(
+        ForeignKey("bank_accounts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    external_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped[User] = relationship(back_populates="finance_transactions")
+
+
+class BankConnection(Base):
+    __tablename__ = "bank_connections"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    provider_code: Mapped[str] = mapped_column(String(50), index=True)
+    provider_name: Mapped[str] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(30), default="active", index=True)
+    mode: Mapped[str] = mapped_column(String(20), default="demo")  # demo | saltedge
+    external_customer_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    external_connection_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    consent_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="bank_connections")
+    accounts: Mapped[list["BankAccount"]] = relationship(
+        back_populates="connection", cascade="all, delete-orphan"
+    )
+
+
+class BankAccount(Base):
+    __tablename__ = "bank_accounts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    connection_id: Mapped[str] = mapped_column(
+        ForeignKey("bank_connections.id", ondelete="CASCADE"), index=True
+    )
+    provider_code: Mapped[str] = mapped_column(String(50), index=True)
+    provider_name: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(120))
+    account_type: Mapped[str] = mapped_column(String(40), default="checking")
+    currency: Mapped[str] = mapped_column(String(8), default="ILS")
+    balance: Mapped[float] = mapped_column(Float, default=0.0)
+    iban_masked: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    external_account_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    budget_type: Mapped[str] = mapped_column(String(20), default="home", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="bank_accounts")
+    connection: Mapped[BankConnection] = relationship(back_populates="accounts")
 
 
 class AssetReminder(Base):
