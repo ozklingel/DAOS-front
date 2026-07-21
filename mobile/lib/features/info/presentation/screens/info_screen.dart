@@ -6,6 +6,7 @@ import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart
 import 'package:taskmail/features/hub/data/models/hub_models.dart';
 import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
 import 'package:taskmail/features/info/presentation/widgets/asset_reminder_sheet.dart';
+import 'package:taskmail/features/info/presentation/widgets/info_documents_sheet.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/shared/widgets/daos_page_scaffold.dart';
@@ -93,12 +94,25 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                     icon: hubIconForKey(category.icon),
                     subtitleLines: category.items,
                     onTap: () {
+                      final docsInCategory = hub.documents
+                          .where((d) => d.category == category.id)
+                          .toList();
+                      if (docsInCategory.isNotEmpty) {
+                        showInfoCategorySheet(
+                          context,
+                          category: category,
+                          documents: hub.documents,
+                        );
+                        return;
+                      }
                       final match = _findReminderForCategory(hub.reminders, category.id);
                       if (match != null) {
                         showAssetReminderSheet(context, ref, match);
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${category.title} — ${l.comingSoon}')),
+                        showInfoCategorySheet(
+                          context,
+                          category: category,
+                          documents: hub.documents,
                         );
                       }
                     },

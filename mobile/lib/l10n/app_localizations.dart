@@ -56,6 +56,11 @@ abstract class AppLocalizations {
   String documentSavedTo(String category);
   String get photoCaptureFailed;
   String get pickFromGallery;
+  String get infoCategoryEmpty;
+  String get infoCategoryEmptyHint;
+  String infoDocumentsCount(int count);
+  String get infoDocumentDate;
+  String get infoDocumentExtracted;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
 
@@ -337,6 +342,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoCaptureFailed => 'Could not open camera. Try picking from gallery.';
   @override
   String get pickFromGallery => 'Choose from gallery';
+  @override
+  String get infoCategoryEmpty => 'No documents in this category yet';
+  @override
+  String get infoCategoryEmptyHint =>
+      'Use Take photo on the home screen to scan a document into this category.';
+  @override
+  String infoDocumentsCount(int count) =>
+      count == 1 ? '1 document' : '$count documents';
+  @override
+  String get infoDocumentDate => 'Date';
+  @override
+  String get infoDocumentExtracted => 'Extracted text';
   @override
   String get noTasksToday => 'No tasks for today — sync your email to get started.';
   @override
@@ -926,6 +943,18 @@ class AppLocalizationsHe extends AppLocalizations {
   String get photoCaptureFailed => 'לא ניתן לפתוח את המצלמה. נסו לבחור מהגלריה.';
   @override
   String get pickFromGallery => 'בחר מהגלריה';
+  @override
+  String get infoCategoryEmpty => 'אין עדיין מסמכים בקטגוריה זו';
+  @override
+  String get infoCategoryEmptyHint =>
+      'השתמשו ב"צלם תמונה" במסך הבית כדי לסרוק מסמך לקטגוריה זו.';
+  @override
+  String infoDocumentsCount(int count) =>
+      count == 1 ? 'מסמך אחד' : '$count מסמכים';
+  @override
+  String get infoDocumentDate => 'תאריך';
+  @override
+  String get infoDocumentExtracted => 'טקסט שחולץ';
   @override
   String get noTasksToday => 'אין משימות להיום — סנכרנו מיילים כדי להתחיל.';
   @override

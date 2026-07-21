@@ -132,16 +132,18 @@ class AIService:
         b64 = base64.b64encode(image_bytes).decode("ascii")
         data_url = f"data:{mime_type};base64,{b64}"
         prompt = """Analyze this document photo for a Hebrew personal info hub.
+Today's date context: use ISO dates (YYYY-MM-DD). For Hebrew dates like 19.7 or 19/07, resolve month/day; if year is missing use the nearest upcoming year relative to today.
 Return JSON only with keys:
 - category: one of personal_docs | ideas | summaries | links | archive | vehicle | insurance
-- title: short Hebrew title (e.g. דרכון, תעודת זהות, רשימת קניות)
+- title: short Hebrew title (e.g. דרכון, הזמנה לאירוע, תעודת זהות)
 - summary: 1 short Hebrew sentence describing the document
 - extracted_text: key text visible on the document (Hebrew/English), or empty string
-- expiry_date: YYYY-MM-DD if an expiry/due date is visible, else null
+- expiry_date: YYYY-MM-DD for event date / invitation date / expiry / due date if visible, else null
 - confidence: 0-1 float
 
 Category rules:
 - passport, ID card, license, contract, certificate → personal_docs
+- event invitation, ticket, RSVP, הזמנה, כרטיס לאירוע → personal_docs (put the event date in expiry_date)
 - shopping list, project notes, ideas, sketches → ideas
 - book notes, meeting notes, summaries, notebooks → summaries
 - screenshot with URL, QR, article link → links

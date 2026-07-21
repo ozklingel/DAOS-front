@@ -66,6 +66,29 @@ class AssetService:
                     "source": "reminder",
                 }
             )
+
+        documents = InfoDocumentService().list_documents(db, user)
+        for doc in documents:
+            if not doc.get("expiry_date"):
+                continue
+            try:
+                expiry = date.fromisoformat(doc["expiry_date"])
+            except ValueError:
+                continue
+            if expiry != day:
+                continue
+            events.append(
+                {
+                    "id": doc["id"],
+                    "title": doc["title"],
+                    "subtitle": doc.get("summary") or doc.get("category_title") or "",
+                    "category": doc.get("category_title") or "מידע",
+                    "start_time": "10:00",
+                    "end_time": "11:00",
+                    "icon": doc.get("icon") or "document",
+                    "source": "document",
+                }
+            )
         return events
 
     def update_reminder(
