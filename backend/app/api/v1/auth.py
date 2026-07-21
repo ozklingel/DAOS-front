@@ -9,18 +9,24 @@ from app.schemas import (
     AuthTokensOut,
     GoogleAuthIn,
     OutlookAuthIn,
+    OutlookAuthorizeUrlIn,
+    OutlookAuthorizeUrlOut,
+    OutlookExchangeIn,
+    OutlookExchangeOut,
     RefreshTokenIn,
     UserOut,
     WhatsAppLinkIn,
 )
 from app.services.auth_service import AuthService
 from app.services.email_sync_service import EmailSyncService
+from app.services.microsoft_oauth_service import MicrosoftOAuthService
 from app.services.whatsapp_service import WhatsAppService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 auth_service = AuthService()
 email_sync = EmailSyncService()
 whatsapp_service = WhatsAppService()
+microsoft_oauth = MicrosoftOAuthService()
 
 
 @router.post("/google", response_model=AuthTokensOut)
@@ -58,6 +64,35 @@ async def sign_in_outlook(body: OutlookAuthIn, db: Session = Depends(get_db)):
         )
     except ValueError as exc:
         raise HTTPException(status_code=401, detail={"message": str(exc)}) from exc
+
+
+@router.post("/outlook/authorize-url", response_model=OutlookAuthorizeUrlOut)
+def outlook_authorize_url(body: OutlookAuthorizeUrlIn):
+    try:
+        url = microsoft_oauth.build_authorize_url(
+            redirect_uri=body.redirect_uri,
+            state=body.state,
+            code_challenge=body.code_challenge,
+        )
+        return OutlookAuthorizeUrlOut(url=url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.post("/outlook/exchange", response_model=OutlookExchangeOut)
+async def outlook_exchange(body: OutlookExchangeIn):
+    try:
+        tokens = await microsoft_oauth.exchange_code(
+            code=body.code,
+            redirect_uri=body.redirect_uri,
+            code_verifier=body.code_verifier,
+        )
+        return OutlookExchangeOut(
+            access_token=tokens["access_token"],
+            refresh_token=tokens.get("refresh_token") or None,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 
 
 @router.post("/google/connect", response_model=UserOut)

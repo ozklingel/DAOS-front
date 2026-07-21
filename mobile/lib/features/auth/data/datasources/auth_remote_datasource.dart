@@ -1,6 +1,8 @@
 import 'package:taskmail/core/constants/api_constants.dart';
+import 'package:taskmail/core/errors/app_exception.dart';
 import 'package:taskmail/core/network/api_client.dart';
 import 'package:taskmail/features/auth/data/models/auth_response_model.dart';
+import 'package:taskmail/features/auth/data/models/oauth_credentials.dart';
 
 class AuthRemoteDataSource {
   AuthRemoteDataSource(this._client);
@@ -69,6 +71,47 @@ class AuthRemoteDataSource {
       parser: (d) => d as Map<String, dynamic>,
     );
     return UserModel.fromJson(data);
+  }
+
+  Future<String> getOutlookAuthorizeUrl({
+    required String redirectUri,
+    required String state,
+    required String codeChallenge,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authOutlookAuthorizeUrl,
+      data: {
+        'redirectUri': redirectUri,
+        'state': state,
+        'codeChallenge': codeChallenge,
+      },
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return data['url'] as String;
+  }
+
+  Future<OutlookSignInCredentials> exchangeOutlookCode({
+    required String code,
+    required String redirectUri,
+    required String codeVerifier,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authOutlookExchange,
+      data: {
+        'code': code,
+        'redirectUri': redirectUri,
+        'codeVerifier': codeVerifier,
+      },
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    final access = data['access_token'] as String? ?? data['accessToken'] as String?;
+    if (access == null || access.isEmpty) {
+      throw const AuthFailureException('Outlook token exchange failed.');
+    }
+    return OutlookSignInCredentials(
+      accessToken: access,
+      refreshToken: data['refresh_token'] as String? ?? data['refreshToken'] as String?,
+    );
   }
 
   Future<UserModel> disconnectGoogle() async {

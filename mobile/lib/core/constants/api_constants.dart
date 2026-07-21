@@ -9,6 +9,8 @@ class ApiConstants {
   // Auth
   static const String authGoogle = '/auth/google';
   static const String authOutlook = '/auth/outlook';
+  static const String authOutlookAuthorizeUrl = '/auth/outlook/authorize-url';
+  static const String authOutlookExchange = '/auth/outlook/exchange';
   static const String authGoogleConnect = '/auth/google/connect';
   static const String authOutlookConnect = '/auth/outlook/connect';
   static const String authGoogleDisconnect = '/auth/google/disconnect';

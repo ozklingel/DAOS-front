@@ -54,7 +54,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthTokens> signInWithOutlook() async {
-    final credentials = await _oauth.signInWithOutlook();
+    final credentials = await _oauth.signInWithOutlook(intent: 'login');
     final response = await _remote.signInWithOutlook(
       accessToken: credentials.accessToken,
       refreshToken: credentials.refreshToken,
@@ -83,7 +83,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User> connectOutlook() async {
-    final credentials = await _oauth.signInWithOutlook();
+    final credentials = await _oauth.signInWithOutlook(intent: 'connect');
     final model = await _remote.connectOutlook(
       accessToken: credentials.accessToken,
       refreshToken: credentials.refreshToken,

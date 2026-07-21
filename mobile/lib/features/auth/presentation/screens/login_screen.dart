@@ -35,6 +35,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await ref.read(analyticsServiceProvider).logLogin(method);
       }
     } on AppException catch (e) {
+      // Web Outlook starts a full-page redirect — don't treat as error.
+      if (e.message.contains('Redirecting')) return;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).errorMessage(e))),
@@ -163,22 +165,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             .signInWithGoogle(),
                       ),
             ),
-            if (!kIsWeb) ...[
-              const SizedBox(height: 16),
-              _Btn(
-                label: l.continueWithOutlook,
-                icon: Icons.mail_outline_rounded,
-                loading: _outlookLoading,
-                onPressed: _busy
-                    ? null
-                    : () => _run(
-                          'outlook',
-                          () => ref
-                              .read(authStateProvider.notifier)
-                              .signInWithOutlook(),
-                        ),
-              ),
-            ],
+            const SizedBox(height: 16),
+            _Btn(
+              label: l.continueWithOutlook,
+              icon: Icons.mail_outline_rounded,
+              loading: _outlookLoading,
+              onPressed: _busy
+                  ? null
+                  : () => _run(
+                        'outlook',
+                        () => ref
+                            .read(authStateProvider.notifier)
+                            .signInWithOutlook(),
+                      ),
+            ),
             if (!kIsWeb && kDebugMode) ...[
               const SizedBox(height: 16),
               _Btn(

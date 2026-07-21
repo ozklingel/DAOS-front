@@ -111,6 +111,47 @@ class OutlookAuthIn(APIModel):
         return data
 
 
+class OutlookAuthorizeUrlIn(APIModel):
+    redirect_uri: str = Field(alias="redirectUri")
+    state: str
+    code_challenge: str = Field(alias="codeChallenge")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "redirect_uri" not in data and "redirectUri" in data:
+                data["redirect_uri"] = data["redirectUri"]
+            if "code_challenge" not in data and "codeChallenge" in data:
+                data["code_challenge"] = data["codeChallenge"]
+        return data
+
+
+class OutlookAuthorizeUrlOut(APIModel):
+    url: str
+
+
+class OutlookExchangeIn(APIModel):
+    code: str
+    redirect_uri: str = Field(alias="redirectUri")
+    code_verifier: str = Field(alias="codeVerifier")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "redirect_uri" not in data and "redirectUri" in data:
+                data["redirect_uri"] = data["redirectUri"]
+            if "code_verifier" not in data and "codeVerifier" in data:
+                data["code_verifier"] = data["codeVerifier"]
+        return data
+
+
+class OutlookExchangeOut(APIModel):
+    access_token: str
+    refresh_token: str | None = None
+
+
 class RefreshTokenIn(APIModel):
     refresh_token: str
 

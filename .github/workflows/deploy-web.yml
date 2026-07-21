@@ -48,6 +48,7 @@ jobs:
       - name: Build web (release)
         env:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
+          OUTLOOK_CLIENT_ID: ${{ vars.OUTLOOK_CLIENT_ID }}
         run: |
           set -e
           REPO_NAME="${{ github.event.repository.name }}"
@@ -57,11 +58,19 @@ jobs:
           CLIENT_ID="812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
           echo "API_BASE_URL=$API_BASE_URL"
           echo "Using Web OAuth client ID (hardcoded for CI)"
+          EXTRA_DEFINES=()
+          if [ -n "${OUTLOOK_CLIENT_ID:-}" ]; then
+            echo "OUTLOOK_CLIENT_ID is set for CI build"
+            EXTRA_DEFINES+=(--dart-define=OUTLOOK_CLIENT_ID="$OUTLOOK_CLIENT_ID")
+          else
+            echo "WARN: vars.OUTLOOK_CLIENT_ID not set — Outlook web login will need it"
+          fi
           flutter build web --release \
             --base-href "/${REPO_NAME}/" \
             --pwa-strategy=none \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
-            --dart-define=GOOGLE_SERVER_CLIENT_ID="$CLIENT_ID"
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="$CLIENT_ID" \
+            "${EXTRA_DEFINES[@]}"
           cp build/web/index.html build/web/404.html
           # dart2js may split strings — check parts, don't fail the whole deploy
           if grep -q 'ur4g34kfo6seil4f6h06igl08ks9ecmt' build/web/main.dart.js \

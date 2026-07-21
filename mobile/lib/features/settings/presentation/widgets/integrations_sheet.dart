@@ -160,30 +160,39 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               label: Text(l.signOutAndUseGoogle),
             ),
           ],
-          if (!kIsWeb) ...[
-            const SizedBox(height: 12),
-            _ConnectionCard(
-              title: l.outlook,
-              connected: outlookConnected,
-              connectedLabel: l.connected,
-              notConnectedLabel: l.notConnected,
-              hint: l.connectExternalCalendar,
-              connectLabel: l.connect,
-              disconnectLabel: l.disconnect,
-              onConnect: () async {
-                try {
-                  await ref.read(authStateProvider.notifier).connectOutlook();
-                } on AppException catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l.errorMessage(e))),
-                    );
-                  }
+          const SizedBox(height: 12),
+          _ConnectionCard(
+            title: l.outlook,
+            connected: outlookConnected,
+            connectedLabel: l.connected,
+            notConnectedLabel: l.notConnected,
+            hint: l.outlookConnectHint,
+            connectLabel: l.connect,
+            disconnectLabel: l.disconnect,
+            isLoading: _isConnecting,
+            onConnect: () async {
+              setState(() => _isConnecting = true);
+              try {
+                await ref.read(authStateProvider.notifier).connectOutlook();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l.outlookConnectedSuccess)),
+                  );
                 }
-              },
-              onDisconnect: () => ref.read(authStateProvider.notifier).disconnectOutlook(),
-            ),
-          ],
+              } on AppException catch (e) {
+                // Web redirects away; ignore redirect message
+                if (e.message.contains('Redirecting')) return;
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l.errorMessage(e))),
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => _isConnecting = false);
+              }
+            },
+            onDisconnect: () => ref.read(authStateProvider.notifier).disconnectOutlook(),
+          ),
           if (gmailConnected || outlookConnected) ...[
             const SizedBox(height: 16),
             FilledButton.icon(

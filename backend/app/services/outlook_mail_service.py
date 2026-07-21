@@ -8,11 +8,12 @@ class OutlookMailService:
     GRAPH_MESSAGES_URL = "https://graph.microsoft.com/v1.0/me/messages"
 
     async def _get_access_token(self, refresh_token: str) -> str:
-        if not settings.microsoft_client_id:
+        client_id = (settings.microsoft_client_id or "").strip()
+        if not client_id or client_id in {"your-azure-app-client-id", "YOUR_OUTLOOK_CLIENT_ID"}:
             raise ValueError("Microsoft OAuth is not configured on the server")
 
         payload = {
-            "client_id": settings.microsoft_client_id,
+            "client_id": client_id,
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "scope": "Mail.Read offline_access openid profile email",

@@ -1,20 +1,30 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:taskmail/core/errors/app_exception.dart';
+import 'package:taskmail/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:taskmail/features/auth/data/models/oauth_credentials.dart';
+import 'package:taskmail/features/auth/data/services/web_navigation.dart';
 
 class OAuthService {
   OAuthService({
     GoogleSignIn? googleSignIn,
     FlutterAppAuth? appAuth,
+    AuthRemoteDataSource? authRemote,
   })  : _googleSignInOverride = googleSignIn,
-        _appAuth = appAuth ?? const FlutterAppAuth();
+        _appAuth = appAuth ?? const FlutterAppAuth(),
+        _authRemoteOverride = authRemote;
 
   final GoogleSignIn? _googleSignInOverride;
   GoogleSignIn? _googleSignIn;
   final FlutterAppAuth _appAuth;
+  final AuthRemoteDataSource? _authRemoteOverride;
+  AuthRemoteDataSource? _authRemote;
 
   /// Set via --dart-define only when non-empty. Empty define must not wipe the fallback.
   static const String _googleServerClientIdEnv =
@@ -28,14 +38,36 @@ class OAuthService {
           ? _googleServerClientIdEnv
           : _googleWebClientIdFallback;
 
-  static const String _outlookClientId = String.fromEnvironment(
-    'OUTLOOK_CLIENT_ID',
-    defaultValue: 'YOUR_OUTLOOK_CLIENT_ID',
-  );
+  static const String _outlookClientIdEnv = String.fromEnvironment('OUTLOOK_CLIENT_ID');
   static const String _outlookRedirectUri = String.fromEnvironment(
     'OUTLOOK_REDIRECT_URI',
     defaultValue: 'com.taskmail://oauth/callback',
   );
+
+  static String get outlookClientId => _outlookClientIdEnv;
+
+  /// Includes GitHub Pages base path (e.g. /DAOS-front/), not just origin.
+  static String webOutlookRedirectUri() {
+    final origin = webOrigin();
+    final baseHref = webBaseHref(); // e.g. "/DAOS-front/" or "/"
+    final base = baseHref.endsWith('/')
+        ? baseHref.substring(0, baseHref.length - 1)
+        : baseHref;
+    if (base.isEmpty) return '$origin/oauth/outlook';
+    return '$origin$base/oauth/outlook';
+  }
+
+  void bindAuthRemote(AuthRemoteDataSource remote) {
+    _authRemote = remote;
+  }
+
+  AuthRemoteDataSource get _remote {
+    final remote = _authRemoteOverride ?? _authRemote;
+    if (remote == null) {
+      throw const AuthFailureException('Auth remote is not configured for Outlook web OAuth.');
+    }
+    return remote;
+  }
 
   GoogleSignIn get _google {
     if (_googleSignInOverride != null) return _googleSignInOverride!;
@@ -134,17 +166,22 @@ class OAuthService {
     }
   }
 
-  Future<OutlookSignInCredentials> signInWithOutlook() async {
+  Future<OutlookSignInCredentials> signInWithOutlook({String intent = 'login'}) async {
     if (kIsWeb) {
+      return _signInWithOutlookWeb(intent: intent);
+    }
+
+    if (outlookClientId.isEmpty || outlookClientId == 'YOUR_OUTLOOK_CLIENT_ID') {
       throw const AuthFailureException(
-        'Outlook sign-in is not supported on web. Use Dev Login for local development.',
+        'OUTLOOK_CLIENT_ID is missing. Set MICROSOFT_CLIENT_ID in backend/.env '
+        'and pass --dart-define=OUTLOOK_CLIENT_ID=... (see OAUTH_SETUP.md).',
       );
     }
 
     try {
       final result = await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
-          _outlookClientId,
+          outlookClientId,
           _outlookRedirectUri,
           discoveryUrl:
               'https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration',
@@ -172,6 +209,73 @@ class OAuthService {
       debugPrint('Outlook sign-in error: $e');
       throw const AuthFailureException('Outlook sign-in failed.');
     }
+  }
+
+  Future<OutlookSignInCredentials> _signInWithOutlookWeb({required String intent}) async {
+    final verifier = _pkceVerifier();
+    final challenge = _pkceChallenge(verifier);
+    final state = _randomUrlSafe(24);
+    final redirectUri = webOutlookRedirectUri();
+
+    webSessionSet('outlook_code_verifier', verifier);
+    webSessionSet('outlook_oauth_state', state);
+    webSessionSet('outlook_oauth_intent', intent);
+    webSessionSet('outlook_redirect_uri', redirectUri);
+
+    final url = await _remote.getOutlookAuthorizeUrl(
+      redirectUri: redirectUri,
+      state: state,
+      codeChallenge: challenge,
+    );
+    webRedirect(url);
+    // Navigation leaves this page; caller never continues.
+    throw const AuthFailureException('Redirecting to Microsoft login…');
+  }
+
+  Future<OutlookSignInCredentials> completeOutlookWebCallback({
+    required String code,
+    required String state,
+  }) async {
+    final expectedState = webSessionGet('outlook_oauth_state');
+    final verifier = webSessionGet('outlook_code_verifier');
+    final redirectUri = webSessionGet('outlook_redirect_uri') ?? webOutlookRedirectUri();
+
+    if (expectedState == null || expectedState != state) {
+      throw const AuthFailureException('Outlook login state mismatch. Try again.');
+    }
+    if (verifier == null || verifier.isEmpty) {
+      throw const AuthFailureException('Outlook login session expired. Try again.');
+    }
+
+    final credentials = await _remote.exchangeOutlookCode(
+      code: code,
+      redirectUri: redirectUri,
+      codeVerifier: verifier,
+    );
+
+    webSessionRemove('outlook_code_verifier');
+    webSessionRemove('outlook_oauth_state');
+    webSessionRemove('outlook_redirect_uri');
+    return credentials;
+  }
+
+  String? consumeOutlookIntent() {
+    final intent = webSessionGet('outlook_oauth_intent');
+    webSessionRemove('outlook_oauth_intent');
+    return intent;
+  }
+
+  static String _pkceVerifier() => _randomUrlSafe(64);
+
+  static String _pkceChallenge(String verifier) {
+    final digest = sha256.convert(utf8.encode(verifier));
+    return base64UrlEncode(digest.bytes).replaceAll('=', '');
+  }
+
+  static String _randomUrlSafe(int length) {
+    final random = Random.secure();
+    final values = List<int>.generate(length, (_) => random.nextInt(256));
+    return base64UrlEncode(values).replaceAll('=', '');
   }
 
   Future<void> signOutGoogle() async {

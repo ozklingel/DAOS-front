@@ -85,6 +85,57 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  /// Completes Microsoft redirect (web). Returns 'settings' or 'dashboard'.
+  Future<String> completeOutlookWebOAuth({
+    required String code,
+    required String state,
+  }) async {
+    _error = null;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final oauth = _ref.read(oauthServiceProvider);
+      final credentials = await oauth.completeOutlookWebCallback(
+        code: code,
+        state: state,
+      );
+      final intent = oauth.consumeOutlookIntent() ?? 'login';
+      final remote = _ref.read(authRemoteDataSourceProvider);
+      final storage = _ref.read(secureStorageServiceProvider);
+
+      if (intent == 'connect') {
+        final userModel = await remote.connectOutlook(
+          accessToken: credentials.accessToken,
+          refreshToken: credentials.refreshToken,
+        );
+        _user = userModel.toEntity();
+        _isAuthenticated = true;
+        await _syncLocaleWithBackend();
+        return 'settings';
+      }
+
+      final response = await remote.signInWithOutlook(
+        accessToken: credentials.accessToken,
+        refreshToken: credentials.refreshToken,
+      );
+      await storage.saveTokens(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        userId: response.user?.id,
+      );
+      _user = response.user?.toEntity();
+      _isAuthenticated = true;
+      await _syncLocaleWithBackend();
+      return 'dashboard';
+    } on AppException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> signInDev() async {
     _error = null;
     _isLoading = true;

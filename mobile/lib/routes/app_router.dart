@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
+import 'package:taskmail/features/auth/presentation/screens/outlook_oauth_callback_screen.dart';
 import 'package:taskmail/features/auth/presentation/screens/login_screen.dart';
 import 'package:taskmail/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:taskmail/features/daily_brief/presentation/screens/daily_brief_screen.dart';
@@ -31,7 +32,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isAuthenticated ? RouteNames.dashboard : RouteNames.login;
       }
 
-      if (!isAuthenticated && location != RouteNames.login) {
+      if (!isAuthenticated &&
+          location != RouteNames.login &&
+          location != RouteNames.outlookOAuthCallback) {
         return RouteNames.login;
       }
 
@@ -49,6 +52,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.outlookOAuthCallback,
+        builder: (context, state) => const OutlookOAuthCallbackScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

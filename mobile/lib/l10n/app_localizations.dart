@@ -276,6 +276,9 @@ abstract class AppLocalizations {
   String get outlookConnectedSuccess;
   String get gmailDisconnected;
   String get outlookDisconnected;
+  String get outlookConnectHint;
+  String get outlookOAuthCompleting;
+  String get outlookOAuthMissingCode;
   String syncCompleteTasks(int count);
   String get syncCompleteNoTasks;
 
@@ -309,7 +312,7 @@ abstract class AppLocalizations {
 
 class AppLocalizationsEn extends AppLocalizations {
   @override
-  String get appTitle => 'TaskMail';
+  String get appTitle => 'DAOS';
   @override
   String get appBrand => 'DAOS';
 
@@ -760,7 +763,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsappVoiceHelpTitle => 'Voice tasks via WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
-      'Link your phone in Settings → Integrations, then send a Hebrew voice note or text to your TaskMail WhatsApp bot.';
+      'Link your phone in Settings → Integrations, then send a Hebrew voice note or text to your DAOS WhatsApp bot.';
   @override
   String get openIntegrations => 'Open integrations';
   @override
@@ -807,6 +810,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gmailDisconnected => 'Gmail disconnected';
   @override
   String get outlookDisconnected => 'Outlook disconnected';
+  @override
+  String get outlookConnectHint =>
+      'Connect Microsoft Outlook to sync emails into tasks.';
+  @override
+  String get outlookOAuthCompleting => 'Completing Outlook sign-in…';
+  @override
+  String get outlookOAuthMissingCode => 'Missing Outlook authorization code.';
   @override
   String syncCompleteTasks(int count) =>
       'Sync complete — $count new task${count == 1 ? '' : 's'} created';
@@ -940,7 +950,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
 class AppLocalizationsHe extends AppLocalizations {
   @override
-  String get appTitle => 'TaskMail';
+  String get appTitle => 'DAOS';
   @override
   String get appBrand => 'DAOS';
 
@@ -1391,7 +1401,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get whatsappVoiceHelpTitle => 'משימות קוליות ב-WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
-      'חברו את המספר בהגדרות → אינטגרציות, ואז שלחו הודעת קול או טקסט בעברית לבוט TaskMail.';
+      'חברו את המספר בהגדרות → אינטגרציות, ואז שלחו הודעת קול או טקסט בעברית לבוט DAOS.';
   @override
   String get openIntegrations => 'פתח אינטגרציות';
   @override
@@ -1438,6 +1448,13 @@ class AppLocalizationsHe extends AppLocalizations {
   String get gmailDisconnected => 'Gmail נותק';
   @override
   String get outlookDisconnected => 'Outlook נותק';
+  @override
+  String get outlookConnectHint =>
+      'חברו את Outlook כדי לסנכרן מיילים למשימות.';
+  @override
+  String get outlookOAuthCompleting => 'משלימים התחברות ל-Outlook…';
+  @override
+  String get outlookOAuthMissingCode => 'חסר קוד הרשאה מ-Outlook.';
   @override
   String syncCompleteTasks(int count) =>
       'סנכרון הושלם — נוצר${count == 1 ? 'ה' : 'ו'} $count משימ${count == 1 ? 'ה' : 'ות'} חדש${count == 1 ? 'ה' : 'ות'}';

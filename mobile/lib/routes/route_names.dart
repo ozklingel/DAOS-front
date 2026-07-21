@@ -13,4 +13,5 @@ class RouteNames {
   static const calendar = '/home/calendar';
   static const settings = '/home/settings';
   static const profile = '/home/profile';
+  static const outlookOAuthCallback = '/oauth/outlook';
 }

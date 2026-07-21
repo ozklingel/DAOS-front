@@ -1,6 +1,6 @@
 # OAuth Setup — Real Gmail & Outlook Connection
 
-TaskMail needs OAuth credentials so the mobile app can sign in and the backend can sync email in the background.
+DAOS needs OAuth credentials so the mobile app can sign in and the backend can sync email in the background.
 
 ## Overview
 
@@ -83,7 +83,10 @@ If you see `ApiException: 10`, the Android SHA-1 or package name does not match 
 1. Open [Azure Portal](https://portal.azure.com/) → Microsoft Entra ID → App registrations → New registration
 2. Name: `TaskMail`
 3. Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
-4. Redirect URI: **Mobile and desktop applications** → `com.taskmail://oauth/callback`
+4. Redirect URIs:
+   - **Single-page application**: `http://127.0.0.1:5173/oauth/outlook`
+   - **Single-page application** (prod, if needed): `https://ozklingel.github.io/DAOS-front/oauth/outlook`
+   - **Mobile and desktop applications**: `com.taskmail://oauth/callback`
 
 ### 2. API permissions
 
@@ -106,15 +109,32 @@ MICROSOFT_CLIENT_ID=<Azure application client ID>
 MICROSOFT_CLIENT_SECRET=
 ```
 
-Leave `MICROSOFT_CLIENT_SECRET` empty for a public mobile client. Set it only if you registered a confidential client.
+Leave `MICROSOFT_CLIENT_SECRET` empty for a public SPA / mobile client.
+Create a client secret only if Azure requires a confidential client.
 
 ### 5. Run the Flutter app
+
+**Web (Chrome):**
+
+```powershell
+cd mobile
+.\scripts\dev_web.ps1
+```
+
+The script reads `MICROSOFT_CLIENT_ID` from `backend/.env` and passes `OUTLOOK_CLIENT_ID`.
+
+**Mobile:**
 
 ```bash
 flutter run \
   --dart-define=API_BASE_URL=http://192.168.1.205:8080/api/v1 \
   --dart-define=OUTLOOK_CLIENT_ID=<Azure client ID>
 ```
+
+### 6. Connect Outlook
+
+- Login screen → **Continue with Outlook**, or
+- After Dev Login → Settings → Integrations → **Connect** next to Outlook
 
 ---
 

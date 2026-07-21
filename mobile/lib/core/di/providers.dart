@@ -18,7 +18,11 @@ import 'package:taskmail/features/tasks/data/repositories/tasks_repository_impl.
 import 'package:taskmail/features/tasks/domain/repositories/tasks_repository.dart';
 import 'package:taskmail/services/secure_storage_service.dart';
 
-final oauthServiceProvider = Provider<OAuthService>((ref) => OAuthService());
+final oauthServiceProvider = Provider<OAuthService>((ref) {
+  final service = OAuthService();
+  service.bindAuthRemote(ref.watch(authRemoteDataSourceProvider));
+  return service;
+});
 
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSource(ref.watch(apiClientProvider));
