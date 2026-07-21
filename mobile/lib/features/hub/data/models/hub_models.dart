@@ -480,6 +480,9 @@ class InfoDocumentData {
     this.expiryDate,
     this.confidence = 0,
     this.icon = 'document',
+    this.hasImage = false,
+    this.mimeType,
+    this.imageDataUrl,
     this.createdAt,
   });
 
@@ -489,13 +492,19 @@ class InfoDocumentData {
       category: json['category'] as String? ?? 'archive',
       categoryTitle:
           json['category_title'] as String? ?? json['categoryTitle'] as String? ?? '',
-      title: json['title'] as String? ?? '',
+      title: (json['title'] as String?)?.trim().isNotEmpty == true
+          ? (json['title'] as String).trim()
+          : 'מסמך ללא שם',
       summary: json['summary'] as String?,
       extractedText:
           json['extracted_text'] as String? ?? json['extractedText'] as String?,
       expiryDate: json['expiry_date'] as String? ?? json['expiryDate'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
       icon: json['icon'] as String? ?? 'document',
+      hasImage: json['has_image'] as bool? ?? json['hasImage'] as bool? ?? false,
+      mimeType: json['mime_type'] as String? ?? json['mimeType'] as String?,
+      imageDataUrl:
+          json['image_data_url'] as String? ?? json['imageDataUrl'] as String?,
       createdAt: json['created_at'] as String? ?? json['createdAt'] as String?,
     );
   }
@@ -509,5 +518,8 @@ class InfoDocumentData {
   final String? expiryDate;
   final double confidence;
   final String icon;
+  final bool hasImage;
+  final String? mimeType;
+  final String? imageDataUrl;
   final String? createdAt;
 }

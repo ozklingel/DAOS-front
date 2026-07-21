@@ -463,6 +463,9 @@ class InfoDocumentOut(APIModel):
     expiry_date: str | None = None
     confidence: float = 0.0
     icon: str = "document"
+    has_image: bool = False
+    mime_type: str | None = None
+    image_data_url: str | None = None
     created_at: str | None = None
 
 

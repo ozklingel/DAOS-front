@@ -219,7 +219,7 @@ class DashboardScreen extends ConsumerWidget {
 
       if (!context.mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text(l.documentSavedTo(doc.categoryTitle))),
+                  SnackBar(content: Text(l.documentSavedTo('${doc.categoryTitle} — ${doc.title}'))),
       );
       context.go(RouteNames.info);
       } catch (e) {

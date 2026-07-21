@@ -100,6 +100,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                       if (docsInCategory.isNotEmpty) {
                         showInfoCategorySheet(
                           context,
+                          ref,
                           category: category,
                           documents: hub.documents,
                         );
@@ -111,6 +112,7 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                       } else {
                         showInfoCategorySheet(
                           context,
+                          ref,
                           category: category,
                           documents: hub.documents,
                         );

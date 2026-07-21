@@ -61,6 +61,10 @@ abstract class AppLocalizations {
   String infoDocumentsCount(int count);
   String get infoDocumentDate;
   String get infoDocumentExtracted;
+  String get infoDocumentNoImage;
+  String get deleteDocument;
+  String get deleteDocumentConfirm;
+  String get documentDeleted;
   String get noTasksToday;
   String weatherSummary(String temp, String period, String city);
 
@@ -354,6 +358,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get infoDocumentDate => 'Date';
   @override
   String get infoDocumentExtracted => 'Extracted text';
+  @override
+  String get infoDocumentNoImage => 'No photo available for this document';
+  @override
+  String get deleteDocument => 'Delete document';
+  @override
+  String get deleteDocumentConfirm => 'Delete this document permanently?';
+  @override
+  String get documentDeleted => 'Document deleted';
   @override
   String get noTasksToday => 'No tasks for today — sync your email to get started.';
   @override
@@ -955,6 +967,14 @@ class AppLocalizationsHe extends AppLocalizations {
   String get infoDocumentDate => 'תאריך';
   @override
   String get infoDocumentExtracted => 'טקסט שחולץ';
+  @override
+  String get infoDocumentNoImage => 'אין תמונה זמינה למסמך זה';
+  @override
+  String get deleteDocument => 'מחק מסמך';
+  @override
+  String get deleteDocumentConfirm => 'למחוק את המסמך לצמיתות?';
+  @override
+  String get documentDeleted => 'המסמך נמחק';
   @override
   String get noTasksToday => 'אין משימות להיום — סנכרנו מיילים כדי להתחיל.';
   @override

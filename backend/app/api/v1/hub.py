@@ -201,10 +201,36 @@ async def upload_info_document(
         )
         return InfoDocumentUploadOut(
             document=InfoDocumentOut.model_validate(doc),
-            message=f"נשמר תחת {doc.get('category_title', 'מידע')}",
+            message=f"נשמר תחת {doc.get('category_title', 'מידע')}: {doc.get('title', '')}",
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
+
+
+@router.get("/info/documents/{document_id}", response_model=InfoDocumentOut)
+def get_info_document(
+    document_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        return InfoDocumentOut.model_validate(
+            info_document_service.get_document(db, user, document_id)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail={"message": str(exc)}) from exc
+
+
+@router.delete("/info/documents/{document_id}", status_code=204)
+def delete_info_document(
+    document_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        info_document_service.delete_document(db, user, document_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail={"message": str(exc)}) from exc
 
 
 @router.get("/assets", response_model=list[AssetReminderOut])

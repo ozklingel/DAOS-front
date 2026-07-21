@@ -119,6 +119,10 @@ class HubRemoteDataSource {
     return InfoDocumentData.fromJson(document);
   }
 
+  Future<void> deleteInfoDocument(String id) async {
+    await _client.delete('${ApiConstants.infoDocuments}/$id');
+  }
+
   Future<AssetReminderData> updateAsset({
     required String id,
     String? title,
