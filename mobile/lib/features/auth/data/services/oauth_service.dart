@@ -70,7 +70,7 @@ class OAuthService {
   }
 
   GoogleSignIn get _google {
-    if (_googleSignInOverride != null) return _googleSignInOverride!;
+    if (_googleSignInOverride != null) return _googleSignInOverride;
     return _googleSignIn ??= GoogleSignIn(
       scopes: const [
         'email',

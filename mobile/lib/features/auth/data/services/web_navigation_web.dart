@@ -3,11 +3,11 @@
 String webOrigin() {
   final location = html.window.location;
   final origin = location.origin;
-  if (origin != null && origin.isNotEmpty) return origin;
+  if (origin.isNotEmpty) return origin;
   return '${location.protocol}//${location.host}';
 }
 
-/// App mount path from <base href>, e.g. "/DAOS-front/" on GitHub Pages.
+/// App mount path from the HTML base href, e.g. `/DAOS-front/` on GitHub Pages.
 String webBaseHref() {
   final base = html.document.querySelector('base')?.getAttribute('href');
   if (base == null || base.isEmpty || base == './') return '/';
