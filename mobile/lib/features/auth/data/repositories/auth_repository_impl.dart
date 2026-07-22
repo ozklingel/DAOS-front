@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User> connectGmail() async {
-    final credentials = await _oauth.signInWithGoogle();
+    final credentials = await _oauth.authorizeGmailAccess();
     final model = await _remote.connectGoogle(
       idToken: credentials.idToken,
       accessToken: credentials.accessToken,

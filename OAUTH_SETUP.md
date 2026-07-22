@@ -70,9 +70,12 @@ flutter run \
 
 ### 5. Sign in with Google
 
-Use **Continue with Google** on the login screen. The app requests Gmail read-only access and sends a server auth code to the backend, which stores a refresh token for background sync.
+Use **Continue with Google** on the login screen. Login requests only `email` + `profile`
+so new users are not blocked by unverified Gmail scopes (Google 403).
 
-If you see `ApiException: 10`, the Android SHA-1 or package name does not match your OAuth client.
+Gmail inbox access is requested later via **Settings → Integrations → Connect Gmail**
+(`gmail.readonly`). Until Google verifies that scope, Connect Gmail may still show 403
+for some accounts — but users can still sign in and use the rest of the app.
 
 ---
 

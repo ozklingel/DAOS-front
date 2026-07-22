@@ -26,6 +26,16 @@ class OAuthService {
   final AuthRemoteDataSource? _authRemoteOverride;
   AuthRemoteDataSource? _authRemote;
 
+  /// Login only — avoids Google 403 when Gmail scope is unverified.
+  static const List<String> _loginScopes = [
+    'email',
+    'profile',
+  ];
+
+  /// Restricted scope — request only when user connects Gmail in Settings.
+  static const String _gmailReadonlyScope =
+      'https://www.googleapis.com/auth/gmail.readonly';
+
   /// Set via --dart-define only when non-empty. Empty define must not wipe the fallback.
   static const String _googleServerClientIdEnv =
       String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
@@ -69,101 +79,159 @@ class OAuthService {
     return remote;
   }
 
-  GoogleSignIn get _google {
-    if (_googleSignInOverride != null) return _googleSignInOverride;
-    return _googleSignIn ??= GoogleSignIn(
-      scopes: const [
-        'email',
-        'profile',
-        'https://www.googleapis.com/auth/gmail.readonly',
-      ],
+  GoogleSignIn _buildGoogleSignIn({
+    required List<String> scopes,
+    bool forceServerAuthCode = false,
+  }) {
+    return GoogleSignIn(
+      scopes: scopes,
       // Web MUST pass clientId — empty/null causes Google 401 invalid_client.
       clientId: kIsWeb ? _googleServerClientId : null,
       serverClientId: !kIsWeb ? _googleServerClientId : null,
-      forceCodeForRefreshToken:
-          !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+      forceCodeForRefreshToken: forceServerAuthCode ||
+          (!kIsWeb && defaultTargetPlatform == TargetPlatform.android),
+    );
+  }
+
+  GoogleSignIn get _google {
+    if (_googleSignInOverride != null) return _googleSignInOverride;
+    return _googleSignIn ??= _buildGoogleSignIn(scopes: _loginScopes);
+  }
+
+  void _assertGoogleClientConfigured() {
+    if (kIsWeb && _googleServerClientId.startsWith('45773018634-')) {
+      throw const AuthFailureException(
+        'Wrong GOOGLE_SERVER_CLIENT_ID (old client). Stop the app and run: '
+        'cd mobile; .\\scripts\\dev_web.ps1 — do not pass the old ID manually. '
+        'See WEB_OAUTH_FIX.md.',
+      );
+    }
+    if (_googleServerClientId.isEmpty) {
+      throw const AuthFailureException(
+        'GOOGLE_SERVER_CLIENT_ID is empty. Rebuild with a valid Web OAuth client ID.',
+      );
+    }
+  }
+
+  Future<GoogleSignInCredentials> _credentialsFrom(
+    GoogleSignInAccount account,
+  ) async {
+    final auth = await account.authentication;
+    final idToken = auth.idToken;
+    final accessToken = auth.accessToken;
+
+    if (idToken != null && idToken.isNotEmpty) {
+      return GoogleSignInCredentials(
+        idToken: idToken,
+        accessToken: accessToken,
+        serverAuthCode: account.serverAuthCode,
+      );
+    }
+
+    // Web signIn() often returns access_token only (no id_token).
+    if (kIsWeb && accessToken != null && accessToken.isNotEmpty) {
+      return GoogleSignInCredentials(
+        accessToken: accessToken,
+        serverAuthCode: account.serverAuthCode,
+      );
+    }
+
+    throw const AuthFailureException(
+      'Failed to obtain Google credentials. Confirm GOOGLE_SERVER_CLIENT_ID matches '
+      'your Web OAuth client in Google Cloud Console, then fully restart the app.',
     );
   }
 
   Future<GoogleSignInCredentials> signInWithGoogle() async {
     try {
-      if (kIsWeb && _googleServerClientId.startsWith('45773018634-')) {
-        throw const AuthFailureException(
-          'Wrong GOOGLE_SERVER_CLIENT_ID (old client). Stop the app and run: '
-          'cd mobile; .\\scripts\\dev_web.ps1 — do not pass the old ID manually. '
-          'See WEB_OAUTH_FIX.md.',
-        );
-      }
-
-      if (_googleServerClientId.isEmpty) {
-        throw const AuthFailureException(
-          'GOOGLE_SERVER_CLIENT_ID is empty. Rebuild with a valid Web OAuth client ID.',
-        );
-      }
+      _assertGoogleClientConfigured();
 
       final account = await _google.signIn();
       if (account == null) {
         throw const ValidationException('Google sign-in was cancelled.');
       }
+      return _credentialsFrom(account);
+    } catch (e) {
+      throw _mapGoogleError(e);
+    }
+  }
 
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-      final accessToken = auth.accessToken;
+  /// Second-step consent for inbox sync (Settings → Connect Gmail).
+  Future<GoogleSignInCredentials> authorizeGmailAccess() async {
+    try {
+      _assertGoogleClientConfigured();
 
-      if (idToken != null && idToken.isNotEmpty) {
-        return GoogleSignInCredentials(
-          idToken: idToken,
-          serverAuthCode: account.serverAuthCode,
-        );
+      // Prefer incremental consent on the existing login session.
+      var account = _google.currentUser;
+      account ??= await _google.signInSilently();
+      account ??= await _google.signIn();
+      if (account == null) {
+        throw const ValidationException('Google sign-in was cancelled.');
       }
 
-      // Web signIn() often returns access_token only (no id_token).
-      if (kIsWeb && accessToken != null && accessToken.isNotEmpty) {
-        return GoogleSignInCredentials(accessToken: accessToken);
+      final granted = await _google.requestScopes(const [_gmailReadonlyScope]);
+      if (granted) {
+        return _credentialsFrom(account);
       }
 
-      if (_googleServerClientId.isEmpty) {
-        throw const AuthFailureException(
-          'Google ID token missing. Set GOOGLE_SERVER_CLIENT_ID to your Web OAuth '
-          'client ID (same as GOOGLE_CLIENT_ID in backend/.env). Add it to '
-          'mobile/android/local.properties as google.server.client.id, or pass '
-          '--dart-define=GOOGLE_SERVER_CLIENT_ID=... when running flutter.',
-        );
+      // Fallback: dedicated client that includes Gmail from the start
+      // (needed on some web / platform combinations).
+      final gmailClient = _googleSignInOverride ??
+          _buildGoogleSignIn(
+            scopes: const [..._loginScopes, _gmailReadonlyScope],
+            forceServerAuthCode: true,
+          );
+      final gmailAccount = await gmailClient.signIn();
+      if (gmailAccount == null) {
+        throw const ValidationException('Gmail authorization was cancelled.');
       }
-      throw const AuthFailureException(
-        'Failed to obtain Google credentials. Confirm GOOGLE_SERVER_CLIENT_ID matches '
-        'your Web OAuth client in Google Cloud Console, then fully restart the app.',
-      );
+      return _credentialsFrom(gmailAccount);
     } catch (e) {
       if (e is AppException) rethrow;
-      debugPrint('Google sign-in error: $e');
-      final msg = e.toString();
-      if (kIsWeb && (msg.contains('origin') || msg.contains('invalid_client') || msg.contains('popup') || msg.contains('OAuth client'))) {
-        throw AuthFailureException(
-          'Google Web OAuth failed (invalid_client / origin). '
-          'In Google Cloud → APIs & Services → Credentials → Web client: '
-          '1) Confirm client ID matches 812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt... '
-          '2) Authorized JavaScript origins must include https://ozklingel.github.io '
-          '(no path) and http://127.0.0.1:5173 for local. See WEB_OAUTH_FIX.md.',
-        );
-      }
-      if (msg.contains('people.googleapis.com') || msg.contains('People API')) {
+      final mapped = _mapGoogleError(e);
+      if (mapped.message == 'Google sign-in failed.') {
         throw const AuthFailureException(
-          'Enable People API in Google Cloud (project daos-15254), wait 2 minutes, '
-          'then try again. See WEB_OAUTH_FIX.md.',
+          'Gmail access was denied or blocked. If Google shows 403, the app still '
+          'needs Gmail scope verification — login works without it.',
         );
       }
-      if (e is PlatformException && e.code == 'sign_in_failed') {
-        final message = e.message ?? '';
-        if (message.contains('ApiException: 10')) {
-          throw const AuthFailureException(
-            'Google Sign-In is not configured. Add SHA-1 fingerprint and OAuth '
-            'client IDs in Google Cloud Console, or use Dev Login in debug mode.',
-          );
-        }
-      }
-      throw const AuthFailureException('Google sign-in failed.');
+      throw mapped;
     }
+  }
+
+  AppException _mapGoogleError(Object e) {
+    if (e is AppException) return e;
+    debugPrint('Google sign-in error: $e');
+    final msg = e.toString();
+    if (kIsWeb &&
+        (msg.contains('origin') ||
+            msg.contains('invalid_client') ||
+            msg.contains('popup') ||
+            msg.contains('OAuth client'))) {
+      return AuthFailureException(
+        'Google Web OAuth failed (invalid_client / origin). '
+        'In Google Cloud → APIs & Services → Credentials → Web client: '
+        '1) Confirm client ID matches 812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt... '
+        '2) Authorized JavaScript origins must include https://ozklingel.github.io '
+        '(no path) and http://127.0.0.1:5173 for local. See WEB_OAUTH_FIX.md.',
+      );
+    }
+    if (msg.contains('people.googleapis.com') || msg.contains('People API')) {
+      return const AuthFailureException(
+        'Enable People API in Google Cloud (project daos-15254), wait 2 minutes, '
+        'then try again. See WEB_OAUTH_FIX.md.',
+      );
+    }
+    if (e is PlatformException && e.code == 'sign_in_failed') {
+      final message = e.message ?? '';
+      if (message.contains('ApiException: 10')) {
+        return const AuthFailureException(
+          'Google Sign-In is not configured. Add SHA-1 fingerprint and OAuth '
+          'client IDs in Google Cloud Console, or use Dev Login in debug mode.',
+        );
+      }
+    }
+    return const AuthFailureException('Google sign-in failed.');
   }
 
   Future<OutlookSignInCredentials> signInWithOutlook({String intent = 'login'}) async {
