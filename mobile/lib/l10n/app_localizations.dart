@@ -48,6 +48,12 @@ abstract class AppLocalizations {
   String get yourTasksToday;
   String get quickActions;
   String get addTask;
+  String get createTaskSheetTitle;
+  String get taskTitleField;
+  String get taskDescriptionField;
+  String get createTaskSave;
+  String get titleRequired;
+  String taskCreatedSuccess(String title);
   String get voiceRecord;
   String get takePhoto;
   String get writeMessage;
@@ -343,6 +349,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickActions => 'Quick Actions';
   @override
   String get addTask => 'Add task';
+  @override
+  String get createTaskSheetTitle => 'New task';
+  @override
+  String get taskTitleField => 'Title';
+  @override
+  String get taskDescriptionField => 'Description';
+  @override
+  String get createTaskSave => 'Create task';
+  @override
+  String get titleRequired => 'Title is required';
+  @override
+  String taskCreatedSuccess(String title) => 'Task created: $title';
   @override
   String get voiceRecord => 'Voice note';
   @override
@@ -981,6 +999,18 @@ class AppLocalizationsHe extends AppLocalizations {
   String get quickActions => 'פעולות מהירות';
   @override
   String get addTask => 'הוסף משימה';
+  @override
+  String get createTaskSheetTitle => 'משימה חדשה';
+  @override
+  String get taskTitleField => 'כותרת';
+  @override
+  String get taskDescriptionField => 'תיאור';
+  @override
+  String get createTaskSave => 'צור משימה';
+  @override
+  String get titleRequired => 'חובה למלא כותרת';
+  @override
+  String taskCreatedSuccess(String title) => 'נוצרה משימה: $title';
   @override
   String get voiceRecord => 'הקלט קולית';
   @override

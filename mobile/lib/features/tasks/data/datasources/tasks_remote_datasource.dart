@@ -62,6 +62,33 @@ class TasksRemoteDataSource {
     return TaskModel.fromJson(data);
   }
 
+  Future<TaskModel> createTask({
+    required String title,
+    String? description,
+    TaskPriority? priority,
+    TaskCategory? category,
+    EnergyLevel? energyLevel,
+    DateTime? deadline,
+  }) async {
+    final body = <String, dynamic>{
+      'title': title.trim(),
+    };
+    if (description != null && description.trim().isNotEmpty) {
+      body['description'] = description.trim();
+    }
+    if (priority != null) body['priority'] = priority.name;
+    if (category != null) body['category'] = category.apiValue;
+    if (energyLevel != null) body['energyLevel'] = energyLevel.apiValue;
+    if (deadline != null) body['deadline'] = deadline.toUtc().toIso8601String();
+
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.tasks,
+      data: body,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return TaskModel.fromJson(data);
+  }
+
   Future<TaskModel> updateTask(
     String id, {
     required TaskAction action,

@@ -183,6 +183,31 @@ class TaskListOut(APIModel):
     has_more: bool
 
 
+class TaskCreateIn(APIModel):
+    title: str
+    description: str | None = None
+    priority: str | None = None
+    category: str | None = None
+    energy_level: str | None = Field(default=None, alias="energyLevel")
+    deadline: datetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "energy_level" not in data and "energyLevel" in data:
+            data["energy_level"] = data["energyLevel"]
+        return data
+
+    @model_validator(mode="after")
+    def validate_title(self) -> "TaskCreateIn":
+        if not (self.title or "").strip():
+            raise ValueError("title is required")
+        self.title = self.title.strip()
+        if self.description is not None:
+            self.description = self.description.strip() or None
+        return self
+
+
 class TaskUpdateIn(APIModel):
     action: str
     snooze_until: datetime | None = Field(default=None, alias="snoozeUntil")

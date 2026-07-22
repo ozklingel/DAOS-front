@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:taskmail/features/tasks/presentation/widgets/create_task_sheet.dart';
 import 'package:taskmail/features/tasks/presentation/widgets/tasks_filter_sheet.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
@@ -58,6 +59,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showCreateTaskSheet(context, ref),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
         children: [

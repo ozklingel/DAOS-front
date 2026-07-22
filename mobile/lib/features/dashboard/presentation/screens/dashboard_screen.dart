@@ -11,6 +11,7 @@ import 'package:taskmail/features/dashboard/presentation/widgets/voice_task_reco
 import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
 import 'package:taskmail/features/info/data/services/document_capture_service.dart';
 import 'package:taskmail/features/tasks/domain/entities/task.dart';
+import 'package:taskmail/features/tasks/presentation/widgets/create_task_sheet.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/shared/models/task_enums.dart';
@@ -137,7 +138,7 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _QuickActions(
                   l: l,
-                  onAddTask: () => context.go(RouteNames.tasks),
+                  onAddTask: () => showCreateTaskSheet(context, ref),
                   onWhatsAppHelp: () => _showWhatsAppHelp(context, l),
                   onTakePhoto: () => _takePhotoAndUpload(context, ref, l),
                   onVoiceRecord: () => showVoiceTaskRecorder(context, ref),

@@ -4,10 +4,11 @@ from datetime import UTC, datetime
 from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session
 
+from app.core.security import new_id
 from app.deps import start_of_week
 from app.models import DailyBrief, EnergyLevel, Task, TaskCategory, TaskPriority, TaskStatus, User
 from app.services.support_services import SettingsService
-from app.services.task_classifier import DAILY_ENERGY_BUDGET, energy_cost
+from app.services.task_classifier import DAILY_ENERGY_BUDGET, energy_cost, infer_category_and_energy
 
 settings_service = SettingsService()
 
@@ -84,6 +85,67 @@ class TaskService:
     def get_task(self, db: Session, user: User, task_id: str) -> Task | None:
         self.refresh_overdue_status(db, user.id)
         return db.query(Task).filter(Task.user_id == user.id, Task.id == task_id).one_or_none()
+
+    def create_task(
+        self,
+        db: Session,
+        user: User,
+        *,
+        title: str,
+        description: str | None = None,
+        priority: str | None = None,
+        category: str | None = None,
+        energy_level: str | None = None,
+        deadline: datetime | None = None,
+    ) -> Task:
+        priority_value = (priority or TaskPriority.medium.value).strip().lower()
+        valid_priorities = {p.value for p in TaskPriority}
+        if priority_value not in valid_priorities:
+            raise ValueError(f"Invalid priority: {priority}")
+
+        inferred_category, inferred_energy = infer_category_and_energy(
+            subject=title,
+            snippet=description or "",
+            priority=priority_value,
+        )
+
+        category_value = (category or inferred_category).strip().lower()
+        valid_categories = {c.value for c in TaskCategory}
+        if category_value not in valid_categories:
+            raise ValueError(f"Invalid category: {category}")
+
+        energy_value = (energy_level or inferred_energy).strip().lower()
+        valid_energy = {e.value for e in EnergyLevel}
+        if energy_value not in valid_energy:
+            raise ValueError(f"Invalid energyLevel: {energy_level}")
+
+        priority_scores = {
+            TaskPriority.critical.value: 90.0,
+            TaskPriority.high.value: 75.0,
+            TaskPriority.medium.value: 50.0,
+            TaskPriority.low.value: 25.0,
+            TaskPriority.none.value: 10.0,
+        }
+
+        now = datetime.now(UTC)
+        task = Task(
+            id=new_id(),
+            user_id=user.id,
+            title=title.strip()[:500],
+            description=(description or None),
+            status=TaskStatus.open.value,
+            priority=priority_value,
+            priority_score=priority_scores.get(priority_value, 50.0),
+            category=category_value,
+            energy_level=energy_value,
+            deadline=deadline,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        return task
 
     def update_task(self, db: Session, user: User, task: Task, action: str, snooze_until: datetime | None) -> Task:
         now = datetime.now(UTC)

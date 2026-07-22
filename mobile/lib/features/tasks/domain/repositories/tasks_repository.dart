@@ -15,6 +15,15 @@ abstract class TasksRepository {
 
   Future<Task> getTaskById(String id);
 
+  Future<Task> createTask({
+    required String title,
+    String? description,
+    TaskPriority? priority,
+    TaskCategory? category,
+    EnergyLevel? energyLevel,
+    DateTime? deadline,
+  });
+
   Future<Task> completeTask(String id);
   Future<Task> snoozeTask(String id, DateTime until);
   Future<Task> dismissTask(String id);

@@ -39,6 +39,26 @@ class TasksRepositoryImpl implements TasksRepository {
   }
 
   @override
+  Future<Task> createTask({
+    required String title,
+    String? description,
+    TaskPriority? priority,
+    TaskCategory? category,
+    EnergyLevel? energyLevel,
+    DateTime? deadline,
+  }) async {
+    final model = await _remote.createTask(
+      title: title,
+      description: description,
+      priority: priority,
+      category: category,
+      energyLevel: energyLevel,
+      deadline: deadline,
+    );
+    return model.toEntity();
+  }
+
+  @override
   Future<Task> completeTask(String id) async {
     final model = await _remote.updateTask(id, action: TaskAction.complete);
     return model.toEntity();

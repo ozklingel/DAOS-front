@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import User
-from app.schemas import TaskListOut, TaskOut, TaskUpdateIn, VoiceTaskOut
+from app.schemas import TaskCreateIn, TaskListOut, TaskOut, TaskUpdateIn, VoiceTaskOut
 from app.services.ai_service import AIService
 from app.services.task_ingest_service import create_task_from_analysis
 from app.services.task_service import TaskService
@@ -12,6 +12,28 @@ from app.services.task_service import TaskService
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 task_service = TaskService()
 ai_service = AIService()
+
+
+@router.post("", response_model=TaskOut, status_code=201)
+def create_task(
+    body: TaskCreateIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        task = task_service.create_task(
+            db,
+            user,
+            title=body.title,
+            description=body.description,
+            priority=body.priority,
+            category=body.category,
+            energy_level=body.energy_level,
+            deadline=body.deadline,
+        )
+        return TaskOut.model_validate(task)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 
 
 @router.post("/from-voice", response_model=VoiceTaskOut)
