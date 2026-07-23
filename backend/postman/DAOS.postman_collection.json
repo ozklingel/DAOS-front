@@ -1,0 +1,784 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-daos-api-2026",
+    "name": "DAOS API",
+    "description": "Postman collection for the DAOS / TaskMail FastAPI backend.\n\nQuick start:\n1. Set `baseUrl` (local: http://127.0.0.1:8080 or production: https://daos-api.onrender.com)\n2. Run **Auth → Dev Login** — scripts save `accessToken` / `refreshToken`\n3. Other requests use Bearer `{{accessToken}}` automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8080" },
+    { "key": "apiPrefix", "value": "/api/v1" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "taskId", "value": "" },
+    { "key": "connectionId", "value": "" },
+    { "key": "documentId", "value": "" },
+    { "key": "assetId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Public liveness probe. Includes openai_configured flag."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Dev Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', j.access_token || j.accessToken || '');",
+                  "  pm.collectionVariables.set('refreshToken', j.refresh_token || j.refreshToken || '');",
+                  "  pm.test('Saved tokens', () => pm.expect(pm.collectionVariables.get('accessToken')).to.be.ok);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/dev",
+            "description": "Local/dev sign-in. Saves access + refresh tokens to collection variables."
+          }
+        },
+        {
+          "name": "Google Sign-In",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"GOOGLE_ID_TOKEN\",\n  \"accessToken\": null,\n  \"serverAuthCode\": null\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/google"
+          }
+        },
+        {
+          "name": "Outlook Sign-In",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"MICROSOFT_ACCESS_TOKEN\",\n  \"refreshToken\": \"MICROSOFT_REFRESH_TOKEN\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/outlook"
+          }
+        },
+        {
+          "name": "Outlook Authorize URL",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"redirectUri\": \"http://127.0.0.1:5173/oauth/outlook\",\n  \"state\": \"postman-state\",\n  \"codeChallenge\": \"CODE_CHALLENGE_S256\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/outlook/authorize-url"
+          }
+        },
+        {
+          "name": "Outlook Exchange Code",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"AUTH_CODE\",\n  \"redirectUri\": \"http://127.0.0.1:5173/oauth/outlook\",\n  \"codeVerifier\": \"CODE_VERIFIER\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/outlook/exchange"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', j.access_token || j.accessToken || '');",
+                  "  pm.collectionVariables.set('refreshToken', j.refresh_token || j.refreshToken || '');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/logout"
+          }
+        },
+        {
+          "name": "Connect Gmail",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"GOOGLE_ID_TOKEN\",\n  \"accessToken\": null,\n  \"serverAuthCode\": \"SERVER_AUTH_CODE\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/google/connect"
+          }
+        },
+        {
+          "name": "Disconnect Gmail",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/google/disconnect"
+          }
+        },
+        {
+          "name": "Connect Outlook Mailbox",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"MICROSOFT_ACCESS_TOKEN\",\n  \"refreshToken\": \"MICROSOFT_REFRESH_TOKEN\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/outlook/connect"
+          }
+        },
+        {
+          "name": "Disconnect Outlook",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/outlook/disconnect"
+          }
+        },
+        {
+          "name": "Link WhatsApp Phone",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+972501234567\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/whatsapp/link"
+          }
+        },
+        {
+          "name": "Disconnect WhatsApp",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/auth/whatsapp/disconnect"
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "OpenAI Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/system/openai-status",
+            "description": "Verifies OPENAI_API_KEY is present, valid, and not out of quota."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  if (j.id) pm.collectionVariables.set('taskId', j.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"לשלם חשבון חשמל\",\n  \"description\": \"עד סוף החודש\",\n  \"priority\": \"high\",\n  \"category\": \"errands\",\n  \"energyLevel\": \"medium\",\n  \"deadline\": null\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks"
+          }
+        },
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/tasks?page=1&limit=20&sortBy=deadline&order=asc",
+              "host": ["{{baseUrl}}{{apiPrefix}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "status", "value": "open", "disabled": true },
+                { "key": "priority", "value": "high", "disabled": true },
+                { "key": "category", "value": "work", "disabled": true },
+                { "key": "energyLevel", "value": "medium", "disabled": true },
+                { "key": "sortBy", "value": "deadline" },
+                { "key": "order", "value": "asc" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Update Task (complete)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"complete\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Update Task (snooze)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"snooze\",\n  \"snoozeUntil\": \"2026-07-25T09:00:00+03:00\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Update Task (dismiss)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"dismiss\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Create Task From Voice (text)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "transcript",
+                  "value": "תשלח את הדוח ללקוח עד מחר",
+                  "type": "text"
+                },
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true
+                }
+              ]
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/tasks/from-voice",
+            "description": "Multipart: transcript and/or audio file."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/dashboard"
+          }
+        },
+        {
+          "name": "Daily Brief",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/daily-brief"
+          }
+        },
+        {
+          "name": "Get Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/settings"
+          }
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"he\",\n  \"pushNotificationsEnabled\": true,\n  \"dailyBriefEnabled\": true,\n  \"emailSyncEnabled\": true,\n  \"dailyBriefTime\": \"09:00\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Emails",
+      "item": [
+        {
+          "name": "Email AI Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/emails/ai-status"
+          }
+        },
+        {
+          "name": "Analyze Preview",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"משימה: לאשר חוזה\",\n  \"sender\": \"boss@example.com\",\n  \"snippet\": \"בבקשה לאשר את החוזה עד יום ראשון\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/emails/analyze-preview"
+          }
+        },
+        {
+          "name": "Sync Emails",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/emails/sync"
+          }
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp",
+      "item": [
+        {
+          "name": "Simulate Voice/Text Task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transcript\": \"תשלח את הדוח ללקוח עד מחר בבוקר\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/whatsapp/simulate"
+          }
+        },
+        {
+          "name": "Dev Inbound",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+972501234567\",\n  \"text\": \"צריך לשלם את שכר הדירה עד סוף החודש\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/whatsapp/dev-inbound"
+          }
+        },
+        {
+          "name": "Inbound Latest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/whatsapp/inbound/latest"
+          }
+        },
+        {
+          "name": "Inbound Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/whatsapp/inbound?recent_limit=20",
+              "host": ["{{baseUrl}}{{apiPrefix}}"],
+              "path": ["whatsapp", "inbound"],
+              "query": [{ "key": "recent_limit", "value": "20" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hub",
+      "item": [
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/profile"
+          }
+        },
+        {
+          "name": "Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/calendar",
+              "host": ["{{baseUrl}}{{apiPrefix}}"],
+              "path": ["calendar"],
+              "query": [
+                { "key": "from", "value": "2026-07-01", "disabled": true },
+                { "key": "to", "value": "2026-07-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Finance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/finance?budgetType=home",
+              "host": ["{{baseUrl}}{{apiPrefix}}"],
+              "path": ["finance"],
+              "query": [{ "key": "budgetType", "value": "home" }]
+            }
+          }
+        },
+        {
+          "name": "Create Finance Transaction",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budgetType\": \"home\",\n  \"title\": \"סופר\",\n  \"amount\": 120.5,\n  \"txType\": \"expense\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/finance/transactions"
+          }
+        },
+        {
+          "name": "Bank Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/providers"
+          }
+        },
+        {
+          "name": "Bank Connections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/connections"
+          }
+        },
+        {
+          "name": "Bank Connect",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  const id = j.connection && (j.connection.id || j.connection.connection_id);",
+                  "  if (id) pm.collectionVariables.set('connectionId', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_code\": \"demo\",\n  \"budget_type\": \"home\",\n  \"return_url\": \"http://127.0.0.1:5173/\",\n  \"psu_id\": null\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/connect"
+          }
+        },
+        {
+          "name": "Bank Sync Connection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/connections/{{connectionId}}/sync"
+          }
+        },
+        {
+          "name": "Bank Delete Connection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/connections/{{connectionId}}"
+          }
+        },
+        {
+          "name": "Finanda Callback",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"connection_id\": \"{{connectionId}}\",\n  \"consent_id\": null,\n  \"code\": null\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/finanda/callback"
+          }
+        },
+        {
+          "name": "Salt Edge Callback",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"connection_id\": \"{{connectionId}}\",\n  \"external_connection_id\": \"ext-123\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/banks/saltedge/callback"
+          }
+        },
+        {
+          "name": "Info Hub",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/info"
+          }
+        },
+        {
+          "name": "Upload Info Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  const id = j.document && j.document.id;",
+                  "  if (id) pm.collectionVariables.set('documentId', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Image of ID / insurance / document"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/info/documents"
+          }
+        },
+        {
+          "name": "Get Info Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/info/documents/{{documentId}}"
+          }
+        },
+        {
+          "name": "Delete Info Document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/info/documents/{{documentId}}"
+          }
+        },
+        {
+          "name": "List Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/assets"
+          }
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"ביטוח רכב\",\n  \"expiry_date\": \"2026-12-31\",\n  \"notes\": \"לחדש חודש לפני\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/assets/{{assetId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Register Device",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fcmToken\": \"FCM_DEVICE_TOKEN\",\n  \"platform\": \"android\"\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/notifications/device"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "WhatsApp Verify (GET)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=YOUR_VERIFY_TOKEN&hub.challenge=12345",
+              "host": ["{{baseUrl}}"],
+              "path": ["webhooks", "whatsapp"],
+              "query": [
+                { "key": "hub.mode", "value": "subscribe" },
+                { "key": "hub.verify_token", "value": "YOUR_VERIFY_TOKEN" },
+                { "key": "hub.challenge", "value": "12345" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "WhatsApp Inbound (POST)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Hub-Signature-256", "value": "sha256=...", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": []\n}"
+            },
+            "url": "{{baseUrl}}/webhooks/whatsapp"
+          }
+        },
+        {
+          "name": "Green API Webhook",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"typeWebhook\": \"incomingMessageReceived\",\n  \"senderData\": {\n    \"sender\": \"972501234567@c.us\"\n  },\n  \"messageData\": {\n    \"typeMessage\": \"textMessage\",\n    \"textMessageData\": {\n      \"textMessage\": \"תשלח דוח עד מחר\"\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/webhooks/green-api"
+          }
+        },
+        {
+          "name": "Salt Edge Webhook",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/webhooks/saltedge"
+          }
+        }
+      ]
+    }
+  ]
+}

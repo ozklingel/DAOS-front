@@ -427,7 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginTagline =>
-      'Turn your inbox into actionable tasks.\nAI analyzes your emails so you never miss what matters.';
+      'AI analyzes messages from Email, WhatsApp, and SMS into clear tasks —\nand helps you stay on top of your monthly spending.';
   @override
   String get continueWithGoogle => 'Continue with Google';
   @override
@@ -1077,7 +1077,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get loginTagline =>
-      'הפכו את תיבת הדואר למשימות ברורות.\nבינה מלאכותית מנתחת את המיילים שלכם כדי שלא תפספסו דבר.';
+      'בינה מלאכותית מנתחת הודעות ממייל, WhatsApp ו-SMS למשימות ברורות —\nועוזרת לסדר את ההוצאות החודשיות שלכם.';
   @override
   String get continueWithGoogle => 'המשך עם Google';
   @override
