@@ -24,7 +24,8 @@ class EmailSyncService:
         emails = await self._fetch_emails(db, user)
         created = 0
         skipped_non_hebrew = 0
-        skipped_no_keyword = 0
+        skipped_no_signal = 0
+        skipped_not_actionable = 0
         for email in emails:
             exists = (
                 db.query(Task)
@@ -38,16 +39,18 @@ class EmailSyncService:
                 skipped_non_hebrew += 1
                 continue
 
-            if not self.ai.has_task_keyword(email["subject"], email["snippet"]):
-                skipped_no_keyword += 1
+            if not self.ai.looks_like_task_candidate(email["subject"], email["snippet"]):
+                skipped_no_signal += 1
                 continue
 
             analysis, source = self.ai.analyze_email_detailed(
                 subject=email["subject"],
                 sender=email["sender"],
                 snippet=email["snippet"],
+                channel="email",
             )
             if not analysis or not analysis.get("is_actionable", True):
+                skipped_not_actionable += 1
                 continue
 
             task = create_task_from_analysis(
@@ -74,18 +77,22 @@ class EmailSyncService:
             db.commit()
 
         logger.info(
-            "Email sync for user %s: scanned=%d created=%d skipped_non_hebrew=%d skipped_no_keyword=%d",
+            "Email sync for user %s: scanned=%d created=%d skipped_non_hebrew=%d "
+            "skipped_no_signal=%d skipped_not_actionable=%d",
             user.id,
             len(emails),
             created,
             skipped_non_hebrew,
-            skipped_no_keyword,
+            skipped_no_signal,
+            skipped_not_actionable,
         )
         return {
             "created": created,
             "scanned": len(emails),
             "skipped_non_hebrew": skipped_non_hebrew,
-            "skipped_no_keyword": skipped_no_keyword,
+            "skipped_no_keyword": skipped_no_signal,
+            "skipped_no_signal": skipped_no_signal,
+            "skipped_not_actionable": skipped_not_actionable,
         }
 
     async def _fetch_emails(self, db: Session, user: User) -> list[dict]:

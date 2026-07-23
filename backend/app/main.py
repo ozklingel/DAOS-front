@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, dashboard, emails, hub, notifications, tasks, whatsapp
+from app.api.v1 import auth, dashboard, emails, hub, notifications, system, tasks, whatsapp
 from app.api import webhooks_green_api, webhooks_saltedge, webhooks_whatsapp
 from app.config import settings
 from app.database import SessionLocal, init_db
@@ -102,6 +102,7 @@ app.include_router(tasks.router, prefix=api_prefix)
 app.include_router(dashboard.router, prefix=api_prefix)
 app.include_router(notifications.router, prefix=api_prefix)
 app.include_router(whatsapp.router, prefix=api_prefix)
+app.include_router(system.router, prefix=api_prefix)
 app.include_router(webhooks_whatsapp.router)
 app.include_router(webhooks_green_api.router)
 app.include_router(webhooks_saltedge.router)
@@ -109,4 +110,9 @@ app.include_router(webhooks_saltedge.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": settings.app_name, "version": settings.app_version}
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "openai_configured": bool((settings.openai_api_key or "").strip()),
+    }

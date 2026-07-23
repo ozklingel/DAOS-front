@@ -546,3 +546,13 @@ class InfoDocumentOut(APIModel):
 class InfoDocumentUploadOut(APIModel):
     document: InfoDocumentOut
     message: str = "Document saved"
+
+
+class OpenAIStatusOut(APIModel):
+    configured: bool
+    ok: bool
+    status: str
+    message: str
+    model: str | None = None
+    checked_at: str | None = None
+    error_type: str | None = None

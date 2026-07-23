@@ -76,10 +76,6 @@ async def create_task_from_voice(
             detail={"message": "חסרה הקלטה תקינה."},
         )
 
-    # Ensure the Hebrew task keyword so analysis accepts the message
-    if "משימה" not in text:
-        text = f"משימה: {text}"
-
     analysis, source = ai_service.analyze_voice_transcript(text)
     if not analysis:
         return VoiceTaskOut(

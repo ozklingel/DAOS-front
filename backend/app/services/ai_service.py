@@ -16,6 +16,21 @@ logger = logging.getLogger(__name__)
 HEBREW_CHAR_RE = re.compile(r"[\u0590-\u05FF]")
 TASK_KEYWORD = "משימה"
 
+# Soft signals that an incoming WhatsApp/email is likely a task (beyond the word משימה).
+TASK_SIGNAL_RE = re.compile(
+    r"("
+    r"משימה|todo|to[\s-]?do|"
+    r"צריך(?:ה|ים)?|חייב(?:ת|ים)?|בבקשה|אנא|\bנא\b|"
+    r"תזכ(?:יר|ורת)|אל תשכח|לא לשכוח|"
+    r"מועד אחרון|תאריך יעד|דדליין|deadline|"
+    r"דחוף|בהול|חירום|דחיפות|"
+    r"ל(?:שלם|בדוק|טפל|אשר|שלוח|תאם|תקשר|גיש|חדש|עדכן|השיב|ענות|סגור|סיים)|"
+    r"ת(?:שלח|בדק|בדוק|תקשר|אשר|זכיר|עדכן)|"
+    r"פעולה נדרשת|נדרש(?:ת|ים)?(?:\s+טיפול|\s+פעולה)?"
+    r")",
+    re.IGNORECASE,
+)
+
 
 class AIService:
     def __init__(self) -> None:
@@ -44,6 +59,84 @@ class AIService:
     def ai_enabled(self) -> bool:
         return self.client is not None
 
+    def check_openai_status(self) -> dict:
+        """
+        Verify OPENAI_API_KEY is present, accepted by OpenAI, and usable
+        (not missing / revoked / out of quota).
+        """
+        key = (settings.openai_api_key or "").strip()
+        model = settings.openai_model
+        base = {
+            "configured": bool(key),
+            "model": model,
+            "ok": False,
+            "status": "missing_key",
+            "message": "OPENAI_API_KEY is not set.",
+            "checked_at": datetime.now(UTC).isoformat(),
+        }
+        if not key:
+            return base
+        if not self.client:
+            return {
+                **base,
+                "status": "client_init_failed",
+                "message": "OpenAI client failed to initialize (check key / SSL settings).",
+            }
+
+        try:
+            # Tiny live call — catches invalid/revoked keys and insufficient_quota.
+            self.client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=1,
+                temperature=0,
+            )
+            return {
+                **base,
+                "ok": True,
+                "status": "ok",
+                "message": "OpenAI API key is valid and the account can complete requests.",
+            }
+        except Exception as exc:
+            err = str(exc).lower()
+            err_type = type(exc).__name__
+            if "insufficient_quota" in err or "exceeded your current quota" in err:
+                status = "quota_exceeded"
+                message = (
+                    "OpenAI quota/billing exhausted. Add credit at "
+                    "platform.openai.com → Billing."
+                )
+            elif (
+                "invalid_api_key" in err
+                or "incorrect api key" in err
+                or "authentication" in err
+                or "401" in err
+                or err_type in {"AuthenticationError", "PermissionDeniedError"}
+            ):
+                status = "invalid_key"
+                message = "OpenAI API key is invalid, revoked, or removed from the account."
+            elif "rate_limit" in err or "429" in err and "quota" not in err:
+                # Rate limit without quota wording — key works but throttled.
+                return {
+                    **base,
+                    "ok": True,
+                    "status": "rate_limited",
+                    "message": "OpenAI key works but is temporarily rate-limited.",
+                }
+            elif "connect" in err or "timeout" in err or "ssl" in err:
+                status = "unreachable"
+                message = f"Could not reach OpenAI: {exc}"
+            else:
+                status = "error"
+                message = f"OpenAI check failed: {exc}"
+            return {
+                **base,
+                "ok": False,
+                "status": status,
+                "message": message,
+                "error_type": err_type,
+            }
+
     @staticmethod
     def is_hebrew_email(subject: str, snippet: str) -> bool:
         """True when subject or snippet contains Hebrew letters."""
@@ -53,52 +146,88 @@ class AIService:
     def has_task_keyword(subject: str, snippet: str) -> bool:
         return TASK_KEYWORD in f"{subject} {snippet}"
 
+    @classmethod
+    def looks_like_task_candidate(cls, subject: str, snippet: str) -> bool:
+        """Broader than the literal word משימה — verbs, requests, deadlines, urgency."""
+        text = f"{subject} {snippet}".strip()
+        if not text:
+            return False
+        if cls.has_task_keyword(subject, snippet):
+            return True
+        return bool(TASK_SIGNAL_RE.search(text))
+
     def analyze_email(self, *, subject: str, sender: str, snippet: str) -> dict | None:
         analysis, _source = self.analyze_email_detailed(
-            subject=subject, sender=sender, snippet=snippet
+            subject=subject, sender=sender, snippet=snippet, channel="email"
         )
         return analysis
 
     def analyze_email_detailed(
-        self, *, subject: str, sender: str, snippet: str
+        self,
+        *,
+        subject: str,
+        sender: str,
+        snippet: str,
+        channel: str = "email",
     ) -> tuple[dict | None, str]:
         if not self.is_hebrew_email(subject, snippet):
-            logger.debug("Skipping non-Hebrew email: %r", subject[:120])
+            logger.debug("Skipping non-Hebrew message: %r", subject[:120])
             return None, "skipped_not_hebrew"
 
-        # Only process when the Hebrew word משימה appears (emails + WhatsApp transcripts)
-        if not self.has_task_keyword(subject, snippet):
-            logger.debug("Skipping email without keyword '%s': %r", TASK_KEYWORD, subject[:120])
-            return None, "skipped_no_task_keyword"
+        is_direct = channel in {"whatsapp", "voice"}
+        has_signals = self.looks_like_task_candidate(subject, snippet)
+
+        # Emails: require soft task signals to avoid newsletters/noise.
+        # WhatsApp/voice: allow AI to decide on any Hebrew message.
+        if channel == "email" and not has_signals:
+            logger.debug("Skipping email without task signals: %r", subject[:120])
+            return None, "skipped_no_task_signal"
 
         if self.client:
             try:
-                analysis = self._openai_analysis(subject, sender, snippet)
-                analysis = self._apply_task_keyword_override(subject, snippet, analysis)
+                analysis = self._openai_analysis(
+                    subject, sender, snippet, channel=channel
+                )
+                if self.has_task_keyword(subject, snippet):
+                    analysis = self._apply_task_keyword_override(subject, snippet, analysis)
                 analysis = self._enrich_deadline(subject, snippet, analysis)
-                if analysis.get("is_actionable", True):
+                if analysis.get("is_actionable", False):
                     logger.info(
-                        "Email task detected via OpenAI (%s): %r",
+                        "Task detected via OpenAI (%s/%s): %r",
+                        channel,
                         settings.openai_model,
                         analysis.get("title", subject)[:120],
                     )
                     return analysis, "openai"
+                logger.info(
+                    "OpenAI judged not actionable (%s): %r",
+                    channel,
+                    subject[:120],
+                )
+                return None, "openai_not_actionable"
             except Exception as exc:
-                logger.warning("OpenAI analysis failed, using Hebrew heuristics: %s", exc)
+                logger.warning("OpenAI analysis failed, using heuristics: %s", exc)
+
+        if not has_signals and not is_direct:
+            return None, "skipped_no_task_signal"
 
         analysis = self._heuristic_analysis(subject, sender, snippet)
         if analysis:
             analysis = self._enrich_deadline(subject, snippet, analysis)
             logger.info(
-                "Email task detected via Hebrew heuristics: %r",
+                "Task detected via heuristics (%s): %r",
+                channel,
                 analysis.get("title", subject)[:120],
             )
             return analysis, "heuristic"
 
-        analysis = self._task_keyword_fallback(subject, snippet)
-        analysis = self._enrich_deadline(subject, snippet, analysis)
-        logger.info("Email task detected via keyword '%s': %r", TASK_KEYWORD, subject[:120])
-        return analysis, "task_keyword"
+        if self.has_task_keyword(subject, snippet):
+            analysis = self._task_keyword_fallback(subject, snippet)
+            analysis = self._enrich_deadline(subject, snippet, analysis)
+            logger.info("Task detected via keyword '%s': %r", TASK_KEYWORD, subject[:120])
+            return analysis, "task_keyword"
+
+        return None, "no_task_detected"
 
     def analyze_voice_transcript(self, transcript: str) -> tuple[dict | None, str]:
         text = transcript.strip()
@@ -108,6 +237,18 @@ class AIService:
             subject=text[:200],
             sender="Voice",
             snippet=text,
+            channel="voice",
+        )
+
+    def analyze_whatsapp_transcript(self, transcript: str) -> tuple[dict | None, str]:
+        text = transcript.strip()
+        if not text:
+            return None, "empty"
+        return self.analyze_email_detailed(
+            subject=text[:200],
+            sender="WhatsApp",
+            snippet=text,
+            channel="whatsapp",
         )
 
     def transcribe_audio(self, audio_bytes: bytes, filename: str = "voice.ogg") -> str | None:
@@ -308,26 +449,46 @@ Respond with valid JSON only."""
             analysis["deadline"] = extracted
         return analysis
 
-    def _openai_analysis(self, subject: str, sender: str, snippet: str) -> dict:
+    def _openai_analysis(
+        self, subject: str, sender: str, snippet: str, *, channel: str = "email"
+    ) -> dict:
         today = israel_now().strftime("%Y-%m-%d")
         weekday_names = ["שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון"]
         weekday = weekday_names[israel_today().weekday()]
-        prompt = f"""Analyze this Hebrew email and extract an actionable task.
-The email already contains the word "משימה" — always set is_actionable to true.
-Write title and description in Hebrew only.
-Today's date in Israel is {today} ({weekday}). Resolve relative dates like "מחר", "יום שישי", "21/07" against this date.
-Return JSON only with keys:
+        channel_label = {
+            "email": "מייל",
+            "whatsapp": "הודעת WhatsApp",
+            "voice": "הודעה קולית",
+        }.get(channel, channel)
+
+        prompt = f"""נתח את ה{channel_label} בעברית וקבע אם יש בה משימה / פעולה שצריך לבצע.
+
+היום בישראל: {today} ({weekday}).
+פרש תאריכים יחסיים (מחר, מחרתיים, יום ראשון, 21/07, בעוד שבוע) לפי התאריך הזה.
+
+מתי is_actionable=true:
+- יש בקשה או הוראה לבצע משהו (לשלם, לבדוק, לשלוח, לאשר, לתאם, להתקשר, לטפל…)
+- יש תזכורת / דדליין / "צריך" / "בבקשה" / "אל תשכח"
+- מופיעה המילה "משימה" או ניסוח משימתי ברור
+- גם ניסוח קצר בוואטסאפ כמו "תשלח את הדוח עד מחר" נחשב משימה
+
+מתי is_actionable=false:
+- שיחה חברתית, תודה, אישור בלבד ("תודה", "בסדר", "קיבלתי")
+- פרסום / ניוזלטר / מידע כללי בלי פעולה נדרשת
+- שאלה רטורית בלי בקשה לביצוע
+
+החזר JSON בלבד עם המפתחות:
 - is_actionable (boolean)
-- title (string, short action item in Hebrew)
-- description (string in Hebrew)
+- title (מחרוזת קצרה בעברית — הפעולה עצמה, לא העתק של כל ההודעה)
+- description (עברית, פרטים שימושיים או null)
 - priority (critical|high|medium|low|none)
 - priority_score (0-100 float)
-- deadline (ISO8601 string with timezone, or null if no date mentioned)
+- deadline (ISO8601 עם timezone, או null אם אין תאריך)
 
-Email:
+מקור:
 From: {sender}
 Subject: {subject}
-Snippet: {snippet}
+Body: {snippet}
 """
         response = self.client.chat.completions.create(
             model=settings.openai_model,
@@ -335,69 +496,28 @@ Snippet: {snippet}
                 {
                     "role": "system",
                     "content": (
-                        "You extract actionable tasks from Hebrew emails only. "
-                        "Respond with valid JSON only. Title and description must be in Hebrew."
+                        "אתה מזהה משימות בעברית ממיילים והודעות WhatsApp. "
+                        "החזר JSON תקין בלבד. title ו-description בעברית. "
+                        "העדף לזהות משימות אמיתיות, אבל אל תיצור משימה מצ'אט חברתי."
                     ),
                 },
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.2,
+            temperature=0.1,
+            response_format={"type": "json_object"},
         )
         content = response.choices[0].message.content or "{}"
-        return json.loads(content)
+        data = json.loads(content)
+        if "is_actionable" not in data:
+            data["is_actionable"] = bool(data.get("title"))
+        return data
 
     def _heuristic_analysis(self, subject: str, sender: str, snippet: str) -> dict | None:
         raw = f"{subject} {snippet}"
         if not self.is_hebrew_email(subject, snippet):
             return None
 
-        hebrew_words = [
-            "דחוף",
-            "דחיפות",
-            "בהול",
-            "חירום",
-            "נדרש",
-            "נדרשת",
-            "נדרשים",
-            "פעולה נדרשת",
-            "נדרשת פעולה",
-            "נדרש טיפול",
-            "אישור",
-            "אשר",
-            "אנא",
-            "בבקשה",
-            "מועד אחרון",
-            "תאריך יעד",
-            "עד ל",
-            "עד ה",
-            "חשוב",
-            "תזכורת",
-            "להשיב",
-            "לענות",
-            "לבדוק",
-            "לטפל",
-            "לעדכן",
-            "לאשר",
-            "לחדש",
-            "לתאם",
-            "להתקשר",
-            "לשלם",
-            "להגיש",
-            "דדליין",
-            "משימה",
-            "טיפול",
-            "פעולה",
-        ]
-
-        matched = any(w in raw for w in hebrew_words)
-        if not matched:
-            matched = bool(
-                re.search(
-                    r"(לחדש|לטפל|להתקשר|לתאם|לעדכן|לבדוק|לאשר|לשלם|להגיש|להשיב|לענות|נא)\b",
-                    raw,
-                )
-            )
-        if not matched:
+        if not self.looks_like_task_candidate(subject, snippet):
             return None
 
         priority = TaskPriority.medium.value
@@ -406,13 +526,19 @@ Snippet: {snippet}
         if any(m in raw for m in urgent_markers):
             priority = TaskPriority.critical.value
             score = 92.0
-        elif "מועד" in raw or "תאריך יעד" in raw or "עד ל" in raw:
+        elif "מועד" in raw or "תאריך יעד" in raw or "עד ל" in raw or "דדליין" in raw.lower():
             priority = TaskPriority.high.value
             score = 78.0
 
+        title = (subject or snippet).strip()[:200] or "משימה חדשה"
+        # Prefer a cleaner title from the first line of WhatsApp-like text
+        first_line = (snippet or subject).strip().splitlines()[0].strip()
+        if first_line and len(first_line) <= 120:
+            title = first_line
+
         return {
             "is_actionable": True,
-            "title": subject[:200] or "בדוק מייל",
+            "title": title,
             "description": snippet[:500],
             "priority": priority,
             "priority_score": score,

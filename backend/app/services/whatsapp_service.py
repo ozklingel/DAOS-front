@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import User, WhatsAppInboundLog
-from app.services.ai_service import AIService, TASK_KEYWORD
+from app.services.ai_service import AIService
 from app.services.task_ingest_service import create_task_from_analysis
 
 logger = logging.getLogger(__name__)
@@ -336,25 +336,6 @@ class WhatsAppService:
             )
             return None, "", "empty_transcript"
 
-        if TASK_KEYWORD not in transcript:
-            logger.info(
-                "WhatsApp: no keyword %s in message from %s — no reply",
-                TASK_KEYWORD,
-                self.normalize_phone(phone),
-            )
-            self._record_inbound(
-                db,
-                from_phone=phone,
-                message_id=message_id,
-                msg_type=msg_type,
-                body_text=transcript,
-                user_id=user.id,
-                task_id=None,
-                bot_reply=None,
-                status="no_task_keyword",
-            )
-            return None, "", "no_task_keyword"
-
         task, reply, status = self._create_task_from_transcript(
             db, user, transcript, whatsapp_message_id=message_id
         )
@@ -389,13 +370,19 @@ class WhatsAppService:
         *,
         whatsapp_message_id: str | None = None,
     ) -> tuple[object | None, str, str]:
-        analysis, source = self.ai.analyze_voice_transcript(transcript)
+        analysis, source = self.ai.analyze_whatsapp_transcript(transcript)
         if not analysis:
             if source == "skipped_not_hebrew":
                 return None, "רק הודעות בעברית נתמכות כרגע. שלחו משימה בעברית.", "not_hebrew"
+            if source in {"openai_not_actionable", "no_task_detected", "skipped_no_task_signal"}:
+                return (
+                    None,
+                    "",
+                    "no_task_detected",
+                )
             return (
                 None,
-                "לא זוהתה משימה בהודעה. נסו לנסח ברור יותר, למשל: \"משימה: לשלוח דוח\".",
+                "לא זוהתה משימה בהודעה. נסו לנסח ברור יותר, למשל: \"תשלח את הדוח עד מחר\".",
                 "no_task_detected",
             )
 
