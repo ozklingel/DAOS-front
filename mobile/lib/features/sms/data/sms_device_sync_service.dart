@@ -78,30 +78,6 @@ class SmsDeviceSyncService {
     );
     return result;
   }
-
-  /// iOS / manual: submit pasted or shared SMS text.
-  Future<SmsIngestResult> ingestManualText(String text, {String? from}) async {
-    final body = text.trim();
-    if (body.isEmpty) {
-      return const SmsIngestResult(processed: 0, createdCount: 0, created: []);
-    }
-    final id =
-        'manual-${DateTime.now().millisecondsSinceEpoch}-${body.hashCode}';
-    final result = await _remote.ingest([
-      SmsDeviceMessage(
-        messageId: id,
-        body: body,
-        fromAddress: from,
-        receivedAt: DateTime.now(),
-      ),
-    ]);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      StorageKeys.smsLastSyncAt,
-      DateTime.now().toUtc().toIso8601String(),
-    );
-    return result;
-  }
 }
 
 /// Factory for UI layer (uses app Dio/ApiClient).

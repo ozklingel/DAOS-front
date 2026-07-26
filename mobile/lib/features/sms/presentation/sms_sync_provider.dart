@@ -121,16 +121,6 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
       state = state.copyWith(isBusy: false, error: e.toString());
     }
   }
-
-  Future<void> pasteAndIngest(String text) async {
-    state = state.copyWith(isBusy: true, clearError: true, clearResult: true);
-    try {
-      final result = await _service.ingestManualText(text);
-      state = state.copyWith(isBusy: false, lastResult: result);
-    } catch (e) {
-      state = state.copyWith(isBusy: false, error: e.toString());
-    }
-  }
 }
 
 final smsSyncProvider =
