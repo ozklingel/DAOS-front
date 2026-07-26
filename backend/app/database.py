@@ -11,54 +11,66 @@ engine = create_engine(settings.database_url, connect_args=connect_args, pool_pr
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def _migrate_sqlite() -> None:
-    if not settings.database_url.startswith("sqlite"):
-        return
+def _add_column_if_missing(table: str, column: str, ddl_type: str) -> None:
     inspector = inspect(engine)
-    if "users" not in inspector.get_table_names():
+    if table not in inspector.get_table_names():
         return
-    columns = {col["name"] for col in inspector.get_columns("users")}
-    if "google_access_token" not in columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE users ADD COLUMN google_access_token TEXT"))
-    if "tasks" not in inspector.get_table_names():
+    columns = {col["name"] for col in inspector.get_columns(table)}
+    if column in columns:
         return
-    task_columns = {col["name"] for col in inspector.get_columns("tasks")}
-    if "category" not in task_columns:
-        with engine.begin() as conn:
-            conn.execute(
-                text("ALTER TABLE tasks ADD COLUMN category VARCHAR(20) DEFAULT 'general'")
-            )
-    if "energy_level" not in task_columns:
-        with engine.begin() as conn:
-            conn.execute(
-                text("ALTER TABLE tasks ADD COLUMN energy_level VARCHAR(20) DEFAULT 'medium'")
-            )
-    if "whatsapp_phone" not in columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE users ADD COLUMN whatsapp_phone VARCHAR(20)"))
-    if "sms_phone" not in columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE users ADD COLUMN sms_phone VARCHAR(20)"))
-    if "whatsapp_message_id" not in task_columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN whatsapp_message_id VARCHAR(512)"))
-    if "sms_message_id" not in task_columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN sms_message_id VARCHAR(512)"))
-    if "finance_transactions" in inspector.get_table_names():
-        tx_columns = {col["name"] for col in inspector.get_columns("finance_transactions")}
-        if "bank_account_id" not in tx_columns:
-            with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE finance_transactions ADD COLUMN bank_account_id VARCHAR(36)"))
-        if "external_id" not in tx_columns:
-            with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE finance_transactions ADD COLUMN external_id VARCHAR(128)"))
+    with engine.begin() as conn:
+        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
+
+
+def _ensure_unique_index(table: str, column: str, index_name: str) -> None:
+    inspector = inspect(engine)
+    if table not in inspector.get_table_names():
+        return
+    existing = {idx["name"] for idx in inspector.get_indexes(table)}
+    if index_name in existing:
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(f"CREATE UNIQUE INDEX IF NOT EXISTS {index_name} ON {table} ({column})")
+        )
+
+
+def _migrate_schema() -> None:
+    """Add columns introduced after initial create_all (SQLite + Postgres)."""
+    inspector = inspect(engine)
+    tables = set(inspector.get_table_names())
+    if "users" not in tables:
+        return
+
+    _add_column_if_missing("users", "google_access_token", "TEXT")
+    _add_column_if_missing("users", "whatsapp_phone", "VARCHAR(20)")
+    _add_column_if_missing("users", "sms_phone", "VARCHAR(20)")
+
+    # Unique indexes for phone link columns (idempotent).
+    try:
+        _ensure_unique_index("users", "sms_phone", "ix_users_sms_phone")
+    except Exception:
+        # Index may already exist under another name; column presence is what matters.
+        pass
+    try:
+        _ensure_unique_index("users", "whatsapp_phone", "ix_users_whatsapp_phone")
+    except Exception:
+        pass
+
+    if "tasks" in tables:
+        _add_column_if_missing("tasks", "category", "VARCHAR(20) DEFAULT 'general'")
+        _add_column_if_missing("tasks", "energy_level", "VARCHAR(20) DEFAULT 'medium'")
+        _add_column_if_missing("tasks", "whatsapp_message_id", "VARCHAR(512)")
+        _add_column_if_missing("tasks", "sms_message_id", "VARCHAR(512)")
+
+    if "finance_transactions" in tables:
+        _add_column_if_missing("finance_transactions", "bank_account_id", "VARCHAR(36)")
+        _add_column_if_missing("finance_transactions", "external_id", "VARCHAR(128)")
 
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
-    _migrate_sqlite()
+    _migrate_schema()
 
 
 def get_db() -> Generator[Session, None, None]:
