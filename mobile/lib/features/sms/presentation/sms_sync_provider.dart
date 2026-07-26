@@ -7,146 +7,133 @@ final smsDeviceSyncServiceProvider = Provider<SmsDeviceSyncService>((ref) {
   return createSmsDeviceSyncService(ref.watch(apiClientProvider));
 });
 
-class SmsSyncState {
-  const SmsSyncState({
+class SmsSyncUiState {
+  const SmsSyncUiState({
+    this.supported = false,
     this.enabled = false,
-    this.isAndroid = false,
     this.hasPermission = false,
-    this.isSyncing = false,
+    this.isBusy = false,
     this.lastResult,
     this.error,
   });
 
+  final bool supported;
   final bool enabled;
-  final bool isAndroid;
   final bool hasPermission;
-  final bool isSyncing;
+  final bool isBusy;
   final SmsIngestResult? lastResult;
   final String? error;
 
-  SmsSyncState copyWith({
+  SmsSyncUiState copyWith({
+    bool? supported,
     bool? enabled,
-    bool? isAndroid,
     bool? hasPermission,
-    bool? isSyncing,
+    bool? isBusy,
     SmsIngestResult? lastResult,
     String? error,
     bool clearError = false,
     bool clearResult = false,
   }) {
-    return SmsSyncState(
+    return SmsSyncUiState(
+      supported: supported ?? this.supported,
       enabled: enabled ?? this.enabled,
-      isAndroid: isAndroid ?? this.isAndroid,
       hasPermission: hasPermission ?? this.hasPermission,
-      isSyncing: isSyncing ?? this.isSyncing,
+      isBusy: isBusy ?? this.isBusy,
       lastResult: clearResult ? null : (lastResult ?? this.lastResult),
       error: clearError ? null : (error ?? this.error),
     );
   }
 }
 
-final smsSyncProvider =
-    StateNotifierProvider<SmsSyncController, SmsSyncState>((ref) {
-  return SmsSyncController(ref.watch(smsDeviceSyncServiceProvider));
-});
-
-class SmsSyncController extends StateNotifier<SmsSyncState> {
-  SmsSyncController(this._service) : super(const SmsSyncState()) {
+class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
+  SmsSyncNotifier(this._service) : super(const SmsSyncUiState()) {
     refresh();
   }
 
   final SmsDeviceSyncService _service;
 
   Future<void> refresh() async {
-    final android = await _service.isAndroidSupported();
+    final supported = await _service.isAndroidSupported();
     final enabled = await _service.isEnabled();
-    final hasPerm = await _service.hasPermission();
+    final hasPermission = await _service.hasPermission();
     state = state.copyWith(
-      isAndroid: android,
+      supported: supported,
       enabled: enabled,
-      hasPermission: hasPerm,
+      hasPermission: hasPermission,
       clearError: true,
     );
   }
 
-  Future<void> enable() async {
-    state = state.copyWith(isSyncing: true, clearError: true);
+  Future<void> enableAndSync() async {
+    state = state.copyWith(isBusy: true, clearError: true, clearResult: true);
     try {
-      final android = await _service.isAndroidSupported();
-      if (android) {
-        final ok = await _service.ensurePermission();
-        if (!ok) {
-          state = state.copyWith(
-            isSyncing: false,
-            error: 'SMS_PERMISSION_DENIED',
-            hasPermission: false,
-          );
-          return;
-        }
-        state = state.copyWith(hasPermission: true);
+      final ok = await _service.ensurePermission();
+      if (!ok) {
+        state = state.copyWith(
+          isBusy: false,
+          hasPermission: false,
+          error: 'sms_permission_denied',
+        );
+        return;
       }
       await _service.setEnabled(true);
-      state = state.copyWith(enabled: true, isSyncing: false);
-      if (android) {
-        await syncNow();
-      }
+      final result = await _service.syncRecent();
+      state = state.copyWith(
+        isBusy: false,
+        enabled: true,
+        hasPermission: true,
+        lastResult: result,
+      );
     } catch (e) {
-      state = state.copyWith(isSyncing: false, error: e.toString());
+      state = state.copyWith(isBusy: false, error: e.toString());
     }
   }
 
   Future<void> disable() async {
-    await _service.setEnabled(false);
-    state = state.copyWith(enabled: false, clearResult: true);
+    state = state.copyWith(isBusy: true, clearError: true);
+    try {
+      await _service.setEnabled(false);
+      state = state.copyWith(isBusy: false, enabled: false);
+    } catch (e) {
+      state = state.copyWith(isBusy: false, error: e.toString());
+    }
   }
 
-  Future<SmsIngestResult?> syncNow() async {
-    state = state.copyWith(isSyncing: true, clearError: true);
+  Future<void> syncNow() async {
+    state = state.copyWith(isBusy: true, clearError: true, clearResult: true);
     try {
-      if (!await _service.isAndroidSupported()) {
-        state = state.copyWith(
-          isSyncing: false,
-          error: 'SMS_ANDROID_ONLY_AUTO',
-        );
-        return null;
-      }
       final ok = await _service.ensurePermission();
       if (!ok) {
         state = state.copyWith(
-          isSyncing: false,
-          error: 'SMS_PERMISSION_DENIED',
+          isBusy: false,
+          hasPermission: false,
+          error: 'sms_permission_denied',
         );
-        return null;
+        return;
       }
       final result = await _service.syncRecent();
-      await _service.setEnabled(true);
       state = state.copyWith(
-        isSyncing: false,
-        lastResult: result,
-        enabled: true,
+        isBusy: false,
         hasPermission: true,
+        lastResult: result,
       );
-      return result;
     } catch (e) {
-      state = state.copyWith(isSyncing: false, error: e.toString());
-      rethrow;
+      state = state.copyWith(isBusy: false, error: e.toString());
     }
   }
 
-  Future<SmsIngestResult?> ingestPaste(String text) async {
-    state = state.copyWith(isSyncing: true, clearError: true);
+  Future<void> pasteAndIngest(String text) async {
+    state = state.copyWith(isBusy: true, clearError: true, clearResult: true);
     try {
       final result = await _service.ingestManualText(text);
-      await _service.setEnabled(true);
-      state = state.copyWith(
-        isSyncing: false,
-        lastResult: result,
-        enabled: true,
-      );
-      return result;
+      state = state.copyWith(isBusy: false, lastResult: result);
     } catch (e) {
-      state = state.copyWith(isSyncing: false, error: e.toString());
-      rethrow;
+      state = state.copyWith(isBusy: false, error: e.toString());
     }
   }
 }
+
+final smsSyncProvider =
+    StateNotifierProvider<SmsSyncNotifier, SmsSyncUiState>((ref) {
+  return SmsSyncNotifier(ref.watch(smsDeviceSyncServiceProvider));
+});

@@ -69,7 +69,11 @@ class SmsService:
 
     def find_user_by_phone(self, db: Session, phone: str) -> User | None:
         normalized = self.normalize_phone(phone)
-        return db.query(User).filter(User.sms_phone == normalized).one_or_none()
+        user = db.query(User).filter(User.sms_phone == normalized).one_or_none()
+        if user:
+            return user
+        # Allow WhatsApp-linked number to receive SMS webhooks too
+        return db.query(User).filter(User.whatsapp_phone == normalized).one_or_none()
 
     def _inbound_logs_query(self, db: Session, user: User):
         q = db.query(SmsInboundLog)

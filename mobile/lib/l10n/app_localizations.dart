@@ -260,6 +260,23 @@ abstract class AppLocalizations {
   String get whatsappVoiceHelpTitle;
   String get whatsappVoiceHelpBody;
   String get openIntegrations;
+  String get sms;
+  String get smsConnectHint;
+  String get smsAndroidHint;
+  String get smsManualHint;
+  String get smsEnableSync;
+  String get smsDisableSync;
+  String get smsSyncNow;
+  String get smsPasteButton;
+  String get smsPasteTitle;
+  String get smsPasteHint;
+  String get smsPermissionDenied;
+  String smsSyncResult(int created);
+  String get smsSyncNoTasks;
+  String get connectSmsButton;
+  String get disconnectSmsButton;
+  String get smsLinkedSuccess;
+  String get smsPhoneLabel;
 
   String assetAlertsTitle(int count);
   String get assetReminderDetails;
@@ -784,6 +801,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'Link your phone in Settings → Integrations, then send a Hebrew voice note or text to your DAOS WhatsApp bot.';
   @override
   String get openIntegrations => 'Open integrations';
+  @override
+  String get sms => 'SMS';
+  @override
+  String get smsConnectHint =>
+      'On Android, allow SMS access so DAOS can create tasks from inbox messages.';
+  @override
+  String get smsAndroidHint =>
+      'Enable sync to read recent SMS and create tasks automatically.';
+  @override
+  String get smsManualHint =>
+      'Paste an SMS text to create a task (iOS / web).';
+  @override
+  String get smsEnableSync => 'Enable SMS sync';
+  @override
+  String get smsDisableSync => 'Disable SMS sync';
+  @override
+  String get smsSyncNow => 'Sync SMS now';
+  @override
+  String get smsPasteButton => 'Paste SMS';
+  @override
+  String get smsPasteTitle => 'Paste SMS text';
+  @override
+  String get smsPasteHint => 'Message body';
+  @override
+  String get smsPermissionDenied => 'SMS permission is required to read inbox messages.';
+  @override
+  String smsSyncResult(int created) =>
+      created == 1 ? 'Created 1 task from SMS' : 'Created $created tasks from SMS';
+  @override
+  String get smsSyncNoTasks => 'No new tasks found in recent SMS';
+  @override
+  String get connectSmsButton => 'Link SMS number';
+  @override
+  String get disconnectSmsButton => 'Unlink SMS number';
+  @override
+  String get smsLinkedSuccess => 'SMS number linked';
+  @override
+  String get smsPhoneLabel => 'Mobile number';
   @override
   String assetAlertsTitle(int count) => 'Vehicle & insurance alerts ($count)';
   @override
@@ -1434,6 +1489,44 @@ class AppLocalizationsHe extends AppLocalizations {
       'חברו את המספר בהגדרות → אינטגרציות, ואז שלחו הודעת קול או טקסט בעברית לבוט DAOS.';
   @override
   String get openIntegrations => 'פתח אינטגרציות';
+  @override
+  String get sms => 'SMS';
+  @override
+  String get smsConnectHint =>
+      'באנדרואיד אפשר לאשר גישה ל-SMS כדי ש-DAOS ייצור משימות מהודעות נכנסות.';
+  @override
+  String get smsAndroidHint =>
+      'הפעילו סנכרון כדי לקרוא SMS אחרונים וליצור משימות אוטומטית.';
+  @override
+  String get smsManualHint =>
+      'הדביקו טקסט SMS ליצירת משימה (iOS / ווב).';
+  @override
+  String get smsEnableSync => 'הפעל סנכרון SMS';
+  @override
+  String get smsDisableSync => 'כבה סנכרון SMS';
+  @override
+  String get smsSyncNow => 'סנכרן SMS עכשיו';
+  @override
+  String get smsPasteButton => 'הדבק SMS';
+  @override
+  String get smsPasteTitle => 'הדבקת טקסט SMS';
+  @override
+  String get smsPasteHint => 'תוכן ההודעה';
+  @override
+  String get smsPermissionDenied => 'נדרשת הרשאת SMS לקריאת הודעות נכנסות.';
+  @override
+  String smsSyncResult(int created) =>
+      created == 1 ? 'נוצרה משימה אחת מ-SMS' : 'נוצרו $created משימות מ-SMS';
+  @override
+  String get smsSyncNoTasks => 'לא נמצאו משימות חדשות ב-SMS האחרונים';
+  @override
+  String get connectSmsButton => 'קשר מספר SMS';
+  @override
+  String get disconnectSmsButton => 'נתק מספר SMS';
+  @override
+  String get smsLinkedSuccess => 'מספר SMS חובר';
+  @override
+  String get smsPhoneLabel => 'מספר נייד';
   @override
   String assetAlertsTitle(int count) => 'התראות רכב וביטוח ($count)';
   @override

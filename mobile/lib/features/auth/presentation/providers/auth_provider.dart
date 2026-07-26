@@ -224,6 +224,26 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> connectSms(String phone) async {
+    _error = null;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _user = await _ref.read(authRepositoryProvider).connectSms(phone);
+    } on AppException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> disconnectSms() async {
+    _user = await _ref.read(authRepositoryProvider).disconnectSms();
+    notifyListeners();
+  }
+
   void updateUser(User user) {
     _user = user;
     notifyListeners();

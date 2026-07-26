@@ -147,6 +147,23 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(data);
   }
 
+  Future<UserModel> linkSms(String phone) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authSmsLink,
+      data: {'phone': phone},
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return UserModel.fromJson(data);
+  }
+
+  Future<UserModel> disconnectSms() async {
+    final data = await _client.post<Map<String, dynamic>>(
+      ApiConstants.authSmsDisconnect,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return UserModel.fromJson(data);
+  }
+
   Future<UserModel> getCurrentUser() async {
     final data = await _client.get<Map<String, dynamic>>(
       ApiConstants.authMe,

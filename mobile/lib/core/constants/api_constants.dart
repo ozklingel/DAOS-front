@@ -21,7 +21,10 @@ class ApiConstants {
   static const String authLogout = '/auth/logout';
   static const String authWhatsAppLink = '/auth/whatsapp/link';
   static const String authWhatsAppDisconnect = '/auth/whatsapp/disconnect';
+  static const String authSmsLink = '/auth/sms/link';
+  static const String authSmsDisconnect = '/auth/sms/disconnect';
   static const String whatsAppSimulate = '/whatsapp/simulate';
+  static const String smsIngest = '/sms/ingest';
 
   // Tasks
   static const String tasks = '/tasks';

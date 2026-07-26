@@ -46,6 +46,8 @@ abstract class UserModel with _$UserModel {
     @Default(false) bool outlookConnected,
     @Default(false) bool whatsappConnected,
     String? whatsappPhone,
+    @Default(false) bool smsConnected,
+    String? smsPhone,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,10 @@ abstract class UserModel with _$UserModel {
           false,
       whatsappPhone:
           json['whatsapp_phone'] as String? ?? json['whatsappPhone'] as String?,
+      smsConnected: json['sms_connected'] as bool? ??
+          json['smsConnected'] as bool? ??
+          false,
+      smsPhone: json['sms_phone'] as String? ?? json['smsPhone'] as String?,
     );
   }
 
@@ -77,5 +83,7 @@ abstract class UserModel with _$UserModel {
         outlookConnected: outlookConnected,
         whatsappConnected: whatsappConnected,
         whatsappPhone: whatsappPhone,
+        smsConnected: smsConnected,
+        smsPhone: smsPhone,
       );
 }

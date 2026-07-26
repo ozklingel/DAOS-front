@@ -174,11 +174,11 @@ class AIService:
             logger.debug("Skipping non-Hebrew message: %r", subject[:120])
             return None, "skipped_not_hebrew"
 
-        is_direct = channel in {"whatsapp", "voice"}
+        is_direct = channel in {"whatsapp", "voice", "sms"}
         has_signals = self.looks_like_task_candidate(subject, snippet)
 
         # Emails: require soft task signals to avoid newsletters/noise.
-        # WhatsApp/voice: allow AI to decide on any Hebrew message.
+        # WhatsApp/voice/SMS: allow AI to decide on any Hebrew message.
         if channel == "email" and not has_signals:
             logger.debug("Skipping email without task signals: %r", subject[:120])
             return None, "skipped_no_task_signal"
@@ -249,6 +249,17 @@ class AIService:
             sender="WhatsApp",
             snippet=text,
             channel="whatsapp",
+        )
+
+    def analyze_sms_transcript(self, transcript: str) -> tuple[dict | None, str]:
+        text = transcript.strip()
+        if not text:
+            return None, "empty"
+        return self.analyze_email_detailed(
+            subject=text[:200],
+            sender="SMS",
+            snippet=text,
+            channel="sms",
         )
 
     def transcribe_audio(self, audio_bytes: bytes, filename: str = "voice.ogg") -> str | None:
@@ -459,6 +470,7 @@ Respond with valid JSON only."""
             "email": "מייל",
             "whatsapp": "הודעת WhatsApp",
             "voice": "הודעה קולית",
+            "sms": "הודעת SMS",
         }.get(channel, channel)
 
         prompt = f"""נתח את ה{channel_label} בעברית וקבע אם יש בה משימה / פעולה שצריך לבצע.
@@ -470,11 +482,12 @@ Respond with valid JSON only."""
 - יש בקשה או הוראה לבצע משהו (לשלם, לבדוק, לשלוח, לאשר, לתאם, להתקשר, לטפל…)
 - יש תזכורת / דדליין / "צריך" / "בבקשה" / "אל תשכח"
 - מופיעה המילה "משימה" או ניסוח משימתי ברור
-- גם ניסוח קצר בוואטסאפ כמו "תשלח את הדוח עד מחר" נחשב משימה
+- גם ניסוח קצר בוואטסאפ/SMS כמו "תשלח את הדוח עד מחר" נחשב משימה
+- הודעות מארגונים (בנק, קופת חולים, ביטוח) עם פעולה נדרשת
 
 מתי is_actionable=false:
 - שיחה חברתית, תודה, אישור בלבד ("תודה", "בסדר", "קיבלתי")
-- פרסום / ניוזלטר / מידע כללי בלי פעולה נדרשת
+- פרסום / ניוזלטר / מידע כללי / OTP / קוד אימות בלי פעולה נוספת
 - שאלה רטורית בלי בקשה לביצוע
 
 החזר JSON בלבד עם המפתחות:

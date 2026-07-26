@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     green_api_id_instance: str = ""
     green_api_token: str = ""
 
+    # SMS / Twilio (optional inbound webhook + optional outbound replies)
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from_number: str = ""
+    sms_webhook_token: str = ""
+
     # Finanda Smart Aggregation — primary Israeli Open Banking
     # https://www.finanda.com/open-banking/  |  docs: https://docs.finanda.com
     finanda_api_url: str = ""
@@ -77,6 +83,14 @@ class Settings(BaseSettings):
     @property
     def green_api_enabled(self) -> bool:
         return bool(self.green_api_id_instance.strip() and self.green_api_token.strip())
+
+    @property
+    def twilio_enabled(self) -> bool:
+        return bool(
+            self.twilio_account_sid.strip()
+            and self.twilio_auth_token.strip()
+            and self.twilio_from_number.strip()
+        )
 
     @property
     def finanda_enabled(self) -> bool:

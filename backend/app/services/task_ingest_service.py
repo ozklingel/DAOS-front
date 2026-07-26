@@ -19,6 +19,7 @@ def create_task_from_analysis(
     source_snippet: str,
     email_message_id: str | None = None,
     whatsapp_message_id: str | None = None,
+    sms_message_id: str | None = None,
     sender_name: str | None = None,
     sender_email: str | None = None,
     source_label: str = "ingest",
@@ -30,6 +31,15 @@ def create_task_from_analysis(
         exists = (
             db.query(Task)
             .filter(Task.user_id == user.id, Task.whatsapp_message_id == whatsapp_message_id)
+            .one_or_none()
+        )
+        if exists:
+            return None
+
+    if sms_message_id:
+        exists = (
+            db.query(Task)
+            .filter(Task.user_id == user.id, Task.sms_message_id == sms_message_id)
             .one_or_none()
         )
         if exists:
@@ -58,6 +68,7 @@ def create_task_from_analysis(
         priority=priority,
     )
 
+    has_external_source = bool(email_message_id or whatsapp_message_id or sms_message_id)
     task = Task(
         id=new_id(),
         user_id=user.id,
@@ -70,10 +81,11 @@ def create_task_from_analysis(
         energy_level=energy_level,
         sender_name=sender_name,
         sender_email=sender_email,
-        email_subject=source_subject[:500] if email_message_id or whatsapp_message_id else None,
-        email_snippet=source_snippet[:2000] if email_message_id or whatsapp_message_id else None,
+        email_subject=source_subject[:500] if has_external_source else None,
+        email_snippet=source_snippet[:2000] if has_external_source else None,
         email_message_id=email_message_id,
         whatsapp_message_id=whatsapp_message_id,
+        sms_message_id=sms_message_id,
         deadline=deadline,
     )
     db.add(task)

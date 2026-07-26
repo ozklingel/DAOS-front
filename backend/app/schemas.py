@@ -21,14 +21,24 @@ class UserOut(APIModel):
     gmail_connected: bool = False
     outlook_connected: bool = False
     whatsapp_phone: str | None = None
+    sms_phone: str | None = None
 
     @computed_field
     @property
     def whatsapp_connected(self) -> bool:
         return bool(self.whatsapp_phone)
 
+    @computed_field
+    @property
+    def sms_connected(self) -> bool:
+        return bool(self.sms_phone)
+
 
 class WhatsAppLinkIn(APIModel):
+    phone: str
+
+
+class SmsLinkIn(APIModel):
     phone: str
 
 
@@ -556,3 +566,77 @@ class OpenAIStatusOut(APIModel):
     model: str | None = None
     checked_at: str | None = None
     error_type: str | None = None
+
+
+class SmsMessageIn(APIModel):
+    message_id: str = Field(alias="messageId")
+    body: str
+    from_address: str | None = Field(default=None, alias="fromAddress")
+    received_at: datetime | None = Field(default=None, alias="receivedAt")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "message_id" not in data and "messageId" in data:
+                data["message_id"] = data["messageId"]
+            if "from_address" not in data and "fromAddress" in data:
+                data["from_address"] = data["fromAddress"]
+            if "received_at" not in data and "receivedAt" in data:
+                data["received_at"] = data["receivedAt"]
+        return data
+
+
+class SmsIngestIn(APIModel):
+    messages: list[SmsMessageIn]
+
+
+class SmsIngestCreatedOut(APIModel):
+    task_id: str
+    message_id: str
+    title: str
+
+
+class SmsIngestSkippedOut(APIModel):
+    message_id: str
+    reason: str
+
+
+class SmsIngestOut(APIModel):
+    processed: int
+    created_count: int
+    created: list[SmsIngestCreatedOut] = Field(default_factory=list)
+    skipped: list[SmsIngestSkippedOut] = Field(default_factory=list)
+
+
+class SmsSimulateIn(APIModel):
+    transcript: str
+
+
+class SmsSimulateOut(APIModel):
+    created: bool
+    task_id: str | None = None
+    message: str
+
+
+class SmsDevInboundIn(APIModel):
+    phone: str
+    text: str
+
+
+class SmsInboundOut(APIModel):
+    id: str
+    from_phone: str
+    message_id: str | None = None
+    body_text: str | None = None
+    task_id: str | None = None
+    bot_reply: str | None = None
+    status: str
+    created_at: datetime | None = None
+
+
+class SmsInboundStatusOut(APIModel):
+    linked_phone: str | None = None
+    has_messages: bool = False
+    latest: SmsInboundOut | None = None
+    recent: list[SmsInboundOut] = Field(default_factory=list)
