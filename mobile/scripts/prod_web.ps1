@@ -23,14 +23,8 @@ if (Test-Path $EnvFile) {
 
 $ApiUrl = "https://daos-api.onrender.com/api/v1"
 $WebPort = 5173
-$GoogleFallback = "812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
-if (-not $GoogleClientId -or $GoogleClientId -match 'your-google|YOUR_') {
-    Write-Host "GOOGLE_CLIENT_ID missing/placeholder — using known Web client" -ForegroundColor DarkYellow
-    $GoogleClientId = $GoogleFallback
-}
 
 Write-Host "Production API: $ApiUrl" -ForegroundColor Cyan
-Write-Host "Google client: $GoogleClientId" -ForegroundColor DarkGray
 Write-Host "After login: Settings -> Integrations -> Link YOUR WhatsApp number" -ForegroundColor Yellow
 Write-Host ""
 

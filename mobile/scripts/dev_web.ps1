@@ -23,12 +23,8 @@ if (Test-Path $EnvFile) {
         }
     }
 }
-
-# Ignore placeholders — Flutter code has the known-good Web client fallback.
-$GoogleFallback = "812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
-if (-not $GoogleClientId -or $GoogleClientId -match 'your-google|YOUR_') {
-    Write-Host "GOOGLE_CLIENT_ID missing/placeholder in backend\.env — using known Web client" -ForegroundColor DarkYellow
-    $GoogleClientId = $GoogleFallback
+if (-not $GoogleClientId) {
+    Write-Error "GOOGLE_CLIENT_ID not found in backend\.env"
 }
 
 # Avoid Windows/Hyper-V port conflicts (3508 etc.)

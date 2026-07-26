@@ -1150,7 +1150,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get loginTerms =>
       'בהמשך השימוש, אתם מסכימים לתנאי השירות\nולמדיניות הפרטיות';
   @override
-  String get splashTagline => '';
+  String get splashTagline => 'משימות מייל מבוססות AI';
 
   @override
   String get dashboard => 'לוח בקרה';
