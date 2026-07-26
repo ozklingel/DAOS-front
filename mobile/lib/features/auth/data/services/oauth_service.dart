@@ -43,10 +43,15 @@ class OAuthService {
   static const String _googleWebClientIdFallback =
       '812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com';
 
-  static String get _googleServerClientId =>
-      _googleServerClientIdEnv.isNotEmpty
-          ? _googleServerClientIdEnv
-          : _googleWebClientIdFallback;
+  static String get _googleServerClientId {
+    final fromEnv = _googleServerClientIdEnv.trim();
+    if (fromEnv.isEmpty ||
+        fromEnv.startsWith('your-') ||
+        fromEnv.contains('YOUR_')) {
+      return _googleWebClientIdFallback;
+    }
+    return fromEnv;
+  }
 
   static const String _outlookClientIdEnv = String.fromEnvironment('OUTLOOK_CLIENT_ID');
   static const String _outlookRedirectUri = String.fromEnvironment(

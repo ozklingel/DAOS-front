@@ -122,9 +122,22 @@ class Settings(BaseSettings):
     @property
     def google_client_id_list(self) -> list[str]:
         ids: list[str] = []
+        fallback = (
+            "812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com"
+        )
         for value in (self.google_client_id, self.google_android_client_id):
-            if value and value not in ids:
-                ids.append(value)
+            v = (value or "").strip()
+            if not v:
+                continue
+            # Ignore placeholders from .env.example
+            if v.startswith("your-") or "YOUR_" in v:
+                continue
+            if v not in ids:
+                ids.append(v)
+        if not ids:
+            ids.append(fallback)
+        elif fallback not in ids:
+            ids.append(fallback)
         return ids
 
 
