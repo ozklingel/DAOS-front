@@ -54,8 +54,8 @@ class AuthState extends ChangeNotifier {
       final tokens = await _ref.read(authRepositoryProvider).signInWithGoogle();
       _user = tokens.user;
       _isAuthenticated = true;
-      await _syncLocaleWithBackend();
       notifyListeners();
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       notifyListeners();
@@ -72,8 +72,8 @@ class AuthState extends ChangeNotifier {
           await _ref.read(authRepositoryProvider).signInWithOutlook();
       _user = tokens.user;
       _isAuthenticated = true;
-      await _syncLocaleWithBackend();
       notifyListeners();
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       notifyListeners();
@@ -140,8 +140,8 @@ class AuthState extends ChangeNotifier {
       final tokens = await _ref.read(authRepositoryProvider).signInDev();
       _user = tokens.user;
       _isAuthenticated = true;
-      await _syncLocaleWithBackend();
       notifyListeners();
+      await _syncLocaleWithBackend();
     } on AppException catch (e) {
       _error = e.message;
       notifyListeners();

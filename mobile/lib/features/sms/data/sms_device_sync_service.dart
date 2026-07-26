@@ -32,6 +32,7 @@ class SmsDeviceSyncService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(StorageKeys.smsSyncEnabled, enabled);
     if (enabled) {
+      await initializeBackground();
       await scheduleBackgroundSync();
     } else {
       await cancelBackgroundSync();

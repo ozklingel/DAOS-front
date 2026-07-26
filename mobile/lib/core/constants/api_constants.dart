@@ -3,7 +3,7 @@ class ApiConstants {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.taskmail.app/api/v1',
+    defaultValue: 'https://daos-api.onrender.com/api/v1',
   );
 
   // Auth
