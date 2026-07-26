@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/locale/locale_provider.dart';
+import 'package:taskmail/features/sms/presentation/sms_sync_provider.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/app_router.dart';
 import 'package:taskmail/services/notification_service.dart';
@@ -22,6 +23,9 @@ class _TaskMailAppState extends ConsumerState<TaskMailApp> {
       try {
         await ref.read(notificationServiceProvider).initialize();
         await ref.read(notificationServiceProvider).registerDeviceToken();
+      } catch (_) {}
+      try {
+        await ref.read(smsDeviceSyncServiceProvider).initializeBackground();
       } catch (_) {}
     });
   }

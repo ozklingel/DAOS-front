@@ -17,7 +17,10 @@ import 'package:taskmail/routes/route_names.dart';
 import 'package:taskmail/shared/widgets/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  // Use read (not watch) so GoRouter is created once. Watching auth would
+  // rebuild a new router on every notifyListeners and reset to splash,
+  // which drops in-flight Google/Outlook sign-in results.
+  final authState = ref.read(authStateProvider);
 
   return GoRouter(
     initialLocation: RouteNames.splash,
@@ -26,6 +29,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthenticated = authState.isAuthenticated;
       final isAuthLoading = authState.isLoading;
       final location = state.matchedLocation;
+
+      // Keep login mounted while an OAuth picker / sign-in is in progress.
+      if (isAuthLoading && location == RouteNames.login) {
+        return null;
+      }
 
       if (location == RouteNames.splash) {
         if (isAuthLoading) return null;

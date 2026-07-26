@@ -6,7 +6,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:taskmail/app.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
 import 'package:taskmail/core/locale/locale_provider.dart';
-import 'package:taskmail/features/sms/presentation/sms_sync_provider.dart';
 import 'package:taskmail/firebase/firebase_bootstrap.dart';
 import 'package:taskmail/services/notification_service.dart';
 
@@ -26,7 +25,6 @@ Future<void> main() async {
 
   final container = ProviderContainer();
   await container.read(localeProvider.notifier).ensureInitialized();
-  await container.read(smsDeviceSyncServiceProvider).initializeBackground();
 
   runApp(
     UncontrolledProviderScope(

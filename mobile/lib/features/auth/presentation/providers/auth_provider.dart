@@ -48,7 +48,6 @@ class AuthState extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     _error = null;
-    _isLoading = true;
     notifyListeners();
 
     try {
@@ -56,18 +55,16 @@ class AuthState extends ChangeNotifier {
       _user = tokens.user;
       _isAuthenticated = true;
       await _syncLocaleWithBackend();
+      notifyListeners();
     } on AppException catch (e) {
       _error = e.message;
-      rethrow;
-    } finally {
-      _isLoading = false;
       notifyListeners();
+      rethrow;
     }
   }
 
   Future<void> signInWithOutlook() async {
     _error = null;
-    _isLoading = true;
     notifyListeners();
 
     try {
@@ -76,12 +73,11 @@ class AuthState extends ChangeNotifier {
       _user = tokens.user;
       _isAuthenticated = true;
       await _syncLocaleWithBackend();
+      notifyListeners();
     } on AppException catch (e) {
       _error = e.message;
-      rethrow;
-    } finally {
-      _isLoading = false;
       notifyListeners();
+      rethrow;
     }
   }
 
@@ -138,7 +134,6 @@ class AuthState extends ChangeNotifier {
 
   Future<void> signInDev() async {
     _error = null;
-    _isLoading = true;
     notifyListeners();
 
     try {
@@ -146,12 +141,11 @@ class AuthState extends ChangeNotifier {
       _user = tokens.user;
       _isAuthenticated = true;
       await _syncLocaleWithBackend();
+      notifyListeners();
     } on AppException catch (e) {
       _error = e.message;
-      rethrow;
-    } finally {
-      _isLoading = false;
       notifyListeners();
+      rethrow;
     }
   }
 
