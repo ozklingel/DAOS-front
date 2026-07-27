@@ -14,6 +14,8 @@ Stable HTTPS URL for WhatsApp webhooks (no ngrok).
 | `GOOGLE_CLIENT_ID` | from `backend/.env` |
 | `GOOGLE_CLIENT_SECRET` | from `backend/.env` |
 | `GOOGLE_ANDROID_CLIENT_ID` | from `backend/.env` |
+| `MICROSOFT_CLIENT_ID` | Azure App Registration **Application (client) ID** |
+| `MICROSOFT_CLIENT_SECRET` | leave empty for public SPA/mobile, or set if confidential |
 | `OPENAI_API_KEY` | from `backend/.env` |
 | `WHATSAPP_VERIFY_TOKEN` | `DAOS` (same as Meta) |
 | `WHATSAPP_ACCESS_TOKEN` | Meta EAA token |
@@ -75,6 +77,20 @@ WhatsApp webhook POST received
 ---
 
 ## Flutter app → production API
+
+### Android phone (SMS works only here)
+
+```powershell
+cd mobile
+.\scripts\prod_android.ps1        # flutter run --release → Render
+# or:
+.\scripts\prod_android.ps1 apk    # build APK to install manually
+```
+
+Then on the phone: **Settings → Integrations → SMS → Allow SMS & sync now**  
+Render logs should show `POST /api/v1/sms/ingest`.
+
+### Web (Chrome) — no SMS inbox
 
 ```powershell
 cd mobile
