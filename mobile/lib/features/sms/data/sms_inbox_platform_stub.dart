@@ -8,4 +8,10 @@ class SmsInboxPlatform {
 
   static Future<List<SmsDeviceMessage>> readRecent({int count = 30}) async =>
       const [];
+
+  static Future<List<SmsDeviceMessage>> readSince(
+    DateTime since, {
+    int scanCount = 500,
+  }) async =>
+      const [];
 }

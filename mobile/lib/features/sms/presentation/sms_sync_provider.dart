@@ -79,7 +79,7 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
       }
       await _service.setEnabled(true);
       await _service.clearSyncedIds();
-      final result = await _service.syncRecent();
+      final result = await _service.syncToday();
       state = state.copyWith(
         isBusy: false,
         enabled: true,
@@ -113,9 +113,10 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
         );
         return;
       }
-      final result = await _service.syncRecent();
+      final result = await _service.syncToday();
       state = state.copyWith(
         isBusy: false,
+        enabled: true,
         hasPermission: true,
         lastResult: result,
       );
@@ -124,21 +125,28 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
     }
   }
 
-  /// Called after login / app start when SMS sync was already enabled.
-  Future<void> syncIfEnabled() async {
+  /// App open / after login: POST today's SMS → server creates tasks.
+  Future<void> syncTodaysInbox() async {
     if (!await _service.isAndroidSupported()) return;
-    if (!await _service.isEnabled()) return;
     try {
-      final result = await _service.syncIfEnabled();
+      final result = await _service.syncTodaysOnLaunch();
       if (result == null) return;
       state = state.copyWith(
         enabled: true,
-        hasPermission: await _service.hasPermission(),
+        hasPermission: true,
         lastResult: result,
       );
+      debugPrint(
+        'SMS launch sync: processed=${result.processed} created=${result.createdCount}',
+      );
     } catch (e) {
-      debugPrint('SMS background sync failed: $e');
+      debugPrint('SMS launch sync failed: $e');
     }
+  }
+
+  /// Called after login / app start when SMS sync was already enabled.
+  Future<void> syncIfEnabled() async {
+    await syncTodaysInbox();
   }
 }
 

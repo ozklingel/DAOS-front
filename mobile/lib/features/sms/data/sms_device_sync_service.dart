@@ -19,6 +19,9 @@ class SmsDeviceSyncService {
   final SmsRemoteDataSource _remote;
   final SmsDeviceReader _reader;
 
+  /// Backend accepts at most this many messages per /sms/ingest call.
+  static const int ingestBatchSize = 40;
+
   Future<bool> isAndroidSupported() => _reader.isSupported;
 
   Future<bool> hasPermission() => _reader.hasPermission();
@@ -67,18 +70,40 @@ class SmsDeviceSyncService {
     await prefs.remove(StorageKeys.smsSyncedIds);
   }
 
+  /// App open / login: send today's inbox SMS when permission is already granted.
+  Future<SmsIngestResult?> syncTodaysOnLaunch() async {
+    if (!await isAndroidSupported()) return null;
+    if (!await hasPermission()) return null;
+    // Keep background sync aligned once the user has granted SMS access.
+    if (!await isEnabled()) {
+      await setEnabled(true);
+    }
+    return syncToday();
+  }
+
   /// Background / startup sync when user already enabled SMS.
-  Future<SmsIngestResult?> syncIfEnabled({int count = 30}) async {
+  Future<SmsIngestResult?> syncIfEnabled() async {
     if (!await isAndroidSupported()) return null;
     if (!await isEnabled()) return null;
     if (!await hasPermission()) return null;
-    return syncRecent(count: count);
+    return syncToday();
+  }
+
+  /// All SMS received since local midnight → server → tasks.
+  Future<SmsIngestResult> syncToday() async {
+    final messages = await _reader.readToday();
+    debugPrint('SMS: read ${messages.length} messages from today');
+    return _ingestMessages(messages);
   }
 
   /// Foreground / UI-triggered sync of recent inbox SMS.
   Future<SmsIngestResult> syncRecent({int count = 30}) async {
     final messages = await _reader.readRecent(count: count);
     debugPrint('SMS: read ${messages.length} inbox messages');
+    return _ingestMessages(messages);
+  }
+
+  Future<SmsIngestResult> _ingestMessages(List<SmsDeviceMessage> messages) async {
     final prefs = await SharedPreferences.getInstance();
     final fresh = await filterUnsyncedSms(prefs, messages);
     debugPrint('SMS: ${fresh.length} new messages to send to server');
@@ -89,16 +114,33 @@ class SmsDeviceSyncService {
         created: const [],
       );
     }
-    final result = await _remote.ingest(fresh);
-    debugPrint(
-      'SMS: server processed=${result.processed} created=${result.createdCount}',
-    );
-    await markSyncedSms(prefs, fresh.map((m) => m.messageId));
+
+    var processed = 0;
+    var createdCount = 0;
+    final created = <SmsIngestCreatedItem>[];
+
+    for (var i = 0; i < fresh.length; i += ingestBatchSize) {
+      final end = (i + ingestBatchSize < fresh.length)
+          ? i + ingestBatchSize
+          : fresh.length;
+      final chunk = fresh.sublist(i, end);
+      final result = await _remote.ingest(chunk);
+      processed += result.processed;
+      createdCount += result.createdCount;
+      created.addAll(result.created);
+      await markSyncedSms(prefs, chunk.map((m) => m.messageId));
+    }
+
+    debugPrint('SMS: server processed=$processed created=$createdCount');
     await prefs.setString(
       StorageKeys.smsLastSyncAt,
       DateTime.now().toUtc().toIso8601String(),
     );
-    return result;
+    return SmsIngestResult(
+      processed: processed,
+      createdCount: createdCount,
+      created: created,
+    );
   }
 }
 

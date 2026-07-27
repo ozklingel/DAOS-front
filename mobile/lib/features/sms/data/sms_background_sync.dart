@@ -25,7 +25,7 @@ Future<SmsIngestResult?> syncSmsFromBackground() async {
 
   final reader = SmsDeviceReader();
   if (!await reader.hasPermission()) return null;
-  final messages = await reader.readRecent(count: 25);
+  final messages = await reader.readToday();
   final fresh = await filterUnsyncedSms(prefs, messages);
   if (fresh.isEmpty) return null;
 
@@ -42,13 +42,30 @@ Future<SmsIngestResult?> syncSmsFromBackground() async {
     ),
   );
   final remote = SmsRemoteDataSource(ApiClient(dio));
-  final result = await remote.ingest(fresh);
-  await markSyncedSms(prefs, fresh.map((m) => m.messageId));
+
+  var processed = 0;
+  var createdCount = 0;
+  final created = <SmsIngestCreatedItem>[];
+  const batchSize = 40;
+  for (var i = 0; i < fresh.length; i += batchSize) {
+    final end = (i + batchSize < fresh.length) ? i + batchSize : fresh.length;
+    final chunk = fresh.sublist(i, end);
+    final result = await remote.ingest(chunk);
+    processed += result.processed;
+    createdCount += result.createdCount;
+    created.addAll(result.created);
+    await markSyncedSms(prefs, chunk.map((m) => m.messageId));
+  }
+
   await prefs.setString(
     StorageKeys.smsLastSyncAt,
     DateTime.now().toUtc().toIso8601String(),
   );
-  return result;
+  return SmsIngestResult(
+    processed: processed,
+    createdCount: createdCount,
+    created: created,
+  );
 }
 
 Future<List<SmsDeviceMessage>> filterUnsyncedSms(

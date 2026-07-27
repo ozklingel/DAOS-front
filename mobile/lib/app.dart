@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,15 +25,24 @@ class _DaosAppState extends ConsumerState<DaosApp> {
         await ref.read(notificationServiceProvider).initialize();
         await ref.read(notificationServiceProvider).registerDeviceToken();
       } catch (_) {}
-      await ref.read(smsSyncProvider.notifier).syncIfEnabled();
+      await _syncTodaysSmsIfReady();
     });
+  }
+
+  Future<void> _syncTodaysSmsIfReady() async {
+    final auth = ref.read(authStateProvider);
+    if (!auth.isAuthenticated || auth.isLoading) return;
+    await ref.read(smsSyncProvider.notifier).syncTodaysInbox();
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(authStateProvider, (prev, next) {
-      if (prev?.isAuthenticated != true && next.isAuthenticated && !next.isLoading) {
-        ref.read(smsSyncProvider.notifier).syncIfEnabled();
+      final becameReady = next.isAuthenticated &&
+          !next.isLoading &&
+          (prev?.isAuthenticated != true || prev?.isLoading == true);
+      if (becameReady) {
+        ref.read(smsSyncProvider.notifier).syncTodaysInbox();
       }
     });
     final router = ref.watch(routerProvider);

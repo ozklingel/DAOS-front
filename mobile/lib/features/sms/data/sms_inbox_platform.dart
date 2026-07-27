@@ -20,16 +20,30 @@ class SmsInboxPlatform {
 
     return messages
         .where((m) => (m.body ?? '').trim().isNotEmpty)
-        .map((m) {
-          final id = m.id?.toString() ??
-              '${m.address ?? ''}_${m.date?.millisecondsSinceEpoch ?? 0}_${(m.body ?? '').hashCode}';
-          return SmsDeviceMessage(
-            messageId: 'android-$id',
-            body: m.body!.trim(),
-            fromAddress: m.address,
-            receivedAt: m.date,
-          );
-        })
+        .map(_toDeviceMessage)
         .toList();
+  }
+
+  /// Inbox messages with [receivedAt] on/after [since] (local device time).
+  /// Scans a large recent window because flutter_sms_inbox has no date query.
+  static Future<List<SmsDeviceMessage>> readSince(
+    DateTime since, {
+    int scanCount = 500,
+  }) async {
+    final all = await readRecent(count: scanCount);
+    return all
+        .where((m) => m.receivedAt != null && !m.receivedAt!.isBefore(since))
+        .toList();
+  }
+
+  static SmsDeviceMessage _toDeviceMessage(SmsMessage m) {
+    final id = m.id?.toString() ??
+        '${m.address ?? ''}_${m.date?.millisecondsSinceEpoch ?? 0}_${(m.body ?? '').hashCode}';
+    return SmsDeviceMessage(
+      messageId: 'android-$id',
+      body: m.body!.trim(),
+      fromAddress: m.address,
+      receivedAt: m.date,
+    );
   }
 }

@@ -258,8 +258,8 @@ class SmsService:
         """JWT user uploads recent SMS from their device; create tasks where AI detects them."""
         created: list[dict] = []
         skipped: list[dict] = []
-        # Cap batch size to keep AI cost / latency bounded
-        batch = list(messages)[:40]
+        # Cap batch size to keep AI cost / latency bounded (mobile batches if larger)
+        batch = list(messages)[:100]
 
         for raw in batch:
             message_id = str(raw.get("message_id") or "").strip()

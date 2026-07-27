@@ -25,4 +25,13 @@ class SmsDeviceReader {
     if (!await hasPermission()) return const [];
     return SmsInboxPlatform.readRecent(count: count);
   }
+
+  /// All inbox SMS received since local midnight (today).
+  Future<List<SmsDeviceMessage>> readToday() async {
+    if (!await isSupported) return const [];
+    if (!await hasPermission()) return const [];
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    return SmsInboxPlatform.readSince(startOfDay);
+  }
 }
