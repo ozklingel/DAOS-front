@@ -56,6 +56,24 @@ class OAuthService {
 
   static String get outlookClientId => _outlookClientIdEnv;
 
+  static bool get isOutlookConfigured {
+    final id = outlookClientId.trim();
+    if (id.isEmpty) return false;
+    const placeholders = {
+      'YOUR_OUTLOOK_CLIENT_ID',
+      'your-azure-app-client-id',
+    };
+    return !placeholders.contains(id);
+  }
+
+  void _assertOutlookConfigured() {
+    if (isOutlookConfigured) return;
+    throw const AuthFailureException(
+      'Outlook is not configured. Set MICROSOFT_CLIENT_ID in backend/.env to a real '
+      'Azure App Registration client ID (personal Microsoft accounts enabled). See OAUTH_SETUP.md.',
+    );
+  }
+
   /// Includes GitHub Pages base path (e.g. /DAOS-front/), not just origin.
   static String webOutlookRedirectUri() {
     final origin = webOrigin();
@@ -238,13 +256,7 @@ class OAuthService {
     if (kIsWeb) {
       return _signInWithOutlookWeb(intent: intent);
     }
-
-    if (outlookClientId.isEmpty || outlookClientId == 'YOUR_OUTLOOK_CLIENT_ID') {
-      throw const AuthFailureException(
-        'OUTLOOK_CLIENT_ID is missing. Set MICROSOFT_CLIENT_ID in backend/.env '
-        'and pass --dart-define=OUTLOOK_CLIENT_ID=... (see OAUTH_SETUP.md).',
-      );
-    }
+    _assertOutlookConfigured();
 
     try {
       final result = await _appAuth.authorizeAndExchangeCode(

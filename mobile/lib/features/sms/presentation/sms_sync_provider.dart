@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/network/api_client_provider.dart';
 import 'package:taskmail/features/sms/data/sms_device_sync_service.dart';
@@ -77,6 +78,7 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
         return;
       }
       await _service.setEnabled(true);
+      await _service.clearSyncedIds();
       final result = await _service.syncRecent();
       state = state.copyWith(
         isBusy: false,
@@ -119,6 +121,23 @@ class SmsSyncNotifier extends StateNotifier<SmsSyncUiState> {
       );
     } catch (e) {
       state = state.copyWith(isBusy: false, error: e.toString());
+    }
+  }
+
+  /// Called after login / app start when SMS sync was already enabled.
+  Future<void> syncIfEnabled() async {
+    if (!await _service.isAndroidSupported()) return;
+    if (!await _service.isEnabled()) return;
+    try {
+      final result = await _service.syncIfEnabled();
+      if (result == null) return;
+      state = state.copyWith(
+        enabled: true,
+        hasPermission: await _service.hasPermission(),
+        lastResult: result,
+      );
+    } catch (e) {
+      debugPrint('SMS background sync failed: $e');
     }
   }
 }

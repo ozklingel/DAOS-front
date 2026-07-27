@@ -267,8 +267,10 @@ abstract class AppLocalizations {
   String get smsDisableSync;
   String get smsSyncNow;
   String get smsPermissionDenied;
-  String smsSyncResult(int created);
+  String smsIngestResult(int sent, int created);
   String get smsSyncNoTasks;
+  String get smsNoInboxMessages;
+  String get outlookNotConfigured;
 
   String assetAlertsTitle(int count);
   String get assetReminderDetails;
@@ -810,10 +812,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get smsPermissionDenied => 'SMS permission is required to read inbox messages.';
   @override
-  String smsSyncResult(int created) =>
-      created == 1 ? 'Created 1 task from SMS' : 'Created $created tasks from SMS';
+  String smsIngestResult(int sent, int created) =>
+      'Sent $sent SMS to server — created $created task${created == 1 ? '' : 's'}.';
   @override
-  String get smsSyncNoTasks => 'No new tasks found in recent SMS';
+  String get smsSyncNoTasks => 'SMS sent to server — no new tasks detected.';
+  @override
+  String get smsNoInboxMessages =>
+      'No SMS found in inbox (or permission not granted).';
+  @override
+  String get outlookNotConfigured =>
+      'Outlook is not configured. Set a real MICROSOFT_CLIENT_ID in backend/.env '
+      '(Azure App Registration with personal Microsoft accounts). See OAUTH_SETUP.md.';
   @override
   String assetAlertsTitle(int count) => 'Vehicle & insurance alerts ($count)';
   @override
@@ -985,6 +994,11 @@ class AppLocalizationsEn extends AppLocalizations {
     final msg = error is AppException ? error.message : error.toString();
     if (msg.contains('PHONE_ALREADY_LINKED') || msg.contains('already linked')) {
       return whatsappPhoneAlreadyLinked;
+    }
+    if (msg.contains('Outlook is not configured') ||
+        msg.contains('Microsoft OAuth is not configured') ||
+        msg.contains('unauthorized_client')) {
+      return outlookNotConfigured;
     }
     if (error is NetworkException) return networkError;
     if (error is UnauthorizedException) return sessionExpired;
@@ -1481,10 +1495,17 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get smsPermissionDenied => 'נדרשת הרשאת SMS לקריאת הודעות נכנסות.';
   @override
-  String smsSyncResult(int created) =>
-      created == 1 ? 'נוצרה משימה אחת מ-SMS' : 'נוצרו $created משימות מ-SMS';
+  String smsIngestResult(int sent, int created) =>
+      'נשלחו $sent SMS לשרת — נוצרו $created משימות.';
   @override
-  String get smsSyncNoTasks => 'לא נמצאו משימות חדשות ב-SMS האחרונים';
+  String get smsSyncNoTasks => 'SMS נשלחו לשרת — לא זוהו משימות חדשות.';
+  @override
+  String get smsNoInboxMessages =>
+      'לא נמצאו SMS בתיבה (או שההרשאה לא ניתנה).';
+  @override
+  String get outlookNotConfigured =>
+      'Outlook לא מוגדר. הגדר MICROSOFT_CLIENT_ID אמיתי ב-backend/.env '
+      '(רישום Azure עם חשבונות Microsoft אישיים). ראה OAUTH_SETUP.md.';
   @override
   String assetAlertsTitle(int count) => 'התראות רכב וביטוח ($count)';
   @override
@@ -1656,6 +1677,11 @@ class AppLocalizationsHe extends AppLocalizations {
     final msg = error is AppException ? error.message : error.toString();
     if (msg.contains('PHONE_ALREADY_LINKED') || msg.contains('already linked')) {
       return whatsappPhoneAlreadyLinked;
+    }
+    if (msg.contains('Outlook is not configured') ||
+        msg.contains('Microsoft OAuth is not configured') ||
+        msg.contains('unauthorized_client')) {
+      return outlookNotConfigured;
     }
     if (error is NetworkException) return networkError;
     if (error is UnauthorizedException) return sessionExpired;

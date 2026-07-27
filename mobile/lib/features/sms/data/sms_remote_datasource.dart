@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:taskmail/core/constants/api_constants.dart';
 import 'package:taskmail/core/network/api_client.dart';
 import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
@@ -8,6 +9,7 @@ class SmsRemoteDataSource {
   final ApiClient _client;
 
   Future<SmsIngestResult> ingest(List<SmsDeviceMessage> messages) async {
+    debugPrint('SMS: POST /sms/ingest with ${messages.length} messages');
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.smsIngest,
       data: {

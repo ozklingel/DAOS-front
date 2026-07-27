@@ -113,10 +113,21 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
       );
       return;
     }
-    final created = sms.lastResult?.createdCount ?? 0;
+    final result = sms.lastResult;
+    if (result == null) return;
+    final sent = result.processed;
+    final created = result.createdCount;
+    if (sent == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.smsNoInboxMessages)),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(created > 0 ? l.smsSyncResult(created) : l.smsSyncNoTasks),
+        content: Text(
+          created > 0 ? l.smsIngestResult(sent, created) : l.smsSyncNoTasks,
+        ),
       ),
     );
   }
@@ -157,22 +168,20 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               onDisconnect: () => ref.read(authStateProvider.notifier).disconnectWhatsApp(),
             ),
             const SizedBox(height: 12),
-            // SMS inbox sync is Android-only (device reads inbox → backend → tasks).
-            if (!kIsWeb)
-              _SmsCard(
-                l: l,
-                smsState: smsState,
-                onEnable: () async {
-                  await ref.read(smsSyncProvider.notifier).enableAndSync();
-                  if (mounted) _showSmsResult(l);
-                },
-                onDisable: () => ref.read(smsSyncProvider.notifier).disable(),
-                onSyncNow: () async {
-                  await ref.read(smsSyncProvider.notifier).syncNow();
-                  if (mounted) _showSmsResult(l);
-                },
-              ),
-            if (!kIsWeb) const SizedBox(height: 12),
+            _SmsCard(
+              l: l,
+              smsState: smsState,
+              onEnable: () async {
+                await ref.read(smsSyncProvider.notifier).enableAndSync();
+                if (mounted) _showSmsResult(l);
+              },
+              onDisable: () => ref.read(smsSyncProvider.notifier).disable(),
+              onSyncNow: () async {
+                await ref.read(smsSyncProvider.notifier).syncNow();
+                if (mounted) _showSmsResult(l);
+              },
+            ),
+            const SizedBox(height: 12),
             _ConnectionCard(
               title: l.gmail,
               connected: gmailConnected,

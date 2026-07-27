@@ -62,15 +62,37 @@ class SmsDeviceSyncService {
     await SmsBackgroundScheduler.cancel();
   }
 
+  Future<void> clearSyncedIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(StorageKeys.smsSyncedIds);
+  }
+
+  /// Background / startup sync when user already enabled SMS.
+  Future<SmsIngestResult?> syncIfEnabled({int count = 30}) async {
+    if (!await isAndroidSupported()) return null;
+    if (!await isEnabled()) return null;
+    if (!await hasPermission()) return null;
+    return syncRecent(count: count);
+  }
+
   /// Foreground / UI-triggered sync of recent inbox SMS.
   Future<SmsIngestResult> syncRecent({int count = 30}) async {
     final messages = await _reader.readRecent(count: count);
+    debugPrint('SMS: read ${messages.length} inbox messages');
     final prefs = await SharedPreferences.getInstance();
     final fresh = await filterUnsyncedSms(prefs, messages);
+    debugPrint('SMS: ${fresh.length} new messages to send to server');
     if (fresh.isEmpty) {
-      return const SmsIngestResult(processed: 0, createdCount: 0, created: []);
+      return SmsIngestResult(
+        processed: messages.length,
+        createdCount: 0,
+        created: const [],
+      );
     }
     final result = await _remote.ingest(fresh);
+    debugPrint(
+      'SMS: server processed=${result.processed} created=${result.createdCount}',
+    );
     await markSyncedSms(prefs, fresh.map((m) => m.messageId));
     await prefs.setString(
       StorageKeys.smsLastSyncAt,

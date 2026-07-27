@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskmail/core/locale/locale_provider.dart';
+import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
+import 'package:taskmail/features/sms/presentation/sms_sync_provider.dart';
 import 'package:taskmail/l10n/app_localizations.dart';
 import 'package:taskmail/routes/app_router.dart';
 import 'package:taskmail/services/notification_service.dart';
@@ -23,11 +26,17 @@ class _TaskMailAppState extends ConsumerState<TaskMailApp> {
         await ref.read(notificationServiceProvider).initialize();
         await ref.read(notificationServiceProvider).registerDeviceToken();
       } catch (_) {}
+      await ref.read(smsSyncProvider.notifier).syncIfEnabled();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authStateProvider, (prev, next) {
+      if (prev?.isAuthenticated != true && next.isAuthenticated && !next.isLoading) {
+        ref.read(smsSyncProvider.notifier).syncIfEnabled();
+      }
+    });
     final router = ref.watch(routerProvider);
     final locale = ref.watch(localeProvider);
 
