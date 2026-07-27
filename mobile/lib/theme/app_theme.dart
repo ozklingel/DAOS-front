@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:taskmail/theme/app_colors.dart';
-import 'package:taskmail/theme/app_typography.dart';
+import 'package:daos/theme/app_colors.dart';
+import 'package:daos/theme/app_typography.dart';
 
 class AppTheme {
   AppTheme._();

@@ -1,4 +1,4 @@
-# Firebase Setup for TaskMail
+# Firebase Setup for DAOS
 
 Firebase powers **push notifications (FCM)** and **analytics** in the mobile app. The app works without Firebase for local development, but you need it for production push notifications.
 
@@ -14,7 +14,7 @@ To enable Firebase fully, follow the steps below.
 
 1. Open [Firebase Console](https://console.firebase.google.com/)
 2. **Add project** (or reuse the same Google Cloud project you used for Gmail OAuth)
-3. Name it e.g. `TaskMail`
+3. Name it e.g. `DAOS`
 
 ---
 

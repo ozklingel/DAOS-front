@@ -84,7 +84,7 @@ for some accounts — but users can still sign in and use the rest of the app.
 ### 1. Azure App Registration
 
 1. Open [Azure Portal](https://portal.azure.com/) → Microsoft Entra ID → App registrations → New registration
-2. Name: `TaskMail`
+2. Name: `DAOS`
 3. Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
 4. Redirect URIs:
    - **Single-page application**: `http://127.0.0.1:5173/oauth/outlook`

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/di/providers.dart';
-import 'package:taskmail/features/daily_brief/domain/entities/daily_brief.dart';
+import 'package:daos/core/di/providers.dart';
+import 'package:daos/features/daily_brief/domain/entities/daily_brief.dart';
 
 final dailyBriefProvider =
     AsyncNotifierProvider<DailyBriefNotifier, DailyBrief>(() {

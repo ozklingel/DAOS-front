@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/models/task_enums.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class PriorityBadge extends StatelessWidget {
   const PriorityBadge({super.key, required this.priority});

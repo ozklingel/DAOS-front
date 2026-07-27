@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://taskmail:taskmail@db:5432/taskmail
+      DATABASE_URL: postgresql://daos:daos@db:5432/daos
       JWT_SECRET_KEY: dev-secret-change-in-production
       DEBUG: "true"
     depends_on:
@@ -18,13 +18,13 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: taskmail
-      POSTGRES_PASSWORD: taskmail
-      POSTGRES_DB: taskmail
+      POSTGRES_USER: daos
+      POSTGRES_PASSWORD: daos
+      POSTGRES_DB: daos
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U taskmail"]
+      test: ["CMD-SHELL", "pg_isready -U daos"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/constants/storage_keys.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/sms/data/sms_device_reader.dart';
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
-import 'package:taskmail/features/sms/data/sms_remote_datasource.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/constants/storage_keys.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/sms/data/sms_device_reader.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/features/sms/data/sms_remote_datasource.dart';
 
 /// Isolate-safe background sync (no Riverpod / UI deps).
 Future<SmsIngestResult?> syncSmsFromBackground() async {

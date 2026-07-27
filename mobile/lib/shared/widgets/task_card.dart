@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/core/utils/date_formatter.dart';
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/widgets/priority_badge.dart';
-import 'package:taskmail/shared/widgets/status_badge.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
-import 'package:taskmail/shared/widgets/task_meta_chips.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/core/utils/date_formatter.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/widgets/priority_badge.dart';
+import 'package:daos/shared/widgets/status_badge.dart';
+import 'package:daos/shared/models/task_enums.dart';
+import 'package:daos/shared/widgets/task_meta_chips.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({

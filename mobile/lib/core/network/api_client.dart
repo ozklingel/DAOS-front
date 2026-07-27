@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
+import 'package:daos/core/errors/app_exception.dart';
 
 class ApiClient {
   ApiClient(this._dio);

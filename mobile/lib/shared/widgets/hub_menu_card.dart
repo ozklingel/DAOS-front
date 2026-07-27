@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/features/dashboard/presentation/widgets/glass_card.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class HubMenuCard extends StatelessWidget {
   const HubMenuCard({

@@ -30,7 +30,7 @@ if (-not $GoogleClientId) {
 # Avoid Windows/Hyper-V port conflicts (3508 etc.)
 $WebPort = 5173
 
-Write-Host "Starting TaskMail in Chrome on http://127.0.0.1:$WebPort ..." -ForegroundColor Cyan
+Write-Host "Starting DAOS in Chrome on http://127.0.0.1:$WebPort ..." -ForegroundColor Cyan
 Write-Host "Google client: $GoogleClientId" -ForegroundColor DarkGray
 if ($OutlookClientId -and $OutlookClientId -ne "your-azure-app-client-id") {
     Write-Host "Outlook client: $OutlookClientId" -ForegroundColor DarkGray

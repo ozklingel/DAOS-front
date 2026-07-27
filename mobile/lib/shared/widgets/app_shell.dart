@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/routes/route_names.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/routes/route_names.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.child});

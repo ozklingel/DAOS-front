@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/di/providers.dart';
-import 'package:taskmail/features/settings/domain/entities/app_settings.dart';
+import 'package:daos/core/di/providers.dart';
+import 'package:daos/features/settings/domain/entities/app_settings.dart';
 
 final settingsProvider =
     AsyncNotifierProvider<SettingsNotifier, AppSettings>(() {

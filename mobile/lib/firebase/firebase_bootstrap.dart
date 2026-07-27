@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:taskmail/firebase_options.dart';
+import 'package:daos/firebase_options.dart';
 
 /// Set to true after [initFirebase] succeeds.
 bool isFirebaseReady = false;

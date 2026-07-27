@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/routes/route_names.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/routes/route_names.dart';
+import 'package:daos/theme/app_colors.dart';
 
 /// Handles Microsoft redirect: /oauth/outlook?code=...&state=...
 class OutlookOAuthCallbackScreen extends ConsumerStatefulWidget {

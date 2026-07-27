@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 part 'task.freezed.dart';
 

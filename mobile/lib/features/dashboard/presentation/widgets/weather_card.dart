@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/features/dashboard/presentation/widgets/glass_card.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/theme/app_colors.dart';
 
 /// Current weather card (Open-Meteo, no API key). Default: Tel Aviv.
 class WeatherCard extends StatefulWidget {

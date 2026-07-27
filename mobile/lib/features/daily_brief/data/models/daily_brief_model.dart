@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/daily_brief/domain/entities/daily_brief.dart';
-import 'package:taskmail/features/tasks/data/models/task_model.dart';
+import 'package:daos/features/daily_brief/domain/entities/daily_brief.dart';
+import 'package:daos/features/tasks/data/models/task_model.dart';
 
 part 'daily_brief_model.freezed.dart';
 

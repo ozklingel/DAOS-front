@@ -1,4 +1,4 @@
-# TaskMail Mobile
+# DAOS Mobile
 
 Production-ready Flutter application for an AI-powered email task reminder system.
 

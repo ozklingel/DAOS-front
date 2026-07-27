@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/hub/data/models/hub_models.dart';
-import 'package:taskmail/features/info/data/services/document_capture_service.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/hub/data/models/hub_models.dart';
+import 'package:daos/features/info/data/services/document_capture_service.dart';
 
 class HubRemoteDataSource {
   HubRemoteDataSource(this._client);

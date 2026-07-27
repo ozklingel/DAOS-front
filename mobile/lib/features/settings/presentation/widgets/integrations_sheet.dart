@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/features/settings/presentation/providers/settings_provider.dart';
-import 'package:taskmail/features/sms/presentation/sms_sync_provider.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/routes/route_names.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
+import 'package:daos/features/sms/presentation/sms_sync_provider.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/routes/route_names.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class IntegrationsSheet extends ConsumerStatefulWidget {
   const IntegrationsSheet({super.key});
@@ -23,7 +23,7 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
 
   bool get _isDevAccount {
     final email = ref.read(authStateProvider).user?.email ?? '';
-    return email.endsWith('@taskmail.local');
+    return email.endsWith('@daos.local') || email.endsWith('@taskmail.local');
   }
 
   Future<void> _connectGmail(AppLocalizations l) async {

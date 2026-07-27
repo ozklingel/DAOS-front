@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
+import 'package:daos/l10n/app_localizations.dart';
 
 class DateFormatter {
   DateFormatter._();

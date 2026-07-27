@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:taskmail/core/constants/storage_keys.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/sms/data/sms_background_scheduler_stub.dart'
-    if (dart.library.io) 'package:taskmail/features/sms/data/sms_background_scheduler_io.dart';
-import 'package:taskmail/features/sms/data/sms_background_sync.dart';
-import 'package:taskmail/features/sms/data/sms_device_reader.dart';
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
-import 'package:taskmail/features/sms/data/sms_remote_datasource.dart';
+import 'package:daos/core/constants/storage_keys.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/sms/data/sms_background_scheduler_stub.dart'
+    if (dart.library.io) 'package:daos/features/sms/data/sms_background_scheduler_io.dart';
+import 'package:daos/features/sms/data/sms_background_sync.dart';
+import 'package:daos/features/sms/data/sms_device_reader.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/features/sms/data/sms_remote_datasource.dart';
 
 class SmsDeviceSyncService {
   SmsDeviceSyncService({

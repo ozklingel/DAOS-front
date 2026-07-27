@@ -1,5 +1,5 @@
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 abstract class TasksRepository {
   Future<List<Task>> getTasks({

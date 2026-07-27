@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:taskmail/features/dashboard/domain/entities/dashboard_stats.dart';
-import 'package:taskmail/features/dashboard/presentation/widgets/glass_card.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:daos/features/dashboard/presentation/widgets/glass_card.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class EnergyMeterCard extends StatelessWidget {
   const EnergyMeterCard({super.key, required this.meter});

@@ -1,9 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:taskmail/core/constants/storage_keys.dart';
+import 'package:daos/core/constants/storage_keys.dart';
 
 final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
-  return SecureStorageService(const FlutterSecureStorage());
+  return SecureStorageService(
+    const FlutterSecureStorage(
+      // Without this, Android can hang forever on first read → black splash,
+      // no network calls.
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    ),
+  );
 });
 
 class SecureStorageService {

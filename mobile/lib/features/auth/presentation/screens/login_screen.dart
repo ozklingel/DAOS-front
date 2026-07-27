@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/locale/locale_provider.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/services/analytics_service.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/locale/locale_provider.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/services/analytics_service.dart';
 
 /// Fresh mobile portrait login (v2). Plain column list — large tappable buttons.
 class LoginScreen extends ConsumerStatefulWidget {

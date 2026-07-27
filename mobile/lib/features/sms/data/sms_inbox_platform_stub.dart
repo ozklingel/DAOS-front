@@ -1,4 +1,4 @@
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
 
 /// Web / non-IO stub — SMS inbox is unavailable.
 class SmsInboxPlatform {

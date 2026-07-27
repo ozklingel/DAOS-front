@@ -3,11 +3,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/features/hub/data/models/hub_models.dart';
-import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/widgets/hub_menu_card.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/features/hub/data/models/hub_models.dart';
+import 'package:daos/features/hub/presentation/providers/hub_providers.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/widgets/hub_menu_card.dart';
+import 'package:daos/theme/app_colors.dart';
 
 Future<void> showInfoCategorySheet(
   BuildContext context,

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:taskmail/features/sms/data/sms_background_sync.dart';
+import 'package:daos/features/sms/data/sms_background_sync.dart';
 import 'package:workmanager/workmanager.dart';
 
 const String _kSmsSyncTaskName = 'daosSmsSyncTask';

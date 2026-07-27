@@ -1,4 +1,4 @@
-# TaskMail — Firebase setup helper (Windows)
+# DAOS — Firebase setup helper (Windows)
 # Prerequisites: Firebase Android app with package com.taskmail.taskmail
 # and google-services.json downloaded to android/app/
 

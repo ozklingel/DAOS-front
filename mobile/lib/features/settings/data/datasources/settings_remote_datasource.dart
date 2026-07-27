@@ -1,6 +1,6 @@
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/settings/data/models/settings_model.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/settings/data/models/settings_model.dart';
 
 class SettingsRemoteDataSource {
   SettingsRemoteDataSource(this._client);

@@ -2,22 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/locale/locale_provider.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/features/sms/presentation/sms_sync_provider.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/routes/app_router.dart';
-import 'package:taskmail/services/notification_service.dart';
-import 'package:taskmail/theme/app_theme.dart';
+import 'package:daos/core/locale/locale_provider.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/sms/presentation/sms_sync_provider.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/routes/app_router.dart';
+import 'package:daos/services/notification_service.dart';
+import 'package:daos/theme/app_theme.dart';
 
-class TaskMailApp extends ConsumerStatefulWidget {
-  const TaskMailApp({super.key});
+class DaosApp extends ConsumerStatefulWidget {
+  const DaosApp({super.key});
 
   @override
-  ConsumerState<TaskMailApp> createState() => _TaskMailAppState();
+  ConsumerState<DaosApp> createState() => _DaosAppState();
 }
 
-class _TaskMailAppState extends ConsumerState<TaskMailApp> {
+class _DaosAppState extends ConsumerState<DaosApp> {
   @override
   void initState() {
     super.initState();
@@ -41,7 +41,7 @@ class _TaskMailAppState extends ConsumerState<TaskMailApp> {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'TaskMail',
+      title: 'DAOS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       locale: locale,

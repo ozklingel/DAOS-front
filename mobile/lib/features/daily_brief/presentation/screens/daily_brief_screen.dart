@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/utils/date_formatter.dart';
-import 'package:taskmail/features/daily_brief/presentation/providers/daily_brief_provider.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
-import 'package:taskmail/shared/widgets/task_card.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/core/utils/date_formatter.dart';
+import 'package:daos/features/daily_brief/presentation/providers/daily_brief_provider.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/widgets/loading_error_widgets.dart';
+import 'package:daos/shared/widgets/task_card.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class DailyBriefScreen extends ConsumerWidget {
   const DailyBriefScreen({super.key});

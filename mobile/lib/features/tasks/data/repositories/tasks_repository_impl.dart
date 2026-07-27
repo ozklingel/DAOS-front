@@ -1,7 +1,7 @@
-import 'package:taskmail/features/tasks/data/datasources/tasks_remote_datasource.dart';
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
-import 'package:taskmail/features/tasks/domain/repositories/tasks_repository.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/features/tasks/data/datasources/tasks_remote_datasource.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
+import 'package:daos/features/tasks/domain/repositories/tasks_repository.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 class TasksRepositoryImpl implements TasksRepository {
   TasksRepositoryImpl(this._remote);

@@ -1,6 +1,6 @@
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/daily_brief/data/models/daily_brief_model.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/daily_brief/data/models/daily_brief_model.dart';
 
 class DailyBriefRemoteDataSource {
   DailyBriefRemoteDataSource(this._client);

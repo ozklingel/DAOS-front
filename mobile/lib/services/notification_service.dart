@@ -2,9 +2,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/network/api_client_provider.dart';
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/firebase/firebase_bootstrap.dart';
+import 'package:daos/core/network/api_client_provider.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/firebase/firebase_bootstrap.dart';
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(ref);
@@ -19,8 +19,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'taskmail_high_importance',
-    'Task Reminders',
+    'daos_high_importance',
+    'DAOS Reminders',
     description: 'Notifications for email-derived tasks',
     importance: Importance.high,
   );

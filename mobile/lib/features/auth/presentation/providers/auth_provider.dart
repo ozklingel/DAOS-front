@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/locale/locale_provider.dart';
-import 'package:taskmail/core/di/providers.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/domain/entities/user.dart';
-import 'package:taskmail/services/secure_storage_service.dart';
+import 'package:daos/core/locale/locale_provider.dart';
+import 'package:daos/core/di/providers.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/domain/entities/user.dart';
+import 'package:daos/services/secure_storage_service.dart';
 
 final authStateProvider = ChangeNotifierProvider<AuthState>((ref) {
   final state = AuthState(ref);
@@ -32,17 +32,34 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final repo = _ref.read(authRepositoryProvider);
-      _isAuthenticated = await repo.hasValidSession();
-      if (_isAuthenticated) {
-        _user = await repo.getCurrentUser();
-        await _syncLocaleWithBackend();
-      }
-    } catch (_) {
+      await _restoreSession().timeout(const Duration(seconds: 8));
+    } catch (e) {
+      debugPrint('Auth initialize failed/timed out: $e');
       _isAuthenticated = false;
+      _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _restoreSession() async {
+    final storage = _ref.read(secureStorageServiceProvider);
+    if (!await storage.hasToken()) {
+      _isAuthenticated = false;
+      return;
+    }
+
+    final repo = _ref.read(authRepositoryProvider);
+    try {
+      // Single /auth/me call — avoids double hang when API is unreachable.
+      _user = await repo.getCurrentUser();
+      _isAuthenticated = true;
+      await _syncLocaleWithBackend();
+    } on UnauthorizedException {
+      await storage.clearTokens();
+      _isAuthenticated = false;
+      _user = null;
     }
   }
 

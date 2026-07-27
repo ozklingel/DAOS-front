@@ -1,6 +1,6 @@
-# TaskMail Backend
+# DAOS Backend
 
-Production-ready REST API for the TaskMail Flutter mobile app.
+Production-ready REST API for the DAOS Flutter mobile app.
 
 ## Stack
 

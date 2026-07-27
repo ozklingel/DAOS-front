@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/features/tasks/presentation/providers/tasks_provider.dart';
-import 'package:taskmail/features/tasks/presentation/widgets/create_task_sheet.dart';
-import 'package:taskmail/features/tasks/presentation/widgets/tasks_filter_sheet.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
-import 'package:taskmail/shared/widgets/task_card.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:daos/features/tasks/presentation/widgets/create_task_sheet.dart';
+import 'package:daos/features/tasks/presentation/widgets/tasks_filter_sheet.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/widgets/loading_error_widgets.dart';
+import 'package:daos/shared/widgets/task_card.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key, this.initialFilter});

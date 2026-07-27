@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/features/hub/presentation/providers/hub_providers.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/shared/widgets/daos_page_scaffold.dart';
-import 'package:taskmail/shared/widgets/hub_menu_card.dart';
-import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
+import 'package:daos/features/hub/presentation/providers/hub_providers.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/shared/widgets/daos_page_scaffold.dart';
+import 'package:daos/shared/widgets/hub_menu_card.dart';
+import 'package:daos/shared/widgets/loading_error_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});

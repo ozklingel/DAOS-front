@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/tasks/data/models/task_model.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/tasks/data/models/task_model.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 class VoiceTaskResult {
   const VoiceTaskResult({

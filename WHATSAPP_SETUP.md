@@ -36,7 +36,7 @@ Invoke-RestMethod -Uri http://127.0.0.1:8080/api/v1/whatsapp/dev-inbound -Method
 
 ---
 
-Hebrew voice or text messages on WhatsApp create tasks in TaskMail.
+Hebrew voice or text messages on WhatsApp create tasks in DAOS.
 
 ## Flow
 

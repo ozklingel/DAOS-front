@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
-import 'package:taskmail/features/sms/data/sms_inbox_platform.dart'
-    if (dart.library.html) 'package:taskmail/features/sms/data/sms_inbox_platform_stub.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/features/sms/data/sms_inbox_platform.dart'
+    if (dart.library.html) 'package:daos/features/sms/data/sms_inbox_platform_stub.dart';
 
 /// Reads recent inbox SMS on Android. iOS/web have no SMS inbox API — returns empty.
 class SmsDeviceReader {

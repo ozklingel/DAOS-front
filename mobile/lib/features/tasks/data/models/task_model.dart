@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 part 'task_model.freezed.dart';
 

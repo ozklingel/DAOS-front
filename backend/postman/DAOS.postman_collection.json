@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-daos-api-2026",
     "name": "DAOS API",
-    "description": "Postman collection for the DAOS / TaskMail FastAPI backend.\n\nQuick start:\n1. Set `baseUrl` (local: http://127.0.0.1:8080 or production: https://daos-api.onrender.com)\n2. Run **Auth → Dev Login** — scripts save `accessToken` / `refreshToken`\n3. Other requests use Bearer `{{accessToken}}` automatically",
+    "description": "Postman collection for the DAOS FastAPI backend.\n\nQuick start:\n1. Set `baseUrl` (local: http://127.0.0.1:8080 or production: https://daos-api.onrender.com)\n2. Run **Auth → Dev Login** — scripts save `accessToken` / `refreshToken`\n3. Other requests use Bearer `{{accessToken}}` automatically",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

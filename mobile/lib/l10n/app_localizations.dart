@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 const _kEnglishBriefPlaceholder =
     'Your AI brief will appear here once emails are synced.';

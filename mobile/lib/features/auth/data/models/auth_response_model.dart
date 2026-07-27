@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/auth/domain/entities/auth_tokens.dart';
-import 'package:taskmail/features/auth/domain/entities/user.dart';
+import 'package:daos/features/auth/domain/entities/auth_tokens.dart';
+import 'package:daos/features/auth/domain/entities/user.dart';
 
 part 'auth_response_model.freezed.dart';
 

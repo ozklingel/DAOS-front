@@ -1,6 +1,6 @@
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
 
 class SmsInboxPlatform {
   static Future<bool> hasPermission() => Permission.sms.isGranted;

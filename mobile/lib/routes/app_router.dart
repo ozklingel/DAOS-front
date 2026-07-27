@@ -1,20 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/features/auth/presentation/screens/outlook_oauth_callback_screen.dart';
-import 'package:taskmail/features/auth/presentation/screens/login_screen.dart';
-import 'package:taskmail/features/calendar/presentation/screens/calendar_screen.dart';
-import 'package:taskmail/features/daily_brief/presentation/screens/daily_brief_screen.dart';
-import 'package:taskmail/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:taskmail/features/finance/presentation/screens/finance_screen.dart';
-import 'package:taskmail/features/info/presentation/screens/info_screen.dart';
-import 'package:taskmail/features/profile/presentation/screens/profile_screen.dart';
-import 'package:taskmail/features/settings/presentation/screens/settings_screen.dart';
-import 'package:taskmail/features/splash/presentation/screens/splash_screen.dart';
-import 'package:taskmail/features/tasks/presentation/screens/task_details_screen.dart';
-import 'package:taskmail/features/tasks/presentation/screens/tasks_screen.dart';
-import 'package:taskmail/routes/route_names.dart';
-import 'package:taskmail/shared/widgets/app_shell.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/auth/presentation/screens/outlook_oauth_callback_screen.dart';
+import 'package:daos/features/auth/presentation/screens/login_screen.dart';
+import 'package:daos/features/calendar/presentation/screens/calendar_screen.dart';
+import 'package:daos/features/daily_brief/presentation/screens/daily_brief_screen.dart';
+import 'package:daos/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:daos/features/finance/presentation/screens/finance_screen.dart';
+import 'package:daos/features/info/presentation/screens/info_screen.dart';
+import 'package:daos/features/profile/presentation/screens/profile_screen.dart';
+import 'package:daos/features/settings/presentation/screens/settings_screen.dart';
+import 'package:daos/features/splash/presentation/screens/splash_screen.dart';
+import 'package:daos/features/tasks/presentation/screens/task_details_screen.dart';
+import 'package:daos/features/tasks/presentation/screens/tasks_screen.dart';
+import 'package:daos/routes/route_names.dart';
+import 'package:daos/shared/widgets/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Use read (not watch) so GoRouter is created once. Watching auth would

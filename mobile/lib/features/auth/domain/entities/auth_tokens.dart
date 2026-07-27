@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/auth/domain/entities/user.dart';
+import 'package:daos/features/auth/domain/entities/user.dart';
 
 part 'auth_tokens.freezed.dart';
 

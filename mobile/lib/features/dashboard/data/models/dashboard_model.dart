@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/dashboard/domain/entities/dashboard_stats.dart';
-import 'package:taskmail/features/tasks/data/models/task_model.dart';
+import 'package:daos/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:daos/features/tasks/data/models/task_model.dart';
 
 part 'dashboard_model.freezed.dart';
 

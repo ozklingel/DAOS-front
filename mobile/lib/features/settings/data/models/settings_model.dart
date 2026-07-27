@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/settings/domain/entities/app_settings.dart';
+import 'package:daos/features/settings/domain/entities/app_settings.dart';
 
 part 'settings_model.freezed.dart';
 

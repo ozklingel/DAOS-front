@@ -1,8 +1,8 @@
-import 'package:taskmail/core/constants/api_constants.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/core/network/api_client.dart';
-import 'package:taskmail/features/auth/data/models/auth_response_model.dart';
-import 'package:taskmail/features/auth/data/models/oauth_credentials.dart';
+import 'package:daos/core/constants/api_constants.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/auth/data/models/auth_response_model.dart';
+import 'package:daos/features/auth/data/models/oauth_credentials.dart';
 
 class AuthRemoteDataSource {
   AuthRemoteDataSource(this._client);

@@ -1,11 +1,11 @@
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/data/models/auth_response_model.dart';
-import 'package:taskmail/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:taskmail/features/auth/data/services/oauth_service.dart';
-import 'package:taskmail/features/auth/domain/entities/auth_tokens.dart';
-import 'package:taskmail/features/auth/domain/entities/user.dart';
-import 'package:taskmail/features/auth/domain/repositories/auth_repository.dart';
-import 'package:taskmail/services/secure_storage_service.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/data/models/auth_response_model.dart';
+import 'package:daos/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:daos/features/auth/data/services/oauth_service.dart';
+import 'package:daos/features/auth/domain/entities/auth_tokens.dart';
+import 'package:daos/features/auth/domain/entities/user.dart';
+import 'package:daos/features/auth/domain/repositories/auth_repository.dart';
+import 'package:daos/services/secure_storage_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
@@ -30,7 +30,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.clearTokens();
       return false;
     } on AppException {
-      return true;
+      // Do NOT treat network errors as a valid session — that left the app on
+      // a black splash while getCurrentUser() was called again and hung.
+      return false;
     }
   }
 

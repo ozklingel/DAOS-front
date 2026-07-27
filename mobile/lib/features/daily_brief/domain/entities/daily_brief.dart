@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
 
 part 'daily_brief.freezed.dart';
 

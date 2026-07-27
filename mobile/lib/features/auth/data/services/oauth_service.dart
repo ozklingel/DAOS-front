@@ -6,10 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:taskmail/core/errors/app_exception.dart';
-import 'package:taskmail/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:taskmail/features/auth/data/models/oauth_credentials.dart';
-import 'package:taskmail/features/auth/data/services/web_navigation.dart';
+import 'package:daos/core/errors/app_exception.dart';
+import 'package:daos/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:daos/features/auth/data/models/oauth_credentials.dart';
+import 'package:daos/features/auth/data/services/web_navigation.dart';
 
 class OAuthService {
   OAuthService({

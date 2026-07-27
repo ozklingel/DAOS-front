@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:taskmail/core/locale/locale_provider.dart';
-import 'package:taskmail/features/auth/presentation/providers/auth_provider.dart';
-import 'package:taskmail/features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'package:taskmail/features/daily_brief/presentation/providers/daily_brief_provider.dart';
-import 'package:taskmail/features/settings/presentation/providers/settings_provider.dart';
-import 'package:taskmail/features/settings/presentation/widgets/integrations_sheet.dart';
-import 'package:taskmail/l10n/app_localizations.dart';
-import 'package:taskmail/routes/route_names.dart';
-import 'package:taskmail/shared/widgets/daos_page_scaffold.dart';
-import 'package:taskmail/shared/widgets/hub_menu_card.dart';
-import 'package:taskmail/shared/widgets/loading_error_widgets.dart';
-import 'package:taskmail/theme/app_colors.dart';
+import 'package:daos/core/locale/locale_provider.dart';
+import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:daos/features/daily_brief/presentation/providers/daily_brief_provider.dart';
+import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
+import 'package:daos/features/settings/presentation/widgets/integrations_sheet.dart';
+import 'package:daos/l10n/app_localizations.dart';
+import 'package:daos/routes/route_names.dart';
+import 'package:daos/shared/widgets/daos_page_scaffold.dart';
+import 'package:daos/shared/widgets/hub_menu_card.dart';
+import 'package:daos/shared/widgets/loading_error_widgets.dart';
+import 'package:daos/theme/app_colors.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

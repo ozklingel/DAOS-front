@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/di/providers.dart';
-import 'package:taskmail/features/tasks/domain/entities/task.dart';
-import 'package:taskmail/shared/models/task_enums.dart';
+import 'package:daos/core/di/providers.dart';
+import 'package:daos/features/tasks/domain/entities/task.dart';
+import 'package:daos/shared/models/task_enums.dart';
 
 class TasksFilterState {
   const TasksFilterState({

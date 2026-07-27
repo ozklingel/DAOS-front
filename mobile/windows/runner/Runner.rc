@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.taskmail" "\0"
-            VALUE "FileDescription", "taskmail" "\0"
+            VALUE "CompanyName", "DAOS" "\0"
+            VALUE "FileDescription", "DAOS" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "taskmail" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.taskmail. All rights reserved." "\0"
-            VALUE "OriginalFilename", "taskmail.exe" "\0"
-            VALUE "ProductName", "taskmail" "\0"
+            VALUE "InternalName", "daos" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 DAOS. All rights reserved." "\0"
+            VALUE "OriginalFilename", "daos.exe" "\0"
+            VALUE "ProductName", "DAOS" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

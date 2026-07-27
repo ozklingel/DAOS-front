@@ -1,5 +1,5 @@
-import 'package:taskmail/features/auth/domain/entities/auth_tokens.dart';
-import 'package:taskmail/features/auth/domain/entities/user.dart';
+import 'package:daos/features/auth/domain/entities/auth_tokens.dart';
+import 'package:daos/features/auth/domain/entities/user.dart';
 
 abstract class AuthRepository {
   Future<bool> hasValidSession();

@@ -220,7 +220,7 @@ class AuthService:
         if not email:
             raise ValueError("Google account has no email")
         if email.lower() != user.email.lower():
-            raise ValueError("Google account email does not match your TaskMail account")
+            raise ValueError("Google account email does not match your DAOS account")
 
         await self._store_google_refresh_token(user, server_auth_code)
         if user.google_refresh_token:
@@ -249,7 +249,7 @@ class AuthService:
         if not email:
             raise ValueError("Outlook account has no email")
         if email.lower() != user.email.lower():
-            raise ValueError("Outlook account email does not match your TaskMail account")
+            raise ValueError("Outlook account email does not match your DAOS account")
 
         if not outlook_refresh_token:
             raise ValueError("Outlook refresh token is required for email sync")
@@ -297,7 +297,7 @@ class AuthService:
         ).update({"revoked": True})
         db.commit()
 
-    def sign_in_dev(self, db: Session, email: str = "dev@taskmail.local") -> tuple[User, str, str]:
+    def sign_in_dev(self, db: Session, email: str = "dev@daos.local") -> tuple[User, str, str]:
         user = self._get_or_create_user(
             db,
             email=email,

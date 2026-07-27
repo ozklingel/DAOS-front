@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/network/api_client_provider.dart';
-import 'package:taskmail/features/sms/data/sms_device_sync_service.dart';
-import 'package:taskmail/features/sms/data/sms_ingest_models.dart';
+import 'package:daos/core/network/api_client_provider.dart';
+import 'package:daos/features/sms/data/sms_device_sync_service.dart';
+import 'package:daos/features/sms/data/sms_ingest_models.dart';
 
 final smsDeviceSyncServiceProvider = Provider<SmsDeviceSyncService>((ref) {
   return createSmsDeviceSyncService(ref.watch(apiClientProvider));

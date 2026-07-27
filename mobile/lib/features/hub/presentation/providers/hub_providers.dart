@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:taskmail/core/network/api_client_provider.dart';
-import 'package:taskmail/features/hub/data/datasources/hub_remote_datasource.dart';
-import 'package:taskmail/features/hub/data/models/hub_models.dart';
+import 'package:daos/core/network/api_client_provider.dart';
+import 'package:daos/features/hub/data/datasources/hub_remote_datasource.dart';
+import 'package:daos/features/hub/data/models/hub_models.dart';
 
 final hubRemoteDataSourceProvider = Provider<HubRemoteDataSource>((ref) {
   return HubRemoteDataSource(ref.watch(apiClientProvider));

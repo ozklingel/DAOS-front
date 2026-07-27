@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     debug: bool = False
     api_prefix: str = "/api/v1"
 
-    database_url: str = "sqlite:///./taskmail.db"
+    database_url: str = "sqlite:///./daos.db"
 
     @field_validator("database_url", mode="before")
     @classmethod
