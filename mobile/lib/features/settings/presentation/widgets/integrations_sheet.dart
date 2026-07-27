@@ -157,20 +157,22 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               onDisconnect: () => ref.read(authStateProvider.notifier).disconnectWhatsApp(),
             ),
             const SizedBox(height: 12),
-            _SmsCard(
-              l: l,
-              smsState: smsState,
-              onEnable: () async {
-                await ref.read(smsSyncProvider.notifier).enableAndSync();
-                if (mounted) _showSmsResult(l);
-              },
-              onDisable: () => ref.read(smsSyncProvider.notifier).disable(),
-              onSyncNow: () async {
-                await ref.read(smsSyncProvider.notifier).syncNow();
-                if (mounted) _showSmsResult(l);
-              },
-            ),
-            const SizedBox(height: 12),
+            // SMS inbox sync is Android-only (device reads inbox → backend → tasks).
+            if (!kIsWeb)
+              _SmsCard(
+                l: l,
+                smsState: smsState,
+                onEnable: () async {
+                  await ref.read(smsSyncProvider.notifier).enableAndSync();
+                  if (mounted) _showSmsResult(l);
+                },
+                onDisable: () => ref.read(smsSyncProvider.notifier).disable(),
+                onSyncNow: () async {
+                  await ref.read(smsSyncProvider.notifier).syncNow();
+                  if (mounted) _showSmsResult(l);
+                },
+              ),
+            if (!kIsWeb) const SizedBox(height: 12),
             _ConnectionCard(
               title: l.gmail,
               connected: gmailConnected,
@@ -343,15 +345,16 @@ class _SmsCard extends StatelessWidget {
                       onPressed: smsState.isBusy ? null : onDisable,
                       child: Text(l.smsDisableSync),
                     )
-                  : FilledButton(
+                  : FilledButton.icon(
                       onPressed: smsState.isBusy ? null : onEnable,
-                      child: smsState.isBusy
+                      icon: smsState.isBusy
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(l.smsEnableSync),
+                          : const Icon(Icons.sms_outlined),
+                      label: Text(l.smsEnableSync),
                     ),
             ),
             if (smsState.enabled) ...[
@@ -360,7 +363,7 @@ class _SmsCard extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: smsState.isBusy ? null : onSyncNow,
-                  icon: const Icon(Icons.sms),
+                  icon: const Icon(Icons.cloud_upload_outlined),
                   label: Text(l.smsSyncNow),
                 ),
               ),

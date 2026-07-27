@@ -797,16 +797,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sms => 'SMS';
   @override
   String get smsAndroidHint =>
-      'Enable sync to read recent inbox SMS and create tasks automatically.';
+      'After you allow SMS access, the phone sends recent inbox messages to the server. The server returns tasks it inferred from them.';
   @override
   String get smsUnsupportedHint =>
-      'SMS inbox sync works on Android only. Install the Android app to create tasks from received messages.';
+      'SMS sync runs only on the Android app (read inbox → server → tasks).';
   @override
-  String get smsEnableSync => 'Enable SMS sync';
+  String get smsEnableSync => 'Allow SMS & sync now';
   @override
-  String get smsDisableSync => 'Disable SMS sync';
+  String get smsDisableSync => 'Stop SMS sync';
   @override
-  String get smsSyncNow => 'Sync SMS now';
+  String get smsSyncNow => 'Send recent SMS again';
   @override
   String get smsPermissionDenied => 'SMS permission is required to read inbox messages.';
   @override
@@ -1468,16 +1468,16 @@ class AppLocalizationsHe extends AppLocalizations {
   String get sms => 'SMS';
   @override
   String get smsAndroidHint =>
-      'הפעילו סנכרון כדי לקרוא SMS אחרונים מהתיבה וליצור מהם משימות אוטומטית.';
+      'אחרי אישור קריאת SMS, הטלפון שולח לשרת את ההודעות האחרונות מהתיבה. השרת מחזיר את המשימות שהסיק מהן.';
   @override
   String get smsUnsupportedHint =>
-      'סנכרון תיבת SMS זמין באנדרואיד בלבד. התקינו את אפליקציית האנדרואיד כדי ליצור משימות מהודעות שקיבלתם.';
+      'סנכרון SMS רץ רק באפליקציית אנדרואיד (קריאת תיבה → שרת → משימות).';
   @override
-  String get smsEnableSync => 'הפעל סנכרון SMS';
+  String get smsEnableSync => 'אשר SMS וסנכרן עכשיו';
   @override
-  String get smsDisableSync => 'כבה סנכרון SMS';
+  String get smsDisableSync => 'עצור סנכרון SMS';
   @override
-  String get smsSyncNow => 'סנכרן SMS עכשיו';
+  String get smsSyncNow => 'שלח שוב SMS אחרונים';
   @override
   String get smsPermissionDenied => 'נדרשת הרשאת SMS לקריאת הודעות נכנסות.';
   @override
