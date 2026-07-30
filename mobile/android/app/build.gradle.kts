@@ -42,7 +42,9 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
         manifestPlaceholders["appAuthRedirectScheme"] = "com.taskmail"
-        if (googleServerClientId.isNotEmpty()) {
+        // Avoid duplicate `default_web_client_id` when google-services plugin
+        // already generates it from google-services.json.
+        if (googleServerClientId.isNotEmpty() && !file("google-services.json").exists()) {
             resValue("string", "default_web_client_id", googleServerClientId)
         }
     }

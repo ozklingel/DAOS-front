@@ -1,9 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/locale/locale_provider.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
-import 'package:daos/features/sms/presentation/sms_sync_provider.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/app_router.dart';
 import 'package:daos/services/notification_service.dart';
@@ -23,16 +24,18 @@ class _DaosAppState extends ConsumerState<DaosApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         await ref.read(notificationServiceProvider).initialize();
-        await ref.read(notificationServiceProvider).registerDeviceToken();
       } catch (_) {}
-      await _syncTodaysSmsIfReady();
+      // FCM only after auth — otherwise /notifications/device returns 401.
+      await _onAuthenticatedStartup();
     });
   }
 
-  Future<void> _syncTodaysSmsIfReady() async {
+  Future<void> _onAuthenticatedStartup() async {
     final auth = ref.read(authStateProvider);
     if (!auth.isAuthenticated || auth.isLoading) return;
-    await ref.read(smsSyncProvider.notifier).syncTodaysInbox();
+    try {
+      await ref.read(notificationServiceProvider).registerDeviceToken();
+    } catch (_) {}
   }
 
   @override
@@ -42,7 +45,7 @@ class _DaosAppState extends ConsumerState<DaosApp> {
           !next.isLoading &&
           (prev?.isAuthenticated != true || prev?.isLoading == true);
       if (becameReady) {
-        ref.read(smsSyncProvider.notifier).syncTodaysInbox();
+        unawaited(_onAuthenticatedStartup());
       }
     });
     final router = ref.watch(routerProvider);

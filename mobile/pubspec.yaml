@@ -1,5 +1,5 @@
 name: daos
-description: DAOS - AI tasks from email, WhatsApp, and SMS.
+description: DAOS - AI tasks from email and WhatsApp.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -38,10 +38,6 @@ dependencies:
   record: ^6.0.0
   path_provider: ^2.1.5
   path: ^1.9.1
-  flutter_sms_inbox: ^1.0.3
-  permission_handler: ^11.4.0
-  workmanager: 0.7.0
-  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

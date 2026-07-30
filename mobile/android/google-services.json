@@ -12,7 +12,12 @@
           "package_name": "com.taskmail.taskmail"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDB1Y60_izwu9Z_YXe1z6Mc5J6LoEmpUbo"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "812104653331-ur4g34kfo6seil4f6h06igl08ks9ecmt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

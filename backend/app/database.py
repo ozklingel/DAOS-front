@@ -44,24 +44,18 @@ def _migrate_schema() -> None:
 
     _add_column_if_missing("users", "google_access_token", "TEXT")
     _add_column_if_missing("users", "whatsapp_phone", "VARCHAR(20)")
-    _add_column_if_missing("users", "sms_phone", "VARCHAR(20)")
 
     # Unique indexes for phone link columns (idempotent).
     try:
-        _ensure_unique_index("users", "sms_phone", "ix_users_sms_phone")
-    except Exception:
-        # Index may already exist under another name; column presence is what matters.
-        pass
-    try:
         _ensure_unique_index("users", "whatsapp_phone", "ix_users_whatsapp_phone")
     except Exception:
+        # Index may already exist under another name; column presence is what matters.
         pass
 
     if "tasks" in tables:
         _add_column_if_missing("tasks", "category", "VARCHAR(20) DEFAULT 'general'")
         _add_column_if_missing("tasks", "energy_level", "VARCHAR(20) DEFAULT 'medium'")
         _add_column_if_missing("tasks", "whatsapp_message_id", "VARCHAR(512)")
-        _add_column_if_missing("tasks", "sms_message_id", "VARCHAR(512)")
 
     if "finance_transactions" in tables:
         _add_column_if_missing("finance_transactions", "bank_account_id", "VARCHAR(36)")

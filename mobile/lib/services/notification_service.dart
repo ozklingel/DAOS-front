@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/network/api_client_provider.dart';
 import 'package:daos/core/constants/api_constants.dart';
 import 'package:daos/firebase/firebase_bootstrap.dart';
+import 'package:daos/services/secure_storage_service.dart';
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(ref);
@@ -78,6 +79,10 @@ class NotificationService {
 
   Future<void> registerDeviceToken() async {
     if (!isFirebaseReady || _messaging == null) return;
+
+    // Endpoint requires JWT — skip silently when logged out.
+    final storage = _ref.read(secureStorageServiceProvider);
+    if (!await storage.hasToken()) return;
 
     try {
       final token = await _messaging!.getToken();

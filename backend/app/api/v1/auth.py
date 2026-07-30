@@ -14,21 +14,18 @@ from app.schemas import (
     OutlookExchangeIn,
     OutlookExchangeOut,
     RefreshTokenIn,
-    SmsLinkIn,
     UserOut,
     WhatsAppLinkIn,
 )
 from app.services.auth_service import AuthService
 from app.services.email_sync_service import EmailSyncService
 from app.services.microsoft_oauth_service import MicrosoftOAuthService
-from app.services.sms_service import SmsService
 from app.services.whatsapp_service import WhatsAppService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 auth_service = AuthService()
 email_sync = EmailSyncService()
 whatsapp_service = WhatsAppService()
-sms_service = SmsService()
 microsoft_oauth = MicrosoftOAuthService()
 
 
@@ -164,25 +161,6 @@ def link_whatsapp(
 @router.post("/whatsapp/disconnect", response_model=UserOut)
 def disconnect_whatsapp(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     user = whatsapp_service.unlink_phone(db, user)
-    return UserOut.model_validate(user)
-
-
-@router.post("/sms/link", response_model=UserOut)
-def link_sms(
-    body: SmsLinkIn,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    try:
-        user = sms_service.link_phone(db, user, body.phone)
-        return UserOut.model_validate(user)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
-
-
-@router.post("/sms/disconnect", response_model=UserOut)
-def disconnect_sms(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    user = sms_service.unlink_phone(db, user)
     return UserOut.model_validate(user)
 
 
