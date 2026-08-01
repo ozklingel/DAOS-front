@@ -21,7 +21,7 @@ class EmailSyncService:
         self.outlook = OutlookMailService()
 
     async def sync_user_emails(self, db: Session, user: User) -> dict:
-        emails = await self._fetch_emails(db, user)
+        emails, fetch_errors = await self._fetch_emails(db, user)
         created = 0
         skipped_non_hebrew = 0
         skipped_no_signal = 0
@@ -93,10 +93,12 @@ class EmailSyncService:
             "skipped_no_keyword": skipped_no_signal,
             "skipped_no_signal": skipped_no_signal,
             "skipped_not_actionable": skipped_not_actionable,
+            "fetch_errors": fetch_errors,
         }
 
-    async def _fetch_emails(self, db: Session, user: User) -> list[dict]:
+    async def _fetch_emails(self, db: Session, user: User) -> tuple[list[dict], list[str]]:
         emails: list[dict] = []
+        fetch_errors: list[str] = []
 
         if user.gmail_connected and (user.google_refresh_token or user.google_access_token):
             try:
@@ -108,6 +110,7 @@ class EmailSyncService:
                 )
             except Exception as exc:
                 logger.warning("Gmail fetch failed for user %s: %s", user.id, exc)
+                fetch_errors.append(f"Gmail: {exc}")
                 if self._is_stale_google_token_error(exc):
                     logger.info(
                         "Clearing stale Gmail token for user %s — reconnect Gmail in settings",
@@ -123,8 +126,13 @@ class EmailSyncService:
                 emails.extend(await self.outlook.fetch_recent_emails(user.outlook_refresh_token))
             except Exception as exc:
                 logger.warning("Outlook fetch failed for user %s: %s", user.id, exc)
+                fetch_errors.append(f"Outlook: {exc}")
+        elif user.outlook_connected and not user.outlook_refresh_token:
+            fetch_errors.append(
+                "Outlook: missing refresh token — disconnect and reconnect Outlook in Integrations"
+            )
 
-        return emails
+        return emails, fetch_errors
 
     @staticmethod
     def _is_stale_google_token_error(exc: Exception) -> bool:

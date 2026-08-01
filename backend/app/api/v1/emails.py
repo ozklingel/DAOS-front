@@ -54,4 +54,20 @@ async def sync_emails(user: User = Depends(get_current_user), db: Session = Depe
             detail={"message": "Connect Gmail or Outlook before syncing emails."},
         )
     result = await email_sync.sync_user_emails(db, user)
-    return EmailSyncOut(**result)
+    fetch_errors = result.get("fetch_errors") or []
+    # If mail providers failed and nothing was scanned, surface the real error.
+    if fetch_errors and result.get("scanned", 0) == 0:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": fetch_errors[0],
+                "fetch_errors": fetch_errors,
+            },
+        )
+    return EmailSyncOut(
+        created=result.get("created", 0),
+        scanned=result.get("scanned", 0),
+        skipped_non_hebrew=result.get("skipped_non_hebrew", 0),
+        skipped_no_signal=result.get("skipped_no_signal", 0),
+        skipped_not_actionable=result.get("skipped_not_actionable", 0),
+    )

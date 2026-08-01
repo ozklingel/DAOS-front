@@ -5,7 +5,8 @@ from app.config import settings
 
 class OutlookMailService:
     TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-    GRAPH_MESSAGES_URL = "https://graph.microsoft.com/v1.0/me/messages"
+    # Inbox only — self-sent task emails land here; avoids Sent Items noise.
+    GRAPH_INBOX_URL = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages"
 
     async def _get_access_token(self, refresh_token: str) -> str:
         client_id = (settings.microsoft_client_id or "").strip()
@@ -16,7 +17,7 @@ class OutlookMailService:
             "client_id": client_id,
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
-            "scope": "Mail.Read offline_access openid profile email",
+            "scope": "openid profile email offline_access User.Read Mail.Read",
         }
         if settings.microsoft_client_secret:
             payload["client_secret"] = settings.microsoft_client_secret
@@ -45,7 +46,7 @@ class OutlookMailService:
 
         async with httpx.AsyncClient(timeout=20) as client:
             response = await client.get(
-                self.GRAPH_MESSAGES_URL,
+                self.GRAPH_INBOX_URL,
                 headers={"Authorization": f"Bearer {access_token}"},
                 params=params,
             )

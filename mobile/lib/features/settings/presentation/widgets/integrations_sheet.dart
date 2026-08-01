@@ -199,12 +199,14 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               FilledButton.icon(
                 onPressed: () async {
                   try {
-                    final created = await ref.read(settingsProvider.notifier).syncEmails();
+                    final result = await ref.read(settingsProvider.notifier).syncEmails();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            created > 0 ? l.syncCompleteTasks(created) : l.syncCompleteNoTasks,
+                            result.created > 0
+                                ? l.syncCompleteTasks(result.created)
+                                : l.syncCompleteScanned(result.scanned),
                           ),
                         ),
                       );

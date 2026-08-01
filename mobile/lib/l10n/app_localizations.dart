@@ -288,6 +288,7 @@ abstract class AppLocalizations {
   String get outlookOAuthMissingCode;
   String syncCompleteTasks(int count);
   String get syncCompleteNoTasks;
+  String syncCompleteScanned(int scanned);
 
   String get networkError;
   String get sessionExpired;
@@ -846,6 +847,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncCompleteNoTasks =>
       'Sync complete — no new actionable emails found';
+  @override
+  String syncCompleteScanned(int scanned) => scanned == 0
+      ? 'Sync complete — no emails were fetched. Reconnect Outlook and try again.'
+      : 'Sync complete — scanned $scanned email${scanned == 1 ? '' : 's'}, no new tasks.';
 
   @override
   String get networkError => 'Network error. Please check your connection.';
@@ -1505,6 +1510,10 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get syncCompleteNoTasks =>
       'סנכרון הושלם — לא נמצאו מיילים חדשים לטיפול';
+  @override
+  String syncCompleteScanned(int scanned) => scanned == 0
+      ? 'סנכרון הושלם — לא נשלפו מיילים. נתקו וחברו מחדש את Outlook ונסו שוב.'
+      : 'סנכרון הושלם — נסרקו $scanned מיילים, לא נוצרו משימות חדשות.';
 
   @override
   String get networkError => 'שגיאת רשת. בדקו את החיבור לאינטרנט.';

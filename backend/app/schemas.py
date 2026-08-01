@@ -267,6 +267,8 @@ class EmailSyncOut(APIModel):
     created: int = 0
     scanned: int = 0
     skipped_non_hebrew: int = 0
+    skipped_no_signal: int = 0
+    skipped_not_actionable: int = 0
 
 
 class EmailAiStatusOut(APIModel):

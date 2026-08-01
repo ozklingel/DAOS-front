@@ -20,7 +20,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     );
   }
 
-  Future<int> syncEmails() async {
+  Future<({int created, int scanned})> syncEmails() async {
     return ref.read(settingsRepositoryProvider).syncEmails();
   }
 }

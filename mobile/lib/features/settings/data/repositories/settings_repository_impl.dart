@@ -26,5 +26,5 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
-  Future<int> syncEmails() => _remote.syncEmails();
+  Future<({int created, int scanned})> syncEmails() => _remote.syncEmails();
 }
