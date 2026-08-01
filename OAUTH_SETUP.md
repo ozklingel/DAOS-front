@@ -84,12 +84,18 @@ for some accounts — but users can still sign in and use the rest of the app.
 ### 1. Azure App Registration
 
 1. Open [Azure Portal](https://portal.azure.com/) → Microsoft Entra ID → App registrations → New registration
-2. Name: `DAOS`
+2. Name: `DAOS` (or `daos-1`)
 3. Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
-4. Redirect URIs:
-   - **Single-page application**: `http://127.0.0.1:5173/oauth/outlook`
-   - **Single-page application** (prod, if needed): `https://ozklingel.github.io/DAOS-front/oauth/outlook`
+4. Redirect URIs — use **Web** (not SPA). The backend exchanges the auth code server-side:
+
+   - **Web**: `http://127.0.0.1:5173/oauth/outlook`
+   - **Web**: `http://localhost:5173/oauth/outlook`
+   - **Web**: `https://ozklingel.github.io/DAOS-front/oauth/outlook`
    - **Mobile and desktop applications**: `com.taskmail://oauth/callback`
+
+   Do **not** put the http(s) URIs under “Single-page application”. SPA + server-side token exchange causes `invalid_request` / AADSTS9002326.
+
+5. Certificates & secrets → **New client secret** → copy the **Value** once (shown only at creation).
 
 ### 2. API permissions
 
@@ -97,23 +103,23 @@ Add delegated permissions:
 
 - `openid`, `profile`, `email`
 - `offline_access`
+- `User.Read`
 - `Mail.Read`
 
 Grant admin consent if required by your tenant.
 
-### 3. Copy Client ID
+### 3. Copy Client ID + secret
 
 App registration → Overview → **Application (client) ID**
 
-### 4. Backend `.env`
+### 4. Backend `.env` + Render Environment
 
 ```env
 MICROSOFT_CLIENT_ID=<Azure application client ID>
-MICROSOFT_CLIENT_SECRET=
+MICROSOFT_CLIENT_SECRET=<Azure client secret Value>
 ```
 
-Leave `MICROSOFT_CLIENT_SECRET` empty for a public SPA / mobile client.
-Create a client secret only if Azure requires a confidential client.
+Set the **same two variables** in Render → `daos-api` → Environment, then wait for redeploy.
 
 ### 5. Run the Flutter app
 

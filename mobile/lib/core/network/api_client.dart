@@ -87,8 +87,23 @@ class ApiClient {
   }
 
   String? _extractMessage(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      return data['message'] as String? ?? data['error'] as String?;
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final direct = map['message'] as String?;
+      if (direct != null && direct.isNotEmpty) return direct;
+
+      final detail = map['detail'];
+      if (detail is String && detail.isNotEmpty) return detail;
+      if (detail is Map) {
+        final nested = Map<String, dynamic>.from(detail);
+        final nestedMsg = nested['message'] as String?;
+        if (nestedMsg != null && nestedMsg.isNotEmpty) return nestedMsg;
+        final nestedErr = nested['error'] as String?;
+        if (nestedErr != null && nestedErr.isNotEmpty) return nestedErr;
+      }
+
+      final error = map['error'];
+      if (error is String && error.isNotEmpty) return error;
     }
     return null;
   }

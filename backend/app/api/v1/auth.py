@@ -63,7 +63,8 @@ async def sign_in_outlook(body: OutlookAuthIn, db: Session = Depends(get_db)):
             user=UserOut.model_validate(user),
         )
     except ValueError as exc:
-        raise HTTPException(status_code=401, detail={"message": str(exc)}) from exc
+        # 400 (not 401) so the app does not show a misleading "Session expired".
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from exc
 
 
 @router.post("/outlook/authorize-url", response_model=OutlookAuthorizeUrlOut)

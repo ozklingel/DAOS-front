@@ -74,7 +74,13 @@ class AuthService:
                 headers={"Authorization": f"Bearer {access_token}"},
             )
         if response.status_code != 200:
-            raise ValueError("Invalid Outlook access token")
+            detail = response.text[:200]
+            logger = __import__("logging").getLogger(__name__)
+            logger.warning("Outlook /me failed (%s): %s", response.status_code, detail)
+            raise ValueError(
+                "Could not read Outlook profile. In Azure add delegated permission "
+                "User.Read, then sign in again and accept consent."
+            )
         data = response.json()
         return {
             "email": data.get("mail") or data.get("userPrincipalName"),

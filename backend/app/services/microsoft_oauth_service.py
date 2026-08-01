@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 AUTHORIZE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-SCOPES = "openid profile email offline_access Mail.Read"
+SCOPES = "openid profile email offline_access User.Read Mail.Read"
 
 
 class MicrosoftOAuthService:

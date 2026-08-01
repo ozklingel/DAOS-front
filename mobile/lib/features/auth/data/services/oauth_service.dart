@@ -270,6 +270,7 @@ class OAuthService {
             'profile',
             'email',
             'offline_access',
+            'User.Read',
             'Mail.Read',
           ],
         ),
