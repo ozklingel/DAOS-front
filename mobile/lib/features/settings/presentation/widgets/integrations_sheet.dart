@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:daos/core/errors/app_exception.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
 import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
-import 'package:daos/features/sms/presentation/sms_sync_provider.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/route_names.dart';
 import 'package:daos/theme/app_colors.dart';
@@ -99,44 +98,10 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
     }
   }
 
-  void _showSmsResult(AppLocalizations l) {
-    final sms = ref.read(smsSyncProvider);
-    if (sms.error == 'sms_permission_denied') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.smsPermissionDenied)),
-      );
-      return;
-    }
-    if (sms.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(sms.error!)),
-      );
-      return;
-    }
-    final result = sms.lastResult;
-    if (result == null) return;
-    final sent = result.processed;
-    final created = result.createdCount;
-    if (sent == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.smsNoInboxMessages)),
-      );
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          created > 0 ? l.smsIngestResult(sent, created) : l.smsSyncNoTasks,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final user = ref.watch(authStateProvider).user;
-    final smsState = ref.watch(smsSyncProvider);
     final gmailConnected = user?.gmailConnected ?? false;
     final outlookConnected = user?.outlookConnected ?? false;
     final whatsappConnected = user?.whatsappConnected ?? false;
@@ -166,20 +131,6 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               isLoading: _isLinkingWhatsApp,
               onConnect: () => _connectWhatsApp(l),
               onDisconnect: () => ref.read(authStateProvider.notifier).disconnectWhatsApp(),
-            ),
-            const SizedBox(height: 12),
-            _SmsCard(
-              l: l,
-              smsState: smsState,
-              onEnable: () async {
-                await ref.read(smsSyncProvider.notifier).enableAndSync();
-                if (mounted) _showSmsResult(l);
-              },
-              onDisable: () => ref.read(smsSyncProvider.notifier).disable(),
-              onSyncNow: () async {
-                await ref.read(smsSyncProvider.notifier).syncNow();
-                if (mounted) _showSmsResult(l);
-              },
             ),
             const SizedBox(height: 12),
             _ConnectionCard(
@@ -272,113 +223,6 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SmsCard extends StatelessWidget {
-  const _SmsCard({
-    required this.l,
-    required this.smsState,
-    required this.onEnable,
-    required this.onDisable,
-    required this.onSyncNow,
-  });
-
-  final AppLocalizations l;
-  final SmsSyncUiState smsState;
-  final VoidCallback onEnable;
-  final VoidCallback onDisable;
-  final VoidCallback onSyncNow;
-
-  @override
-  Widget build(BuildContext context) {
-    final connected = smsState.enabled;
-    final hint = smsState.supported ? l.smsAndroidHint : l.smsUnsupportedHint;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkGlassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l.sms,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.darkTextPrimary,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: connected ? AppColors.successBg : AppColors.darkBackgroundMid,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  connected ? l.connected : l.notConnected,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: connected ? AppColors.success : AppColors.darkTextTertiary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hint,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.darkTextSecondary,
-              height: 1.4,
-            ),
-          ),
-          if (smsState.supported) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: smsState.enabled
-                  ? OutlinedButton(
-                      onPressed: smsState.isBusy ? null : onDisable,
-                      child: Text(l.smsDisableSync),
-                    )
-                  : FilledButton.icon(
-                      onPressed: smsState.isBusy ? null : onEnable,
-                      icon: smsState.isBusy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.sms_outlined),
-                      label: Text(l.smsEnableSync),
-                    ),
-            ),
-            if (smsState.enabled) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: smsState.isBusy ? null : onSyncNow,
-                  icon: const Icon(Icons.cloud_upload_outlined),
-                  label: Text(l.smsSyncNow),
-                ),
-              ),
-            ],
-          ],
-        ],
       ),
     );
   }

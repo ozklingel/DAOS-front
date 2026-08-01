@@ -1,4 +1,4 @@
-# Run DAOS on a physical Android device/emulator (SMS inbox sync works here — not in Chrome).
+# Run DAOS on a physical Android device/emulator.
 $ErrorActionPreference = "Stop"
 $MobileRoot = Split-Path -Parent $PSScriptRoot
 $RepoRoot = Split-Path -Parent $MobileRoot
@@ -36,7 +36,6 @@ if (Test-Path $EnvFile) {
 
 Write-Host "Android dev — API: $ApiUrl" -ForegroundColor Cyan
 Write-Host "Ensure backend listens on 0.0.0.0:8080 and phone is on same Wi‑Fi." -ForegroundColor Yellow
-Write-Host "SMS: Settings → Integrations → Allow SMS & sync now" -ForegroundColor Yellow
 
 $Defines = @(
     "--dart-define=API_BASE_URL=$ApiUrl",

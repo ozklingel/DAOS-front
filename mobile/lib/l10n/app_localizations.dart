@@ -260,16 +260,6 @@ abstract class AppLocalizations {
   String get whatsappVoiceHelpTitle;
   String get whatsappVoiceHelpBody;
   String get openIntegrations;
-  String get sms;
-  String get smsAndroidHint;
-  String get smsUnsupportedHint;
-  String get smsEnableSync;
-  String get smsDisableSync;
-  String get smsSyncNow;
-  String get smsPermissionDenied;
-  String smsIngestResult(int sent, int created);
-  String get smsSyncNoTasks;
-  String get smsNoInboxMessages;
   String get outlookNotConfigured;
 
   String assetAlertsTitle(int count);
@@ -795,30 +785,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Link your phone in Settings → Integrations, then send a Hebrew voice note or text to your DAOS WhatsApp bot.';
   @override
   String get openIntegrations => 'Open integrations';
-  @override
-  String get sms => 'SMS';
-  @override
-  String get smsAndroidHint =>
-      'After you allow SMS access, the phone sends recent inbox messages to the server. The server returns tasks it inferred from them.';
-  @override
-  String get smsUnsupportedHint =>
-      'SMS sync runs only on the Android app (read inbox → server → tasks).';
-  @override
-  String get smsEnableSync => 'Allow SMS & sync now';
-  @override
-  String get smsDisableSync => 'Stop SMS sync';
-  @override
-  String get smsSyncNow => 'Send recent SMS again';
-  @override
-  String get smsPermissionDenied => 'SMS permission is required to read inbox messages.';
-  @override
-  String smsIngestResult(int sent, int created) =>
-      'Sent $sent SMS to server — created $created task${created == 1 ? '' : 's'}.';
-  @override
-  String get smsSyncNoTasks => 'SMS sent to server — no new tasks detected.';
-  @override
-  String get smsNoInboxMessages =>
-      'No SMS found in inbox (or permission not granted).';
   @override
   String get outlookNotConfigured =>
       'Outlook is not configured. Set a real MICROSOFT_CLIENT_ID in backend/.env '
@@ -1478,30 +1444,6 @@ class AppLocalizationsHe extends AppLocalizations {
       'חברו את המספר בהגדרות → אינטגרציות, ואז שלחו הודעת קול או טקסט בעברית לבוט DAOS.';
   @override
   String get openIntegrations => 'פתח אינטגרציות';
-  @override
-  String get sms => 'SMS';
-  @override
-  String get smsAndroidHint =>
-      'אחרי אישור קריאת SMS, הטלפון שולח לשרת את ההודעות האחרונות מהתיבה. השרת מחזיר את המשימות שהסיק מהן.';
-  @override
-  String get smsUnsupportedHint =>
-      'סנכרון SMS רץ רק באפליקציית אנדרואיד (קריאת תיבה → שרת → משימות).';
-  @override
-  String get smsEnableSync => 'אשר SMS וסנכרן עכשיו';
-  @override
-  String get smsDisableSync => 'עצור סנכרון SMS';
-  @override
-  String get smsSyncNow => 'שלח שוב SMS אחרונים';
-  @override
-  String get smsPermissionDenied => 'נדרשת הרשאת SMS לקריאת הודעות נכנסות.';
-  @override
-  String smsIngestResult(int sent, int created) =>
-      'נשלחו $sent SMS לשרת — נוצרו $created משימות.';
-  @override
-  String get smsSyncNoTasks => 'SMS נשלחו לשרת — לא זוהו משימות חדשות.';
-  @override
-  String get smsNoInboxMessages =>
-      'לא נמצאו SMS בתיבה (או שההרשאה לא ניתנה).';
   @override
   String get outlookNotConfigured =>
       'Outlook לא מוגדר. הגדר MICROSOFT_CLIENT_ID אמיתי ב-backend/.env '

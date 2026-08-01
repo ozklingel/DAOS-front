@@ -118,18 +118,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<User> connectSms(String phone) async {
-    final model = await _remote.linkSms(phone);
-    return model.toEntity();
-  }
-
-  @override
-  Future<User> disconnectSms() async {
-    final model = await _remote.disconnectSms();
-    return model.toEntity();
-  }
-
-  @override
   Future<void> logout() async {
     try {
       await _remote.logout();

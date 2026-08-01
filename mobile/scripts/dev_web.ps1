@@ -39,7 +39,6 @@ if ($OutlookClientId -and $OutlookClientId -ne "your-azure-app-client-id") {
 } else {
     Write-Host "Outlook DISABLED: set MICROSOFT_CLIENT_ID in backend/.env (see OAUTH_SETUP.md)" -ForegroundColor Red
 }
-Write-Host "SMS inbox sync does NOT work in Chrome — use: .\scripts\dev_android.ps1" -ForegroundColor Red
 Write-Host "Add origins to THIS Web client in Google Cloud (see WEB_OAUTH_FIX.md):" -ForegroundColor Yellow
 Write-Host "  http://127.0.0.1:$WebPort" -ForegroundColor Yellow
 Write-Host "  http://localhost:$WebPort" -ForegroundColor Yellow

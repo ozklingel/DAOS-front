@@ -1,5 +1,4 @@
 # Install / run DAOS Android against production Render API.
-# SMS inbox → POST https://daos-api.onrender.com/api/v1/sms/ingest
 $ErrorActionPreference = "Stop"
 $MobileRoot = Split-Path -Parent $PSScriptRoot
 $RepoRoot = Split-Path -Parent $MobileRoot
@@ -27,8 +26,6 @@ if (Test-Path $EnvFile) {
 }
 
 Write-Host "Production Android → $ApiUrl" -ForegroundColor Cyan
-Write-Host "After install: Settings → Integrations → SMS → Allow SMS & sync now" -ForegroundColor Yellow
-Write-Host "Watch Render logs for: POST /api/v1/sms/ingest" -ForegroundColor Yellow
 
 if (-not $OutlookClientId -or $OutlookClientId -eq "your-azure-app-client-id") {
     Write-Host "Outlook: MICROSOFT_CLIENT_ID missing/placeholder in backend/.env — Outlook login will fail." -ForegroundColor Red

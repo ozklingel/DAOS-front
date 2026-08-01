@@ -13,7 +13,5 @@ abstract class User with _$User {
     @Default(false) bool outlookConnected,
     @Default(false) bool whatsappConnected,
     String? whatsappPhone,
-    @Default(false) bool smsConnected,
-    String? smsPhone,
   }) = _User;
 }
