@@ -4,6 +4,7 @@ class OutlookInboxEmailPreviewModel {
     required this.subject,
     required this.sender,
     required this.snippet,
+    this.folder = 'inbox',
     this.receivedAt,
     this.isHebrew = false,
     this.hasTaskSignal = false,
@@ -14,6 +15,7 @@ class OutlookInboxEmailPreviewModel {
   final String subject;
   final String sender;
   final String snippet;
+  final String folder;
   final String? receivedAt;
   final bool isHebrew;
   final bool hasTaskSignal;
@@ -25,6 +27,7 @@ class OutlookInboxEmailPreviewModel {
       subject: json['subject'] as String? ?? '',
       sender: json['sender'] as String? ?? '',
       snippet: json['snippet'] as String? ?? '',
+      folder: json['folder'] as String? ?? 'inbox',
       receivedAt: json['received_at'] as String? ?? json['receivedAt'] as String?,
       isHebrew: json['is_hebrew'] as bool? ?? json['isHebrew'] as bool? ?? false,
       hasTaskSignal:
@@ -41,7 +44,10 @@ class OutlookInboxPreviewModel {
     required this.hasRefreshToken,
     required this.accountEmail,
     required this.fetchOk,
+    this.mailboxEmail,
     this.inboxCount = 0,
+    this.sentCount = 0,
+    this.junkCount = 0,
     this.error,
     this.messages = const [],
   });
@@ -49,8 +55,11 @@ class OutlookInboxPreviewModel {
   final bool connected;
   final bool hasRefreshToken;
   final String accountEmail;
+  final String? mailboxEmail;
   final bool fetchOk;
   final int inboxCount;
+  final int sentCount;
+  final int junkCount;
   final String? error;
   final List<OutlookInboxEmailPreviewModel> messages;
 
@@ -61,8 +70,11 @@ class OutlookInboxPreviewModel {
       hasRefreshToken:
           json['has_refresh_token'] as bool? ?? json['hasRefreshToken'] as bool? ?? false,
       accountEmail: json['account_email'] as String? ?? json['accountEmail'] as String? ?? '',
+      mailboxEmail: json['mailbox_email'] as String? ?? json['mailboxEmail'] as String?,
       fetchOk: json['fetch_ok'] as bool? ?? json['fetchOk'] as bool? ?? false,
       inboxCount: json['inbox_count'] as int? ?? json['inboxCount'] as int? ?? 0,
+      sentCount: json['sent_count'] as int? ?? json['sentCount'] as int? ?? 0,
+      junkCount: json['junk_count'] as int? ?? json['junkCount'] as int? ?? 0,
       error: json['error'] as String?,
       messages: rawMessages
           .map((m) => OutlookInboxEmailPreviewModel.fromJson(m as Map<String, dynamic>))

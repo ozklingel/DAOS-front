@@ -123,7 +123,13 @@ class EmailSyncService:
 
         if user.outlook_connected and user.outlook_refresh_token:
             try:
-                emails.extend(await self.outlook.fetch_recent_emails(user.outlook_refresh_token))
+                outlook_emails, new_refresh = await self.outlook.fetch_recent_emails(
+                    user.outlook_refresh_token
+                )
+                emails.extend(outlook_emails)
+                if new_refresh:
+                    user.outlook_refresh_token = new_refresh
+                    db.commit()
             except Exception as exc:
                 logger.warning("Outlook fetch failed for user %s: %s", user.id, exc)
                 fetch_errors.append(f"Outlook: {exc}")

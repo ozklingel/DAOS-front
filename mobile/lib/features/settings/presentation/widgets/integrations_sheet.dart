@@ -279,6 +279,7 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final error = preview.error;
     final messages = preview.messages;
+    final mailbox = preview.mailboxEmail ?? preview.accountEmail;
 
     return AlertDialog(
       title: Text(l.outlookInboxPreviewTitle),
@@ -287,18 +288,55 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
         child: error != null && !preview.fetchOk
             ? Text('$error\n\n${l.outlookInboxPreviewError}')
             : messages.isEmpty
-                ? Text(l.outlookInboxPreviewEmpty)
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.outlookInboxPreviewSummary(
+                          preview.inboxCount,
+                          preview.sentCount,
+                          preview.junkCount,
+                          mailbox,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(l.outlookInboxPreviewEmpty),
+                      const SizedBox(height: 8),
+                      Text(
+                        l.outlookInboxSelfSentHint,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.darkTextSecondary,
+                        ),
+                      ),
+                    ],
+                  )
                 : SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          l.outlookInboxPreviewSummary(preview.inboxCount, preview.accountEmail),
+                          l.outlookInboxPreviewSummary(
+                            preview.inboxCount,
+                            preview.sentCount,
+                            preview.junkCount,
+                            mailbox,
+                          ),
                           style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l.outlookInboxSelfSentHint,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.darkTextSecondary,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         ...messages.map((m) {
                           final flags = <String>[
+                            l.outlookInboxFolderLabel(m.folder),
                             if (m.isHebrew) l.outlookInboxHebrew,
                             if (m.hasTaskSignal) l.outlookInboxTaskSignal,
                             if (m.alreadyIngested) l.outlookInboxAlreadyIngested,

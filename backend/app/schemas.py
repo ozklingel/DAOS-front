@@ -296,6 +296,7 @@ class OutlookInboxEmailPreviewOut(APIModel):
     subject: str
     sender: str
     snippet: str
+    folder: str = "inbox"
     received_at: datetime | None = None
     is_hebrew: bool = False
     has_task_signal: bool = False
@@ -306,8 +307,11 @@ class OutlookInboxPreviewOut(APIModel):
     connected: bool
     has_refresh_token: bool
     account_email: str
+    mailbox_email: str | None = None
     fetch_ok: bool
     inbox_count: int = 0
+    sent_count: int = 0
+    junk_count: int = 0
     error: str | None = None
     messages: list[OutlookInboxEmailPreviewOut] = Field(default_factory=list)
 

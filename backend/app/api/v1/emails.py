@@ -73,10 +73,16 @@ async def outlook_inbox_preview(
         )
 
     try:
-        emails = await outlook_mail.fetch_recent_emails(user.outlook_refresh_token)
+        snapshot = await outlook_mail.fetch_mailbox_snapshot(user.outlook_refresh_token)
     except Exception as exc:
         return base.model_copy(update={"error": str(exc)})
 
+    new_refresh = snapshot.get("new_refresh_token")
+    if new_refresh:
+        user.outlook_refresh_token = new_refresh
+        db.commit()
+
+    emails = snapshot["messages"]
     ingested_ids = {
         row[0]
         for row in db.query(Task.email_message_id)
@@ -95,6 +101,7 @@ async def outlook_inbox_preview(
                 subject=subject,
                 sender=email["sender"],
                 snippet=snippet[:200],
+                folder=email.get("folder", "inbox"),
                 received_at=email.get("received_at"),
                 is_hebrew=ai_service.is_hebrew_email(subject, snippet),
                 has_task_signal=ai_service.looks_like_task_candidate(subject, snippet),
@@ -105,7 +112,10 @@ async def outlook_inbox_preview(
     return base.model_copy(
         update={
             "fetch_ok": True,
-            "inbox_count": len(messages),
+            "mailbox_email": snapshot.get("mailbox_email"),
+            "inbox_count": snapshot.get("inbox_count", 0),
+            "sent_count": snapshot.get("sent_count", 0),
+            "junk_count": snapshot.get("junk_count", 0),
             "messages": messages,
         }
     )

@@ -286,9 +286,11 @@ abstract class AppLocalizations {
   String get outlookConnectHint;
   String get outlookTestInboxButton;
   String get outlookInboxPreviewTitle;
-  String outlookInboxPreviewSummary(int count, String email);
+  String outlookInboxPreviewSummary(int inbox, int sent, int junk, String mailbox);
   String get outlookInboxPreviewError;
   String get outlookInboxPreviewEmpty;
+  String get outlookInboxSelfSentHint;
+  String outlookInboxFolderLabel(String folder);
   String get outlookInboxHebrew;
   String get outlookInboxTaskSignal;
   String get outlookInboxAlreadyIngested;
@@ -850,12 +852,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get outlookInboxPreviewTitle => 'Outlook inbox preview';
   @override
-  String outlookInboxPreviewSummary(int count, String email) =>
-      'Fetched $count recent inbox email${count == 1 ? '' : 's'} for $email';
+  String outlookInboxPreviewSummary(int inbox, int sent, int junk, String mailbox) =>
+      'Mailbox: $mailbox\nInbox: $inbox · Sent: $sent · Junk: $junk';
   @override
   String get outlookInboxPreviewError => 'Could not read Outlook inbox.';
   @override
-  String get outlookInboxPreviewEmpty => 'Inbox is empty or no messages returned.';
+  String get outlookInboxPreviewEmpty =>
+      'No messages returned from Outlook (inbox, sent, junk all empty). '
+      'Try sending from another email address, not to yourself.';
+  @override
+  String get outlookInboxSelfSentHint =>
+      'Emails you send to yourself often appear under Sent, not Inbox.';
+  @override
+  String outlookInboxFolderLabel(String folder) {
+    switch (folder) {
+      case 'sentitems':
+        return 'Sent';
+      case 'junkemail':
+        return 'Junk';
+      default:
+        return 'Inbox';
+    }
+  }
   @override
   String get outlookInboxHebrew => 'Hebrew';
   @override
@@ -1530,12 +1548,28 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get outlookInboxPreviewTitle => 'תצוגת תיבת Outlook';
   @override
-  String outlookInboxPreviewSummary(int count, String email) =>
-      'נשלפו $count מיילים אחרונים מדואר נכנס עבור $email';
+  String outlookInboxPreviewSummary(int inbox, int sent, int junk, String mailbox) =>
+      'תיבה: $mailbox\nנכנס: $inbox · נשלח: $sent · זבל: $junk';
   @override
   String get outlookInboxPreviewError => 'לא ניתן לקרוא את תיבת Outlook.';
   @override
-  String get outlookInboxPreviewEmpty => 'תיבת הדואר ריקה או שלא הוחזרו הודעות.';
+  String get outlookInboxPreviewEmpty =>
+      'לא הוחזרו הודעות מ-Outlook (נכנס, נשלח וזבל ריקים). '
+      'נסו לשלוח מכתובת אחרת, לא לעצמכם.';
+  @override
+  String get outlookInboxSelfSentHint =>
+      'מייל ששולחים לעצמכם לרוב מופיע ב«נשלח», לא ב«נכנס».';
+  @override
+  String outlookInboxFolderLabel(String folder) {
+    switch (folder) {
+      case 'sentitems':
+        return 'נשלח';
+      case 'junkemail':
+        return 'זבל';
+      default:
+        return 'נכנס';
+    }
+  }
   @override
   String get outlookInboxHebrew => 'עברית';
   @override
