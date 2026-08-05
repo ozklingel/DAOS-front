@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:daos/core/errors/app_exception.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/route_names.dart';
@@ -19,6 +20,7 @@ class IntegrationsSheet extends ConsumerStatefulWidget {
 class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
   bool _isConnecting = false;
   bool _isLinkingWhatsApp = false;
+  bool _isTestingOutlookInbox = false;
 
   bool get _isDevAccount {
     final email = ref.read(authStateProvider).user?.email ?? '';
@@ -95,6 +97,26 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
       }
     } finally {
       if (mounted) setState(() => _isLinkingWhatsApp = false);
+    }
+  }
+
+  Future<void> _previewOutlookInbox(AppLocalizations l) async {
+    setState(() => _isTestingOutlookInbox = true);
+    try {
+      final preview = await ref.read(settingsProvider.notifier).previewOutlookInbox();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => _OutlookInboxPreviewDialog(l: l, preview: preview),
+      );
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.errorMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isTestingOutlookInbox = false);
     }
   }
 
@@ -194,6 +216,20 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               },
               onDisconnect: () => ref.read(authStateProvider.notifier).disconnectOutlook(),
             ),
+            if (outlookConnected) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _isTestingOutlookInbox ? null : () => _previewOutlookInbox(l),
+                icon: _isTestingOutlookInbox
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.inbox_outlined),
+                label: Text(l.outlookTestInboxButton),
+              ),
+            ],
             if (gmailConnected || outlookConnected) ...[
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -226,6 +262,86 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _OutlookInboxPreviewDialog extends StatelessWidget {
+  const _OutlookInboxPreviewDialog({
+    required this.l,
+    required this.preview,
+  });
+
+  final AppLocalizations l;
+  final OutlookInboxPreviewModel preview;
+
+  @override
+  Widget build(BuildContext context) {
+    final error = preview.error;
+    final messages = preview.messages;
+
+    return AlertDialog(
+      title: Text(l.outlookInboxPreviewTitle),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: error != null && !preview.fetchOk
+            ? Text('$error\n\n${l.outlookInboxPreviewError}')
+            : messages.isEmpty
+                ? Text(l.outlookInboxPreviewEmpty)
+                : SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          l.outlookInboxPreviewSummary(preview.inboxCount, preview.accountEmail),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        ...messages.map((m) {
+                          final flags = <String>[
+                            if (m.isHebrew) l.outlookInboxHebrew,
+                            if (m.hasTaskSignal) l.outlookInboxTaskSignal,
+                            if (m.alreadyIngested) l.outlookInboxAlreadyIngested,
+                          ];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  m.subject,
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                if (m.sender.isNotEmpty)
+                                  Text(
+                                    m.sender,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.darkTextSecondary,
+                                    ),
+                                  ),
+                                if (flags.isNotEmpty)
+                                  Text(
+                                    flags.join(' · '),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
     );
   }
 }

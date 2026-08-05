@@ -291,6 +291,27 @@ class EmailAnalyzePreviewOut(APIModel):
     analysis: dict | None = None
 
 
+class OutlookInboxEmailPreviewOut(APIModel):
+    message_id: str
+    subject: str
+    sender: str
+    snippet: str
+    received_at: datetime | None = None
+    is_hebrew: bool = False
+    has_task_signal: bool = False
+    already_ingested: bool = False
+
+
+class OutlookInboxPreviewOut(APIModel):
+    connected: bool
+    has_refresh_token: bool
+    account_email: str
+    fetch_ok: bool
+    inbox_count: int = 0
+    error: str | None = None
+    messages: list[OutlookInboxEmailPreviewOut] = Field(default_factory=list)
+
+
 class SettingsOut(APIModel):
     push_notifications_enabled: bool = True
     daily_brief_enabled: bool = True

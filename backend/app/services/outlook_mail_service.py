@@ -74,6 +74,7 @@ class OutlookMailService:
                     "sender_name": sender_name,
                     "sender_email": sender_email,
                     "snippet": message.get("bodyPreview", ""),
+                    "received_at": message.get("receivedDateTime"),
                 }
             )
 

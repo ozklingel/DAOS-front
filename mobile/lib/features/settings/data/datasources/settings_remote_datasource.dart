@@ -1,5 +1,6 @@
 import 'package:daos/core/constants/api_constants.dart';
 import 'package:daos/core/network/api_client.dart';
+import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/data/models/settings_model.dart';
 
 class SettingsRemoteDataSource {
@@ -33,5 +34,13 @@ class SettingsRemoteDataSource {
       created: data['created'] as int? ?? 0,
       scanned: data['scanned'] as int? ?? 0,
     );
+  }
+
+  Future<OutlookInboxPreviewModel> previewOutlookInbox() async {
+    final data = await _client.get<Map<String, dynamic>>(
+      ApiConstants.outlookInboxPreview,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return OutlookInboxPreviewModel.fromJson(data);
   }
 }

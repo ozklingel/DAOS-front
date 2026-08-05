@@ -284,6 +284,14 @@ abstract class AppLocalizations {
   String get gmailDisconnected;
   String get outlookDisconnected;
   String get outlookConnectHint;
+  String get outlookTestInboxButton;
+  String get outlookInboxPreviewTitle;
+  String outlookInboxPreviewSummary(int count, String email);
+  String get outlookInboxPreviewError;
+  String get outlookInboxPreviewEmpty;
+  String get outlookInboxHebrew;
+  String get outlookInboxTaskSignal;
+  String get outlookInboxAlreadyIngested;
   String get outlookOAuthCompleting;
   String get outlookOAuthMissingCode;
   String syncCompleteTasks(int count);
@@ -837,6 +845,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get outlookConnectHint =>
       'Connect Microsoft Outlook to sync emails into tasks.';
+  @override
+  String get outlookTestInboxButton => 'Test Outlook inbox';
+  @override
+  String get outlookInboxPreviewTitle => 'Outlook inbox preview';
+  @override
+  String outlookInboxPreviewSummary(int count, String email) =>
+      'Fetched $count recent inbox email${count == 1 ? '' : 's'} for $email';
+  @override
+  String get outlookInboxPreviewError => 'Could not read Outlook inbox.';
+  @override
+  String get outlookInboxPreviewEmpty => 'Inbox is empty or no messages returned.';
+  @override
+  String get outlookInboxHebrew => 'Hebrew';
+  @override
+  String get outlookInboxTaskSignal => 'Task signal';
+  @override
+  String get outlookInboxAlreadyIngested => 'Already ingested';
   @override
   String get outlookOAuthCompleting => 'Completing Outlook sign-in…';
   @override
@@ -1500,6 +1525,23 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get outlookConnectHint =>
       'חברו את Outlook כדי לסנכרן מיילים למשימות.';
+  @override
+  String get outlookTestInboxButton => 'בדוק תיבת Outlook';
+  @override
+  String get outlookInboxPreviewTitle => 'תצוגת תיבת Outlook';
+  @override
+  String outlookInboxPreviewSummary(int count, String email) =>
+      'נשלפו $count מיילים אחרונים מדואר נכנס עבור $email';
+  @override
+  String get outlookInboxPreviewError => 'לא ניתן לקרוא את תיבת Outlook.';
+  @override
+  String get outlookInboxPreviewEmpty => 'תיבת הדואר ריקה או שלא הוחזרו הודעות.';
+  @override
+  String get outlookInboxHebrew => 'עברית';
+  @override
+  String get outlookInboxTaskSignal => 'סימן משימה';
+  @override
+  String get outlookInboxAlreadyIngested => 'כבר נקלט';
   @override
   String get outlookOAuthCompleting => 'משלימים התחברות ל-Outlook…';
   @override

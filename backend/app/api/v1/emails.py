@@ -10,13 +10,18 @@ from app.schemas import (
     EmailAnalyzePreviewIn,
     EmailAnalyzePreviewOut,
     EmailSyncOut,
+    OutlookInboxPreviewOut,
+    OutlookInboxEmailPreviewOut,
 )
 from app.services.ai_service import AIService
 from app.services.email_sync_service import EmailSyncService
+from app.services.outlook_mail_service import OutlookMailService
+from app.models import Task
 
 router = APIRouter(prefix="/emails", tags=["emails"])
 email_sync = EmailSyncService()
 ai_service = AIService()
+outlook_mail = OutlookMailService()
 
 
 @router.get("/ai-status", response_model=EmailAiStatusOut)
@@ -43,6 +48,66 @@ def analyze_email_preview(body: EmailAnalyzePreviewIn):
         is_hebrew=is_hebrew,
         source=source,
         analysis=analysis,
+    )
+
+
+@router.get("/outlook/inbox-preview", response_model=OutlookInboxPreviewOut)
+async def outlook_inbox_preview(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Prove Outlook inbox access: lists recent inbox messages and sync filter status."""
+    base = OutlookInboxPreviewOut(
+        connected=bool(user.outlook_connected),
+        has_refresh_token=bool(user.outlook_refresh_token),
+        account_email=user.email,
+        fetch_ok=False,
+    )
+    if not user.outlook_connected:
+        return base.model_copy(update={"error": "Outlook is not connected for this account."})
+    if not user.outlook_refresh_token:
+        return base.model_copy(
+            update={
+                "error": "Missing Outlook refresh token — disconnect and reconnect Outlook.",
+            }
+        )
+
+    try:
+        emails = await outlook_mail.fetch_recent_emails(user.outlook_refresh_token)
+    except Exception as exc:
+        return base.model_copy(update={"error": str(exc)})
+
+    ingested_ids = {
+        row[0]
+        for row in db.query(Task.email_message_id)
+        .filter(Task.user_id == user.id, Task.email_message_id.isnot(None))
+        .all()
+    }
+
+    messages: list[OutlookInboxEmailPreviewOut] = []
+    for email in emails:
+        subject = email["subject"]
+        snippet = email["snippet"]
+        message_id = email["message_id"]
+        messages.append(
+            OutlookInboxEmailPreviewOut(
+                message_id=message_id,
+                subject=subject,
+                sender=email["sender"],
+                snippet=snippet[:200],
+                received_at=email.get("received_at"),
+                is_hebrew=ai_service.is_hebrew_email(subject, snippet),
+                has_task_signal=ai_service.looks_like_task_candidate(subject, snippet),
+                already_ingested=message_id in ingested_ids,
+            )
+        )
+
+    return base.model_copy(
+        update={
+            "fetch_ok": True,
+            "inbox_count": len(messages),
+            "messages": messages,
+        }
     )
 
 

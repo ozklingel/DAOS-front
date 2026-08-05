@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/di/providers.dart';
+import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/domain/entities/app_settings.dart';
 
 final settingsProvider =
@@ -22,5 +23,9 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
 
   Future<({int created, int scanned})> syncEmails() async {
     return ref.read(settingsRepositoryProvider).syncEmails();
+  }
+
+  Future<OutlookInboxPreviewModel> previewOutlookInbox() async {
+    return ref.read(settingsRepositoryProvider).previewOutlookInbox();
   }
 }
