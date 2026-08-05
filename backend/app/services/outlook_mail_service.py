@@ -153,33 +153,21 @@ class OutlookMailService:
         )
         emails = self._sort_newest_first(self._parse_messages(payload.get("value", [])))
         if emails:
-            return emails[:max_results], "inbox_no_orderby"
+            return emails[:max_results], "inbox"
 
-        # Fallback: resolve inbox folder id explicitly (rare locale / folder edge cases).
-        folders = await self._get_json(
-            access_token,
-            "https://graph.microsoft.com/v1.0/me/mailFolders",
-            params={
-                "$filter": "wellKnownName eq 'inbox'",
-                "$select": "id,displayName,totalItemCount",
-                "$top": 1,
-            },
-            error_label="Resolve Outlook inbox folder",
-        )
-        folder = (folders.get("value") or [None])[0]
-        if folder and folder.get("id"):
-            folder_url = (
-                f"https://graph.microsoft.com/v1.0/me/mailFolders/{folder['id']}/messages"
-            )
+        # Primary returned 200 but empty — retry with a larger page (no $orderby; sort locally).
+        try:
             payload = await self._get_json(
                 access_token,
-                folder_url,
-                params=params,
-                error_label="Fetch Outlook inbox by folder id",
+                self.GRAPH_INBOX_URL,
+                params={"$top": 50, "$select": "id,subject,from,bodyPreview,receivedDateTime"},
+                error_label="Fetch Outlook inbox (retry)",
             )
             emails = self._sort_newest_first(self._parse_messages(payload.get("value", [])))
             if emails:
-                return emails[:max_results], "inbox_folder_id"
+                return emails[:max_results], "inbox_retry"
+        except ValueError:
+            pass
 
         return [], "empty"
 
