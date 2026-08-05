@@ -284,12 +284,23 @@ abstract class AppLocalizations {
   String get gmailDisconnected;
   String get outlookDisconnected;
   String get outlookConnectHint;
+  String outlookConnectedAs(String email);
   String get outlookTestInboxButton;
   String get outlookInboxPreviewTitle;
   String outlookInboxPreviewSummary(int inboxCount, String mailbox);
+  String outlookInboxDiagnostics(
+    String daosEmail,
+    String mailbox,
+    int totalItems,
+    int unreadItems,
+    bool? mailReadGranted,
+    bool? emailsMatch,
+  );
   String get outlookInboxLatestTitle;
   String get outlookInboxPreviewError;
   String get outlookInboxPreviewEmpty;
+  String outlookInboxPreviewStatsMismatch(int totalItems);
+  String get outlookRefreshTokenHint;
   String get outlookInboxHebrew;
   String get outlookInboxTaskSignal;
   String get outlookInboxAlreadyIngested;
@@ -847,6 +858,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outlookConnectHint =>
       'Connect Microsoft Outlook to sync emails into tasks.';
   @override
+  String outlookConnectedAs(String email) => 'DAOS account: $email';
+  @override
   String get outlookTestInboxButton => 'Test Outlook inbox';
   @override
   String get outlookInboxPreviewTitle => 'Outlook inbox preview';
@@ -854,12 +867,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String outlookInboxPreviewSummary(int inboxCount, String mailbox) =>
       'Inbox for $mailbox — $inboxCount recent message${inboxCount == 1 ? '' : 's'}';
   @override
+  String outlookInboxDiagnostics(
+    String daosEmail,
+    String mailbox,
+    int totalItems,
+    int unreadItems,
+    bool? mailReadGranted,
+    bool? emailsMatch,
+  ) =>
+      'DAOS account: $daosEmail\n'
+      'Outlook mailbox: $mailbox\n'
+      'Inbox total (Graph): $totalItems · unread: $unreadItems\n'
+      'Mail.Read: ${mailReadGranted == true ? 'yes' : mailReadGranted == false ? 'NO' : '?'}\n'
+      'Accounts match: ${emailsMatch == true ? 'yes' : emailsMatch == false ? 'NO' : '?'}';
+  @override
   String get outlookInboxLatestTitle => 'Latest inbox message';
   @override
   String get outlookInboxPreviewError => 'Could not read Outlook inbox.';
   @override
   String get outlookInboxPreviewEmpty =>
       'Inbox is empty — no messages returned from Outlook.';
+  @override
+  String outlookInboxPreviewStatsMismatch(int totalItems) =>
+      'Outlook reports $totalItems messages in Inbox, but none were returned. '
+      'Reconnect Outlook after deploying the latest server fix.';
+  @override
+  String get outlookRefreshTokenHint =>
+      'Refresh token is stored securely on the server (not in the app). '
+      'If Outlook shows Connected, the token exists.';
   @override
   String get outlookInboxHebrew => 'Hebrew';
   @override
@@ -1530,6 +1565,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get outlookConnectHint =>
       'חברו את Outlook כדי לסנכרן מיילים למשימות.';
   @override
+  String outlookConnectedAs(String email) => 'חשבון DAOS: $email';
+  @override
   String get outlookTestInboxButton => 'בדוק תיבת Outlook';
   @override
   String get outlookInboxPreviewTitle => 'תצוגת תיבת Outlook';
@@ -1537,12 +1574,33 @@ class AppLocalizationsHe extends AppLocalizations {
   String outlookInboxPreviewSummary(int inboxCount, String mailbox) =>
       'דואר נכנס של $mailbox — $inboxCount הודעות אחרונות';
   @override
+  String outlookInboxDiagnostics(
+    String daosEmail,
+    String mailbox,
+    int totalItems,
+    int unreadItems,
+    bool? mailReadGranted,
+    bool? emailsMatch,
+  ) =>
+      'חשבון DAOS: $daosEmail\n'
+      'תיבת Outlook: $mailbox\n'
+      'סה"כ ב-Inbox (Graph): $totalItems · לא נקראו: $unreadItems\n'
+      'Mail.Read: ${mailReadGranted == true ? 'כן' : mailReadGranted == false ? 'לא' : '?'}\n'
+      'החשבונות תואמים: ${emailsMatch == true ? 'כן' : emailsMatch == false ? 'לא' : '?'}';
+  @override
   String get outlookInboxLatestTitle => 'המייל האחרון בדואר נכנס';
   @override
   String get outlookInboxPreviewError => 'לא ניתן לקרוא את תיבת Outlook.';
   @override
   String get outlookInboxPreviewEmpty =>
       'דואר נכנס ריק — Outlook לא החזיר הודעות.';
+  @override
+  String outlookInboxPreviewStatsMismatch(int totalItems) =>
+      'Outlook מדווח על $totalItems הודעות ב-Inbox, אבל לא הוחזרה אף אחת. '
+      'נתקו וחברו Outlook אחרי deploy של התיקון האחרון.';
+  @override
+  String get outlookRefreshTokenHint =>
+      'Refresh token שמור בשרת (לא באפליקציה). אם Outlook «מחובר» — ה-token קיים.';
   @override
   String get outlookInboxHebrew => 'עברית';
   @override

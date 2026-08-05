@@ -307,6 +307,11 @@ class OutlookInboxPreviewOut(APIModel):
     has_refresh_token: bool
     account_email: str
     mailbox_email: str | None = None
+    mailbox_upn: str | None = None
+    emails_match: bool | None = None
+    mail_read_granted: bool | None = None
+    inbox_total_items: int = 0
+    inbox_unread_items: int = 0
     fetch_ok: bool
     inbox_count: int = 0
     latest_inbox: OutlookInboxEmailPreviewOut | None = None

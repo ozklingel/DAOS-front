@@ -110,17 +110,40 @@ async def outlook_inbox_preview(
     latest = _to_preview(latest_raw) if latest_raw else None
 
     mailbox_email = preview.get("mailbox_email")
-    error = None
-    if mailbox_email and user.email.lower() != mailbox_email.lower():
+    mailbox_upn = preview.get("mailbox_upn")
+    emails_match = None
+    if mailbox_email:
+        emails_match = user.email.lower() == mailbox_email.lower()
+    elif mailbox_upn:
+        emails_match = user.email.lower() == mailbox_upn.lower()
+
+    error = preview.get("inbox_stats_error")
+    if not error and mailbox_email and user.email.lower() not in {
+        mailbox_email.lower(),
+        (mailbox_upn or "").lower(),
+    }:
         error = (
-            f"Outlook token reads mailbox {mailbox_email}, but DAOS account is {user.email}. "
-            "Connect the Outlook account that receives your test emails."
+            f"DAOS account is {user.email}, but Outlook token reads {mailbox_email}. "
+            "Sign in with that Outlook address or reconnect Outlook after picking the correct Microsoft account."
+        )
+    if not error and preview.get("mail_read_granted") is False:
+        error = "Mail.Read permission missing — disconnect Outlook, reconnect, and accept mail access."
+    total_items = preview.get("inbox_total_items", 0)
+    if not error and total_items > 0 and not latest:
+        error = (
+            f"Outlook reports {total_items} inbox messages but Graph returned none. "
+            "Try disconnect/reconnect Outlook; if it persists, contact support."
         )
 
     return base.model_copy(
         update={
             "fetch_ok": True,
             "mailbox_email": mailbox_email,
+            "mailbox_upn": mailbox_upn,
+            "emails_match": emails_match,
+            "mail_read_granted": preview.get("mail_read_granted"),
+            "inbox_total_items": preview.get("inbox_total_items", 0),
+            "inbox_unread_items": preview.get("inbox_unread_items", 0),
             "inbox_count": preview.get("inbox_count", 0),
             "latest_inbox": latest,
             "messages": messages,

@@ -189,7 +189,9 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               connected: outlookConnected,
               connectedLabel: l.connected,
               notConnectedLabel: l.notConnected,
-              hint: l.outlookConnectHint,
+              hint: outlookConnected && user?.email != null
+                  ? '${l.outlookConnectHint}\n${l.outlookConnectedAs(user!.email)}'
+                  : l.outlookConnectHint,
               connectLabel: l.connect,
               disconnectLabel: l.disconnect,
               isLoading: _isConnecting,
@@ -339,7 +341,15 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final error = preview.error;
     final latest = preview.latestInbox;
-    final mailbox = preview.mailboxEmail ?? preview.accountEmail;
+    final mailbox = preview.mailboxEmail ?? preview.mailboxUpn ?? preview.accountEmail;
+    final diagnostics = l.outlookInboxDiagnostics(
+      preview.accountEmail,
+      mailbox,
+      preview.inboxTotalItems,
+      preview.inboxUnreadItems,
+      preview.mailReadGranted,
+      preview.emailsMatch,
+    );
 
     return AlertDialog(
       title: Text(l.outlookInboxPreviewTitle),
@@ -352,6 +362,11 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        diagnostics,
+                        style: const TextStyle(fontSize: 12, height: 1.4),
+                      ),
+                      const SizedBox(height: 12),
                       Text(l.outlookInboxPreviewSummary(preview.inboxCount, mailbox)),
                       if (error != null) ...[
                         const SizedBox(height: 8),
@@ -361,13 +376,29 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 12),
-                      Text(l.outlookInboxPreviewEmpty),
+                      if (preview.inboxTotalItems > 0)
+                        Text(l.outlookInboxPreviewStatsMismatch(preview.inboxTotalItems))
+                      else
+                        Text(l.outlookInboxPreviewEmpty),
+                      const SizedBox(height: 8),
+                      Text(
+                        l.outlookRefreshTokenHint,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.darkTextSecondary,
+                        ),
+                      ),
                     ],
                   )
                 : SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text(
+                          diagnostics,
+                          style: const TextStyle(fontSize: 12, height: 1.4),
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           l.outlookInboxPreviewSummary(preview.inboxCount, mailbox),
                           style: const TextStyle(fontWeight: FontWeight.w600),

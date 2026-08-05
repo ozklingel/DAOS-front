@@ -42,6 +42,11 @@ class OutlookInboxPreviewModel {
     required this.accountEmail,
     required this.fetchOk,
     this.mailboxEmail,
+    this.mailboxUpn,
+    this.emailsMatch,
+    this.mailReadGranted,
+    this.inboxTotalItems = 0,
+    this.inboxUnreadItems = 0,
     this.inboxCount = 0,
     this.latestInbox,
     this.error,
@@ -52,6 +57,11 @@ class OutlookInboxPreviewModel {
   final bool hasRefreshToken;
   final String accountEmail;
   final String? mailboxEmail;
+  final String? mailboxUpn;
+  final bool? emailsMatch;
+  final bool? mailReadGranted;
+  final int inboxTotalItems;
+  final int inboxUnreadItems;
   final bool fetchOk;
   final int inboxCount;
   final OutlookInboxEmailPreviewModel? latestInbox;
@@ -67,6 +77,13 @@ class OutlookInboxPreviewModel {
           json['has_refresh_token'] as bool? ?? json['hasRefreshToken'] as bool? ?? false,
       accountEmail: json['account_email'] as String? ?? json['accountEmail'] as String? ?? '',
       mailboxEmail: json['mailbox_email'] as String? ?? json['mailboxEmail'] as String?,
+      mailboxUpn: json['mailbox_upn'] as String? ?? json['mailboxUpn'] as String?,
+      emailsMatch: json['emails_match'] as bool? ?? json['emailsMatch'] as bool?,
+      mailReadGranted: json['mail_read_granted'] as bool? ?? json['mailReadGranted'] as bool?,
+      inboxTotalItems:
+          json['inbox_total_items'] as int? ?? json['inboxTotalItems'] as int? ?? 0,
+      inboxUnreadItems:
+          json['inbox_unread_items'] as int? ?? json['inboxUnreadItems'] as int? ?? 0,
       fetchOk: json['fetch_ok'] as bool? ?? json['fetchOk'] as bool? ?? false,
       inboxCount: json['inbox_count'] as int? ?? json['inboxCount'] as int? ?? 0,
       latestInbox: latestRaw is Map<String, dynamic>
