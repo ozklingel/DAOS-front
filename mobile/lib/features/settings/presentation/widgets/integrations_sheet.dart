@@ -275,41 +275,93 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
   final AppLocalizations l;
   final OutlookInboxPreviewModel preview;
 
+  Widget _emailTile(OutlookInboxEmailPreviewModel m, {bool highlight = false}) {
+    final flags = <String>[
+      if (m.isHebrew) l.outlookInboxHebrew,
+      if (m.hasTaskSignal) l.outlookInboxTaskSignal,
+      if (m.alreadyIngested) l.outlookInboxAlreadyIngested,
+    ];
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: highlight ? AppColors.successBg.withValues(alpha: 0.35) : AppColors.darkBackgroundMid,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: highlight ? AppColors.success : AppColors.darkGlassBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            m.subject,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: highlight ? AppColors.darkTextPrimary : AppColors.darkTextPrimary,
+            ),
+          ),
+          if (m.sender.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              m.sender,
+              style: const TextStyle(fontSize: 12, color: AppColors.darkTextSecondary),
+            ),
+          ],
+          if (m.receivedAt != null && m.receivedAt!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              m.receivedAt!,
+              style: const TextStyle(fontSize: 11, color: AppColors.darkTextTertiary),
+            ),
+          ],
+          if (m.snippet.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              m.snippet,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: AppColors.darkTextSecondary),
+            ),
+          ],
+          if (flags.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              flags.join(' · '),
+              style: const TextStyle(fontSize: 12, color: AppColors.success),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final error = preview.error;
-    final messages = preview.messages;
+    final latest = preview.latestInbox;
     final mailbox = preview.mailboxEmail ?? preview.accountEmail;
 
     return AlertDialog(
       title: Text(l.outlookInboxPreviewTitle),
       content: SizedBox(
         width: double.maxFinite,
-        child: error != null && !preview.fetchOk
+        child: !preview.fetchOk && error != null
             ? Text('$error\n\n${l.outlookInboxPreviewError}')
-            : messages.isEmpty
+            : latest == null
                 ? Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l.outlookInboxPreviewSummary(
-                          preview.inboxCount,
-                          preview.sentCount,
-                          preview.junkCount,
-                          mailbox,
+                      Text(l.outlookInboxPreviewSummary(preview.inboxCount, mailbox)),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error,
+                          style: TextStyle(color: AppColors.critical, fontSize: 12),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 12),
                       Text(l.outlookInboxPreviewEmpty),
-                      const SizedBox(height: 8),
-                      Text(
-                        l.outlookInboxSelfSentHint,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.darkTextSecondary,
-                        ),
-                      ),
                     ],
                   )
                 : SingleChildScrollView(
@@ -317,59 +369,23 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          l.outlookInboxPreviewSummary(
-                            preview.inboxCount,
-                            preview.sentCount,
-                            preview.junkCount,
-                            mailbox,
-                          ),
+                          l.outlookInboxPreviewSummary(preview.inboxCount, mailbox),
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l.outlookInboxSelfSentHint,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.darkTextSecondary,
+                        if (error != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            error,
+                            style: TextStyle(color: AppColors.critical, fontSize: 12),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 12),
-                        ...messages.map((m) {
-                          final flags = <String>[
-                            l.outlookInboxFolderLabel(m.folder),
-                            if (m.isHebrew) l.outlookInboxHebrew,
-                            if (m.hasTaskSignal) l.outlookInboxTaskSignal,
-                            if (m.alreadyIngested) l.outlookInboxAlreadyIngested,
-                          ];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  m.subject,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                if (m.sender.isNotEmpty)
-                                  Text(
-                                    m.sender,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.darkTextSecondary,
-                                    ),
-                                  ),
-                                if (flags.isNotEmpty)
-                                  Text(
-                                    flags.join(' · '),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        }),
+                        Text(
+                          l.outlookInboxLatestTitle,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        _emailTile(latest, highlight: true),
                       ],
                     ),
                   ),

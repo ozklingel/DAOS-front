@@ -26,7 +26,18 @@ Write-Host "connected:          $($response.connected)" -ForegroundColor Yellow
 Write-Host "has_refresh_token:  $($response.has_refresh_token)" -ForegroundColor Yellow
 Write-Host "account_email:      $($response.account_email)" -ForegroundColor Yellow
 Write-Host "fetch_ok:           $($response.fetch_ok)" -ForegroundColor Yellow
+Write-Host "mailbox_email:      $($response.mailbox_email)" -ForegroundColor Yellow
 Write-Host "inbox_count:        $($response.inbox_count)" -ForegroundColor Yellow
+
+if ($response.latest_inbox) {
+    $latest = $response.latest_inbox
+    Write-Host ""
+    Write-Host "Latest inbox message:" -ForegroundColor Green
+    Write-Host "  Subject: $($latest.subject)"
+    Write-Host "  From:    $($latest.sender)"
+    if ($latest.received_at) { Write-Host "  At:      $($latest.received_at)" -ForegroundColor DarkGray }
+    if ($latest.snippet) { Write-Host "  Preview: $($latest.snippet)" -ForegroundColor DarkGray }
+}
 
 if ($response.error) {
     Write-Host "error:              $($response.error)" -ForegroundColor Red

@@ -56,7 +56,7 @@ async def outlook_inbox_preview(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Prove Outlook inbox access: lists recent inbox messages and sync filter status."""
+    """Prove Outlook inbox access: show mailbox + latest inbox message."""
     base = OutlookInboxPreviewOut(
         connected=bool(user.outlook_connected),
         has_refresh_token=bool(user.outlook_refresh_token),
@@ -73,16 +73,15 @@ async def outlook_inbox_preview(
         )
 
     try:
-        snapshot = await outlook_mail.fetch_mailbox_snapshot(user.outlook_refresh_token)
+        preview = await outlook_mail.fetch_inbox_preview(user.outlook_refresh_token)
     except Exception as exc:
         return base.model_copy(update={"error": str(exc)})
 
-    new_refresh = snapshot.get("new_refresh_token")
+    new_refresh = preview.get("new_refresh_token")
     if new_refresh:
         user.outlook_refresh_token = new_refresh
         db.commit()
 
-    emails = snapshot["messages"]
     ingested_ids = {
         row[0]
         for row in db.query(Task.email_message_id)
@@ -90,33 +89,42 @@ async def outlook_inbox_preview(
         .all()
     }
 
-    messages: list[OutlookInboxEmailPreviewOut] = []
-    for email in emails:
+    def _to_preview(email: dict) -> OutlookInboxEmailPreviewOut:
         subject = email["subject"]
         snippet = email["snippet"]
         message_id = email["message_id"]
-        messages.append(
-            OutlookInboxEmailPreviewOut(
-                message_id=message_id,
-                subject=subject,
-                sender=email["sender"],
-                snippet=snippet[:200],
-                folder=email.get("folder", "inbox"),
-                received_at=email.get("received_at"),
-                is_hebrew=ai_service.is_hebrew_email(subject, snippet),
-                has_task_signal=ai_service.looks_like_task_candidate(subject, snippet),
-                already_ingested=message_id in ingested_ids,
-            )
+        return OutlookInboxEmailPreviewOut(
+            message_id=message_id,
+            subject=subject,
+            sender=email["sender"],
+            snippet=snippet[:200],
+            received_at=email.get("received_at"),
+            is_hebrew=ai_service.is_hebrew_email(subject, snippet),
+            has_task_signal=ai_service.looks_like_task_candidate(subject, snippet),
+            already_ingested=message_id in ingested_ids,
+        )
+
+    emails = preview["messages"]
+    messages = [_to_preview(email) for email in emails]
+    latest_raw = preview.get("latest_inbox")
+    latest = _to_preview(latest_raw) if latest_raw else None
+
+    mailbox_email = preview.get("mailbox_email")
+    error = None
+    if mailbox_email and user.email.lower() != mailbox_email.lower():
+        error = (
+            f"Outlook token reads mailbox {mailbox_email}, but DAOS account is {user.email}. "
+            "Connect the Outlook account that receives your test emails."
         )
 
     return base.model_copy(
         update={
             "fetch_ok": True,
-            "mailbox_email": snapshot.get("mailbox_email"),
-            "inbox_count": snapshot.get("inbox_count", 0),
-            "sent_count": snapshot.get("sent_count", 0),
-            "junk_count": snapshot.get("junk_count", 0),
+            "mailbox_email": mailbox_email,
+            "inbox_count": preview.get("inbox_count", 0),
+            "latest_inbox": latest,
             "messages": messages,
+            "error": error,
         }
     )
 
