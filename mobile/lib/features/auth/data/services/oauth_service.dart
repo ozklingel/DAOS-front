@@ -273,6 +273,8 @@ class OAuthService {
             'User.Read',
             'Mail.Read',
           ],
+          additionalParameters:
+              intent == 'connect' ? const {'prompt': 'consent'} : null,
         ),
       );
 
@@ -307,6 +309,7 @@ class OAuthService {
       redirectUri: redirectUri,
       state: state,
       codeChallenge: challenge,
+      prompt: intent == 'connect' ? 'consent' : 'select_account',
     );
     webRedirect(url);
     // Navigation leaves this page; caller never continues.

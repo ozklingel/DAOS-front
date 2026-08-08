@@ -128,6 +128,12 @@ async def outlook_inbox_preview(
         )
     if not error and preview.get("mail_read_granted") is False:
         error = "Mail.Read permission missing — disconnect Outlook, reconnect, and accept mail access."
+    if not error and preview.get("has_mail_read_scope") is False:
+        scopes = preview.get("token_scopes") or "(none)"
+        error = (
+            "Outlook token does not include Mail.Read. "
+            f"Scopes: {scopes}. Disconnect Outlook, tap Connect again, and approve mail access."
+        )
     total_items = preview.get("inbox_total_items", 0)
     if not error and total_items > 0 and not latest:
         error = (
@@ -142,6 +148,8 @@ async def outlook_inbox_preview(
             "mailbox_upn": mailbox_upn,
             "emails_match": emails_match,
             "mail_read_granted": preview.get("mail_read_granted"),
+            "has_mail_read_scope": preview.get("has_mail_read_scope"),
+            "token_scopes": preview.get("token_scopes"),
             "inbox_total_items": preview.get("inbox_total_items", 0),
             "inbox_unread_items": preview.get("inbox_unread_items", 0),
             "inbox_count": preview.get("inbox_count", 0),

@@ -30,6 +30,7 @@ class MicrosoftOAuthService:
         redirect_uri: str,
         state: str,
         code_challenge: str,
+        prompt: str = "select_account",
     ) -> str:
         if not self.is_configured():
             raise ValueError(
@@ -44,7 +45,7 @@ class MicrosoftOAuthService:
             "state": state,
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
-            "prompt": "select_account",
+            "prompt": prompt,
         }
         return f"{AUTHORIZE_URL}?{urlencode(params)}"
 

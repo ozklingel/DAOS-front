@@ -45,6 +45,8 @@ class OutlookInboxPreviewModel {
     this.mailboxUpn,
     this.emailsMatch,
     this.mailReadGranted,
+    this.hasMailReadScope,
+    this.tokenScopes,
     this.inboxTotalItems = 0,
     this.inboxUnreadItems = 0,
     this.inboxCount = 0,
@@ -60,6 +62,8 @@ class OutlookInboxPreviewModel {
   final String? mailboxUpn;
   final bool? emailsMatch;
   final bool? mailReadGranted;
+  final bool? hasMailReadScope;
+  final String? tokenScopes;
   final int inboxTotalItems;
   final int inboxUnreadItems;
   final bool fetchOk;
@@ -80,6 +84,9 @@ class OutlookInboxPreviewModel {
       mailboxUpn: json['mailbox_upn'] as String? ?? json['mailboxUpn'] as String?,
       emailsMatch: json['emails_match'] as bool? ?? json['emailsMatch'] as bool?,
       mailReadGranted: json['mail_read_granted'] as bool? ?? json['mailReadGranted'] as bool?,
+      hasMailReadScope:
+          json['has_mail_read_scope'] as bool? ?? json['hasMailReadScope'] as bool?,
+      tokenScopes: json['token_scopes'] as String? ?? json['tokenScopes'] as String?,
       inboxTotalItems:
           json['inbox_total_items'] as int? ?? json['inboxTotalItems'] as int? ?? 0,
       inboxUnreadItems:

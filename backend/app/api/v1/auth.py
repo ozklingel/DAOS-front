@@ -74,6 +74,7 @@ def outlook_authorize_url(body: OutlookAuthorizeUrlIn):
             redirect_uri=body.redirect_uri,
             state=body.state,
             code_challenge=body.code_challenge,
+            prompt=body.prompt,
         )
         return OutlookAuthorizeUrlOut(url=url)
     except ValueError as exc:

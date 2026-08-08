@@ -295,6 +295,8 @@ abstract class AppLocalizations {
     int unreadItems,
     bool? mailReadGranted,
     bool? emailsMatch,
+    bool? hasMailReadScope,
+    String? tokenScopes,
   );
   String get outlookInboxLatestTitle;
   String get outlookInboxPreviewError;
@@ -874,11 +876,14 @@ class AppLocalizationsEn extends AppLocalizations {
     int unreadItems,
     bool? mailReadGranted,
     bool? emailsMatch,
+    bool? hasMailReadScope,
+    String? tokenScopes,
   ) =>
       'DAOS account: $daosEmail\n'
       'Outlook mailbox: $mailbox\n'
       'Inbox total (Graph): $totalItems · unread: $unreadItems\n'
-      'Mail.Read: ${mailReadGranted == true ? 'yes' : mailReadGranted == false ? 'NO' : '?'}\n'
+      'Mail.Read in token: ${hasMailReadScope == true ? 'yes' : hasMailReadScope == false ? 'NO' : '?'}\n'
+      'Token scopes: ${tokenScopes?.isNotEmpty == true ? tokenScopes : '(unknown)'}\n'
       'Accounts match: ${emailsMatch == true ? 'yes' : emailsMatch == false ? 'NO' : '?'}';
   @override
   String get outlookInboxLatestTitle => 'Latest inbox message';
@@ -1581,11 +1586,14 @@ class AppLocalizationsHe extends AppLocalizations {
     int unreadItems,
     bool? mailReadGranted,
     bool? emailsMatch,
+    bool? hasMailReadScope,
+    String? tokenScopes,
   ) =>
       'חשבון DAOS: $daosEmail\n'
       'תיבת Outlook: $mailbox\n'
       'סה"כ ב-Inbox (Graph): $totalItems · לא נקראו: $unreadItems\n'
-      'Mail.Read: ${mailReadGranted == true ? 'כן' : mailReadGranted == false ? 'לא' : '?'}\n'
+      'Mail.Read ב-token: ${hasMailReadScope == true ? 'כן' : hasMailReadScope == false ? 'לא' : '?'}\n'
+      'Scopes: ${tokenScopes?.isNotEmpty == true ? tokenScopes : '(לא ידוע)'}\n'
       'החשבונות תואמים: ${emailsMatch == true ? 'כן' : emailsMatch == false ? 'לא' : '?'}';
   @override
   String get outlookInboxLatestTitle => 'המייל האחרון בדואר נכנס';

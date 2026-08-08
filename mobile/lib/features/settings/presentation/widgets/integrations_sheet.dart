@@ -349,6 +349,8 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
       preview.inboxUnreadItems,
       preview.mailReadGranted,
       preview.emailsMatch,
+      preview.hasMailReadScope,
+      preview.tokenScopes,
     );
 
     return AlertDialog(

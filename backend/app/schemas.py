@@ -115,6 +115,7 @@ class OutlookAuthorizeUrlIn(APIModel):
     redirect_uri: str = Field(alias="redirectUri")
     state: str
     code_challenge: str = Field(alias="codeChallenge")
+    prompt: str = "select_account"
 
     @model_validator(mode="before")
     @classmethod
@@ -310,6 +311,8 @@ class OutlookInboxPreviewOut(APIModel):
     mailbox_upn: str | None = None
     emails_match: bool | None = None
     mail_read_granted: bool | None = None
+    has_mail_read_scope: bool | None = None
+    token_scopes: str | None = None
     inbox_total_items: int = 0
     inbox_unread_items: int = 0
     fetch_ok: bool

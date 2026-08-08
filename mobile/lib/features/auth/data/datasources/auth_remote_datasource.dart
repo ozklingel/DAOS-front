@@ -77,6 +77,7 @@ class AuthRemoteDataSource {
     required String redirectUri,
     required String state,
     required String codeChallenge,
+    String prompt = 'select_account',
   }) async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.authOutlookAuthorizeUrl,
@@ -84,6 +85,7 @@ class AuthRemoteDataSource {
         'redirectUri': redirectUri,
         'state': state,
         'codeChallenge': codeChallenge,
+        'prompt': prompt,
       },
       parser: (d) => d as Map<String, dynamic>,
     );

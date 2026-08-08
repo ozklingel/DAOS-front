@@ -1,6 +1,12 @@
+import base64
+import json
+import logging
+
 import httpx
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class OutlookMailService:
@@ -8,6 +14,24 @@ class OutlookMailService:
     GRAPH_ME_URL = "https://graph.microsoft.com/v1.0/me"
     GRAPH_INBOX_URL = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages"
     GRAPH_INBOX_META_URL = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox"
+    GRAPH_ALL_MESSAGES_URL = "https://graph.microsoft.com/v1.0/me/messages"
+
+    @staticmethod
+    def decode_token_scopes(access_token: str) -> list[str]:
+        try:
+            parts = access_token.split(".")
+            if len(parts) < 2:
+                return []
+            payload = parts[1]
+            padding = "=" * (-len(payload) % 4)
+            data = json.loads(base64.urlsafe_b64decode(payload + padding))
+            scp = data.get("scp") or data.get("roles") or ""
+            if isinstance(scp, list):
+                return [str(s) for s in scp]
+            return [s for s in str(scp).split() if s]
+        except Exception as exc:
+            logger.debug("Could not decode Outlook token scopes: %s", exc)
+            return []
 
     async def refresh_access_token(self, refresh_token: str) -> tuple[str, str | None]:
         client_id = (settings.microsoft_client_id or "").strip()
@@ -52,12 +76,8 @@ class OutlookMailService:
             "user_principal_name": data.get("userPrincipalName") or "",
         }
 
-    async def get_mailbox_email(self, access_token: str) -> str:
-        profile = await self.get_mailbox_profile(access_token)
-        return profile["email"]
-
     async def get_inbox_stats(self, access_token: str) -> dict:
-        params = {"$select": "displayName,totalItemCount,unreadItemCount"}
+        params = {"$select": "id,displayName,totalItemCount,unreadItemCount"}
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.get(
                 self.GRAPH_INBOX_META_URL,
@@ -67,9 +87,10 @@ class OutlookMailService:
         if response.status_code == 403:
             return {
                 "mail_read_granted": False,
+                "inbox_id": None,
                 "total_item_count": 0,
                 "unread_item_count": 0,
-                "error": "Mail.Read permission missing — reconnect Outlook and accept mail access.",
+                "error": "Mail.Read permission missing — disconnect Outlook, reconnect, and accept mail access.",
             }
         if response.status_code != 200:
             detail = response.text[:200]
@@ -77,6 +98,7 @@ class OutlookMailService:
         data = response.json()
         return {
             "mail_read_granted": True,
+            "inbox_id": data.get("id"),
             "total_item_count": int(data.get("totalItemCount") or 0),
             "unread_item_count": int(data.get("unreadItemCount") or 0),
             "display_name": data.get("displayName") or "Inbox",
@@ -130,44 +152,80 @@ class OutlookMailService:
             raise ValueError(f"{error_label} failed: {detail}")
         return response.json()
 
+    async def _try_fetch_messages(
+        self,
+        access_token: str,
+        url: str,
+        params: dict,
+    ) -> list[dict]:
+        try:
+            payload = await self._get_json(
+                access_token,
+                url,
+                params=params,
+                error_label="Fetch Outlook messages",
+            )
+            return self._parse_messages(payload.get("value", []))
+        except ValueError:
+            return []
+
     async def fetch_inbox_messages(
         self,
         access_token: str,
         *,
         max_results: int = 25,
+        inbox_id: str | None = None,
     ) -> tuple[list[dict], str]:
-        """Return inbox messages newest-first.
+        """Return inbox messages newest-first. Never uses $orderby (Graph quirk)."""
+        top = max(max_results, 25)
+        select = "id,subject,from,bodyPreview,receivedDateTime"
 
-        Do NOT pass $orderby to Graph — on some Outlook accounts it returns value=[]
-        even when the inbox is full (known Graph quirk). Sort locally instead.
-        """
-        params = {
-            "$top": max(max_results, 25),
-            "$select": "id,subject,from,bodyPreview,receivedDateTime",
-        }
-        payload = await self._get_json(
-            access_token,
-            self.GRAPH_INBOX_URL,
-            params=params,
-            error_label="Fetch Outlook inbox",
-        )
-        emails = self._sort_newest_first(self._parse_messages(payload.get("value", [])))
-        if emails:
-            return emails[:max_results], "inbox"
+        attempts: list[tuple[str, dict]] = [
+            (self.GRAPH_INBOX_URL, {"$top": top, "$select": select}),
+            (self.GRAPH_INBOX_URL, {"$top": top}),
+        ]
 
-        # Primary returned 200 but empty — retry with a larger page (no $orderby; sort locally).
-        try:
-            payload = await self._get_json(
-                access_token,
-                self.GRAPH_INBOX_URL,
-                params={"$top": 50, "$select": "id,subject,from,bodyPreview,receivedDateTime"},
-                error_label="Fetch Outlook inbox (retry)",
+        if inbox_id:
+            folder_url = f"https://graph.microsoft.com/v1.0/me/mailFolders/{inbox_id}/messages"
+            attempts.append((folder_url, {"$top": top, "$select": select}))
+
+        # Last resort: scan recent mail and keep only messages in the inbox folder.
+        attempts.append(
+            (
+                self.GRAPH_ALL_MESSAGES_URL,
+                {
+                    "$top": 50,
+                    "$select": f"{select},parentFolderId",
+                },
             )
-            emails = self._sort_newest_first(self._parse_messages(payload.get("value", [])))
-            if emails:
-                return emails[:max_results], "inbox_retry"
-        except ValueError:
-            pass
+        )
+
+        for url, params in attempts:
+            if url == self.GRAPH_ALL_MESSAGES_URL:
+                continue
+            raw = await self._try_fetch_messages(access_token, url, params)
+            if raw:
+                emails = self._sort_newest_first(raw)
+                source = "inbox_folder_id" if inbox_id and url.endswith(f"/{inbox_id}/messages") else "inbox"
+                return emails[:max_results], source
+
+        if inbox_id:
+            try:
+                payload = await self._get_json(
+                    access_token,
+                    self.GRAPH_ALL_MESSAGES_URL,
+                    params={"$top": 50, "$select": f"{select},parentFolderId"},
+                    error_label="Fetch all messages",
+                )
+                filtered = [
+                    m for m in payload.get("value", []) if m.get("parentFolderId") == inbox_id
+                ]
+                raw = self._parse_messages(filtered)
+                if raw:
+                    emails = self._sort_newest_first(raw)
+                    return emails[:max_results], "all_messages_filtered"
+            except ValueError:
+                pass
 
         return [], "empty"
 
@@ -177,7 +235,12 @@ class OutlookMailService:
         max_results: int = 25,
     ) -> tuple[list[dict], str | None]:
         access_token, new_refresh = await self.refresh_access_token(refresh_token)
-        emails, _source = await self.fetch_inbox_messages(access_token, max_results=max_results)
+        stats = await self.get_inbox_stats(access_token)
+        emails, _source = await self.fetch_inbox_messages(
+            access_token,
+            max_results=max_results,
+            inbox_id=stats.get("inbox_id"),
+        )
         return emails, new_refresh
 
     async def fetch_inbox_preview(
@@ -187,15 +250,21 @@ class OutlookMailService:
         max_results: int = 10,
     ) -> dict:
         access_token, new_refresh = await self.refresh_access_token(refresh_token)
+        scopes = self.decode_token_scopes(access_token)
         profile = await self.get_mailbox_profile(access_token)
         inbox_stats = await self.get_inbox_stats(access_token)
         emails, fetch_source = await self.fetch_inbox_messages(
-            access_token, max_results=max_results
+            access_token,
+            max_results=max_results,
+            inbox_id=inbox_stats.get("inbox_id"),
         )
+        has_mail_read = any(s.lower() == "mail.read" for s in scopes)
         return {
             "mailbox_email": profile["email"],
             "mailbox_upn": profile["user_principal_name"],
             "mailbox_display_name": profile["display_name"],
+            "token_scopes": " ".join(scopes),
+            "has_mail_read_scope": has_mail_read,
             "mail_read_granted": inbox_stats.get("mail_read_granted", False),
             "inbox_total_items": inbox_stats.get("total_item_count", 0),
             "inbox_unread_items": inbox_stats.get("unread_item_count", 0),
