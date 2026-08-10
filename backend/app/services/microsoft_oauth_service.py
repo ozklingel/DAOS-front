@@ -15,6 +15,24 @@ AUTHORIZE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 SCOPES = "openid profile email offline_access User.Read Mail.Read"
 
+_PERSONAL_EMAIL_DOMAINS = frozenset(
+    {"outlook.com", "hotmail.com", "live.com", "msn.com", "gmail.com"}
+)
+
+
+def build_admin_consent_url(*, account_email: str, client_id: str) -> str | None:
+    """Tenant admin consent URL for work/school accounts (Option B for IT)."""
+    cid = (client_id or "").strip()
+    if not cid or cid in {"your-azure-app-client-id", "YOUR_OUTLOOK_CLIENT_ID"}:
+        return None
+    email = (account_email or "").strip().lower()
+    if "@" not in email:
+        return None
+    domain = email.rsplit("@", 1)[-1]
+    if not domain or domain in _PERSONAL_EMAIL_DOMAINS:
+        return None
+    return f"https://login.microsoftonline.com/{domain}/adminconsent?client_id={cid}"
+
 
 class MicrosoftOAuthService:
     def is_configured(self) -> bool:

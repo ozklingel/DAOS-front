@@ -318,6 +318,7 @@ class OutlookInboxPreviewOut(APIModel):
     fetch_ok: bool
     inbox_count: int = 0
     latest_inbox: OutlookInboxEmailPreviewOut | None = None
+    admin_consent_url: str | None = None
     error: str | None = None
     messages: list[OutlookInboxEmailPreviewOut] = Field(default_factory=list)
 

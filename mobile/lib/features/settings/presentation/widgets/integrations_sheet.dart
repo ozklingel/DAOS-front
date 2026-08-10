@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:daos/core/errors/app_exception.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
 import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
@@ -337,6 +339,53 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
     );
   }
 
+  Widget _adminConsentSection(BuildContext context, String url) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Text(
+          l.outlookAdminConsentHint,
+          style: const TextStyle(fontSize: 12, height: 1.4),
+        ),
+        const SizedBox(height: 8),
+        SelectableText(
+          url,
+          style: const TextStyle(fontSize: 11, color: AppColors.primary),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            TextButton.icon(
+              onPressed: () async {
+                final uri = Uri.tryParse(url);
+                if (uri != null && await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(l.outlookAdminConsentOpenButton),
+            ),
+            TextButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l.outlookAdminConsentCopied)),
+                  );
+                }
+              },
+              icon: const Icon(Icons.copy, size: 16),
+              label: Text(l.outlookAdminConsentCopyButton),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final error = preview.error;
@@ -377,6 +426,8 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
                           style: TextStyle(color: AppColors.critical, fontSize: 12),
                         ),
                       ],
+                      if (preview.adminConsentUrl != null)
+                        _adminConsentSection(context, preview.adminConsentUrl!),
                       const SizedBox(height: 12),
                       if (preview.inboxTotalItems > 0)
                         Text(l.outlookInboxPreviewStatsMismatch(preview.inboxTotalItems))
@@ -412,6 +463,8 @@ class _OutlookInboxPreviewDialog extends StatelessWidget {
                             style: TextStyle(color: AppColors.critical, fontSize: 12),
                           ),
                         ],
+                        if (preview.adminConsentUrl != null)
+                          _adminConsentSection(context, preview.adminConsentUrl!),
                         const SizedBox(height: 12),
                         Text(
                           l.outlookInboxLatestTitle,

@@ -15,6 +15,7 @@ from app.schemas import (
 )
 from app.services.ai_service import AIService
 from app.services.email_sync_service import EmailSyncService
+from app.services.microsoft_oauth_service import build_admin_consent_url
 from app.services.outlook_mail_service import OutlookMailService
 from app.models import Task
 
@@ -128,12 +129,25 @@ async def outlook_inbox_preview(
         )
     if not error and preview.get("mail_read_granted") is False:
         error = "Mail.Read permission missing — disconnect Outlook, reconnect, and accept mail access."
+    admin_consent_url = None
+    if preview.get("has_mail_read_scope") is False or preview.get("mail_read_granted") is False:
+        admin_consent_url = build_admin_consent_url(
+            account_email=user.email,
+            client_id=settings.microsoft_client_id,
+        )
     if not error and preview.get("has_mail_read_scope") is False:
         scopes = preview.get("token_scopes") or "(none)"
         error = (
             "Outlook token does not include Mail.Read. "
-            f"Scopes: {scopes}. Disconnect Outlook, tap Connect again, and approve mail access."
+            f"Scopes: {scopes}. "
         )
+        if admin_consent_url:
+            error += (
+                "Your organization may require IT admin approval — use the admin consent link below, "
+                "then disconnect and reconnect Outlook."
+            )
+        else:
+            error += "Disconnect Outlook, tap Connect again, and approve mail access."
     total_items = preview.get("inbox_total_items", 0)
     if not error and total_items > 0 and not latest:
         error = (
@@ -155,6 +169,7 @@ async def outlook_inbox_preview(
             "inbox_count": preview.get("inbox_count", 0),
             "latest_inbox": latest,
             "messages": messages,
+            "admin_consent_url": admin_consent_url,
             "error": error,
         }
     )

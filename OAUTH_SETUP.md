@@ -106,7 +106,31 @@ Add delegated permissions:
 - `User.Read`
 - `Mail.Read`
 
-Grant admin consent if required by your tenant.
+### Admin consent (work / school accounts)
+
+Personal `@outlook.com` accounts can approve `Mail.Read` themselves. **Organizational tenants** (e.g. `@vikos-ltd.com`) often block delegated permissions until an **IT administrator** grants tenant-wide consent.
+
+**Option A — Azure Portal:** App registration → API permissions → **Grant admin consent for &lt;tenant&gt;**
+
+**Option B — Admin consent URL** (send to your Microsoft 365 admin):
+
+```
+https://login.microsoftonline.com/{TENANT_DOMAIN}/adminconsent?client_id={MICROSOFT_CLIENT_ID}
+```
+
+Example for `vikos-ltd.com`:
+
+```
+https://login.microsoftonline.com/vikos-ltd.com/adminconsent?client_id=<your Azure application client ID>
+```
+
+After the admin approves:
+
+1. In DAOS → Settings → Integrations → **Disconnect** Outlook  
+2. **Connect** again and sign in with the work account  
+3. Tap **Check Outlook inbox** — diagnostics should show `Mail.Read in token: yes`
+
+The app also surfaces this link automatically when inbox preview detects missing `Mail.Read` on a work account.
 
 ### 3. Copy Client ID + secret
 

@@ -51,6 +51,7 @@ class OutlookInboxPreviewModel {
     this.inboxUnreadItems = 0,
     this.inboxCount = 0,
     this.latestInbox,
+    this.adminConsentUrl,
     this.error,
     this.messages = const [],
   });
@@ -69,6 +70,7 @@ class OutlookInboxPreviewModel {
   final bool fetchOk;
   final int inboxCount;
   final OutlookInboxEmailPreviewModel? latestInbox;
+  final String? adminConsentUrl;
   final String? error;
   final List<OutlookInboxEmailPreviewModel> messages;
 
@@ -96,6 +98,8 @@ class OutlookInboxPreviewModel {
       latestInbox: latestRaw is Map<String, dynamic>
           ? OutlookInboxEmailPreviewModel.fromJson(latestRaw)
           : null,
+      adminConsentUrl:
+          json['admin_consent_url'] as String? ?? json['adminConsentUrl'] as String?,
       error: json['error'] as String?,
       messages: rawMessages
           .map((m) => OutlookInboxEmailPreviewModel.fromJson(m as Map<String, dynamic>))

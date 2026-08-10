@@ -303,6 +303,10 @@ abstract class AppLocalizations {
   String get outlookInboxPreviewEmpty;
   String outlookInboxPreviewStatsMismatch(int totalItems);
   String get outlookRefreshTokenHint;
+  String get outlookAdminConsentHint;
+  String get outlookAdminConsentOpenButton;
+  String get outlookAdminConsentCopyButton;
+  String get outlookAdminConsentCopied;
   String get outlookInboxHebrew;
   String get outlookInboxTaskSignal;
   String get outlookInboxAlreadyIngested;
@@ -900,6 +904,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outlookRefreshTokenHint =>
       'Refresh token is stored securely on the server (not in the app). '
       'If Outlook shows Connected, the token exists.';
+  @override
+  String get outlookAdminConsentHint =>
+      'Your organization may require IT admin approval for Mail.Read. '
+      'Share this link with your Microsoft 365 administrator:';
+  @override
+  String get outlookAdminConsentOpenButton => 'Open link for IT admin';
+  @override
+  String get outlookAdminConsentCopyButton => 'Copy link';
+  @override
+  String get outlookAdminConsentCopied => 'Admin consent link copied';
   @override
   String get outlookInboxHebrew => 'Hebrew';
   @override
@@ -1609,6 +1623,16 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get outlookRefreshTokenHint =>
       'Refresh token שמור בשרת (לא באפליקציה). אם Outlook «מחובר» — ה-token קיים.';
+  @override
+  String get outlookAdminConsentHint =>
+      'ייתכן שארגון שלך דורש אישור מנהל IT ל-Mail.Read. '
+      'שלחו את הקישור למנהל Microsoft 365:';
+  @override
+  String get outlookAdminConsentOpenButton => 'פתח קישור למנהל IT';
+  @override
+  String get outlookAdminConsentCopyButton => 'העתק קישור';
+  @override
+  String get outlookAdminConsentCopied => 'קישור admin consent הועתק';
   @override
   String get outlookInboxHebrew => 'עברית';
   @override
