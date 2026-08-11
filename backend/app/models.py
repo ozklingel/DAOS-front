@@ -61,6 +61,7 @@ class InfoDocCategory(str, Enum):
     summaries = "summaries"
     links = "links"
     archive = "archive"
+    finance = "finance"
     vehicle = "vehicle"
     insurance = "insurance"
 

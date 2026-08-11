@@ -16,6 +16,64 @@ logger = logging.getLogger(__name__)
 HEBREW_CHAR_RE = re.compile(r"[\u0590-\u05FF]")
 TASK_KEYWORD = "משימה"
 
+_PAYMENT_STRONG_MARKERS = (
+    "העברה בביט",
+    "bit.co.il",
+    "אישור העברה",
+    "העברה בוצעה",
+    "תשלום בוצע",
+    "paybox",
+    "פייבוקס",
+    "pepper pay",
+    "pepperpay",
+)
+_PAYMENT_WEAK_MARKERS = (
+    "תרומה",
+    "donation",
+    "תשלום",
+    "העברה",
+    "שולם",
+    "paid",
+    "אסמכתא",
+    "reference",
+    "transaction",
+    "קבלה",
+    "receipt",
+    "₪",
+    'ש"ח',
+    " שח ",
+)
+_BIT_APP_MARKERS = (
+    " ביט ",
+    "ביט\n",
+    "ביט -",
+    "bit ",
+    "bit\n",
+    "bit.",
+    "bit-",
+)
+_AMOUNT_RE = re.compile(r"(?:₪|ש[\"״']?ח)\s*[\d,]+|[\d,]+\.?\d*\s*(?:₪|ש[\"״']?ח)")
+
+
+def looks_like_payment_screenshot(*texts: str | None) -> bool:
+    """Detect Bit/bank transfer/donation screenshots (not insurance policies)."""
+    combined = " ".join(t.strip() for t in texts if t and t.strip()).lower()
+    if not combined:
+        return False
+
+    if any(marker.lower() in combined for marker in _PAYMENT_STRONG_MARKERS):
+        return True
+
+    if any(marker in combined for marker in _BIT_APP_MARKERS) and "ביטוח" not in combined:
+        return True
+
+    weak_hits = sum(1 for marker in _PAYMENT_WEAK_MARKERS if marker.lower() in combined)
+    if weak_hits >= 2:
+        return True
+    if weak_hits >= 1 and _AMOUNT_RE.search(combined):
+        return True
+    return False
+
 # Soft signals that an incoming WhatsApp/email is likely a task (beyond the word משימה).
 TASK_SIGNAL_RE = re.compile(
     r"("
@@ -309,8 +367,8 @@ class AIService:
         prompt = """Analyze this document photo for a Hebrew personal info hub.
 Today's date context: use ISO dates (YYYY-MM-DD). For Hebrew dates like 19.7 or 19/07, resolve month/day; if year is missing use the nearest upcoming year relative to today.
 Return JSON only with keys:
-- category: one of personal_docs | ideas | summaries | links | archive | vehicle | insurance
-- title: short Hebrew title (e.g. דרכון, הזמנה לאירוע, תעודת זהות)
+- category: one of personal_docs | ideas | summaries | links | archive | finance | vehicle | insurance
+- title: short Hebrew title (e.g. דרכון, הזמנה לאירוע, תעודת זהות, תרומה בביט)
 - summary: 1 short Hebrew sentence describing the document
 - extracted_text: key text visible on the document (Hebrew/English), or empty string
 - expiry_date: YYYY-MM-DD for event date / invitation date / expiry / due date if visible, else null
@@ -322,9 +380,15 @@ Category rules:
 - shopping list, project notes, ideas, sketches → ideas
 - book notes, meeting notes, summaries, notebooks → summaries
 - screenshot with URL, QR, article link → links
+- payment screenshots / receipts / bank transfers / Bit (ביט) app / PayBox / תרומה / donation / invoice paid → finance
 - vehicle test / רשיון רכב / טסט → vehicle
-- insurance policy / ביטוח → insurance
+- insurance policy document / פוליסת ביטוח / ביטוח רכב / ביטוח דירה → insurance
 - unclear / old / misc → archive
+
+CRITICAL disambiguation (Hebrew):
+- "ביט" is the Bit payment app — NOT "ביטוח" (insurance). Bit transfer confirmations, donation receipts, P2P payments → finance.
+- For finance/payment screenshots: set expiry_date to null (the visible date is a payment date, not document expiry).
+- Only classify as insurance when the document is an insurance policy/certificate, not a payment app screenshot.
 
 Respond with valid JSON only."""
         response = self.client.chat.completions.create(
@@ -334,6 +398,7 @@ Respond with valid JSON only."""
                     "role": "system",
                     "content": (
                         "You classify personal documents from photos. "
+                        "Bit (ביט) is a payment app — never confuse it with ביטוח (insurance). "
                         "Respond with valid JSON only. Titles and summaries in Hebrew."
                     ),
                 },
@@ -376,6 +441,12 @@ Respond with valid JSON only."""
         elif any(w in name for w in ("insurance", "ביטוח")):
             category = InfoDocCategory.insurance.value
             title = "ביטוח"
+        elif any(
+            w in name
+            for w in ("bit", "paybox", "payment", "receipt", "תרומה", "תשלום", "קבלה")
+        ) or ("ביט" in name and "ביטוח" not in name):
+            category = InfoDocCategory.finance.value
+            title = "תשלום / קבלה"
         elif any(w in name for w in ("car", "vehicle", "טסט", "רכב")):
             category = InfoDocCategory.vehicle.value
             title = "רכב"
@@ -399,12 +470,28 @@ Respond with valid JSON only."""
             confidence = float(confidence)
         except (TypeError, ValueError):
             confidence = 0.5
+        title = (str(data.get("title") or "מסמך").strip()[:255] or "מסמך")
+        summary = (str(data.get("summary") or "").strip() or None)
+        extracted_text = (str(data.get("extracted_text") or "").strip() or None)
+        expiry_date = data.get("expiry_date") or None
+
+        if looks_like_payment_screenshot(title, summary, extracted_text):
+            category = InfoDocCategory.finance.value
+            expiry_date = None
+            if not summary:
+                summary = "אישור תשלום / העברה"
+        elif category in {InfoDocCategory.insurance.value, InfoDocCategory.vehicle.value}:
+            combined = " ".join(t for t in (title, summary, extracted_text) if t)
+            if looks_like_payment_screenshot(combined):
+                category = InfoDocCategory.finance.value
+                expiry_date = None
+
         return {
             "category": category,
-            "title": (str(data.get("title") or "מסמך").strip()[:255] or "מסמך"),
-            "summary": (str(data.get("summary") or "").strip() or None),
-            "extracted_text": (str(data.get("extracted_text") or "").strip() or None),
-            "expiry_date": data.get("expiry_date") or None,
+            "title": title,
+            "summary": summary,
+            "extracted_text": extracted_text,
+            "expiry_date": expiry_date,
             "confidence": max(0.0, min(1.0, confidence)),
         }
 

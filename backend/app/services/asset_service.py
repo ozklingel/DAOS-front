@@ -18,6 +18,7 @@ INFO_HUB_CATEGORY_ORDER = [
     InfoDocCategory.ideas.value,
     InfoDocCategory.summaries.value,
     InfoDocCategory.links.value,
+    InfoDocCategory.finance.value,
     InfoDocCategory.vehicle.value,
     InfoDocCategory.insurance.value,
     InfoDocCategory.archive.value,
@@ -155,6 +156,7 @@ class AssetService:
                 InfoDocCategory.ideas.value,
                 InfoDocCategory.summaries.value,
                 InfoDocCategory.links.value,
+                InfoDocCategory.finance.value,
                 InfoDocCategory.archive.value,
             }
             if not items and not is_primary:

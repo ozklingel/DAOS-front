@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_id
 from app.models import AssetReminder, AssetType, InfoDocCategory, InfoDocument, User
-from app.services.ai_service import AIService
+from app.services.ai_service import AIService, looks_like_payment_screenshot
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ INFO_CATEGORY_META: dict[str, tuple[str, str]] = {
     InfoDocCategory.summaries.value: ("סיכומים ומחברות", "notebook"),
     InfoDocCategory.links.value: ("קישורים שימושיים", "link"),
     InfoDocCategory.archive.value: ("ארכיון", "archive"),
+    InfoDocCategory.finance.value: ("תשלומים וקבלות", "finance"),
     InfoDocCategory.vehicle.value: ("רכב", "car"),
     InfoDocCategory.insurance.value: ("ביטוח", "finance"),
 }
@@ -55,6 +56,14 @@ class InfoDocumentService:
             filename=filename,
         )
 
+        if looks_like_payment_screenshot(
+            analysis.get("title"),
+            analysis.get("summary"),
+            analysis.get("extracted_text"),
+        ):
+            analysis["category"] = InfoDocCategory.finance.value
+            analysis["expiry_date"] = None
+
         expiry = self._parse_expiry(analysis.get("expiry_date"))
         # Always keep the photo so the Info page can show it
         image_data = base64.b64encode(image_bytes).decode("ascii")
@@ -83,12 +92,22 @@ class InfoDocumentService:
         )
         db.add(doc)
 
-        # Also create an expiry reminder for vehicle/insurance/personal docs with a date
-        if expiry and analysis["category"] in {
-            InfoDocCategory.vehicle.value,
-            InfoDocCategory.insurance.value,
-            InfoDocCategory.personal_docs.value,
-        }:
+        # Expiry reminders only for real documents — never for payment screenshots
+        if (
+            expiry
+            and analysis["category"] != InfoDocCategory.finance.value
+            and not looks_like_payment_screenshot(
+                analysis.get("title"),
+                analysis.get("summary"),
+                analysis.get("extracted_text"),
+            )
+            and analysis["category"]
+            in {
+                InfoDocCategory.vehicle.value,
+                InfoDocCategory.insurance.value,
+                InfoDocCategory.personal_docs.value,
+            }
+        ):
             self._maybe_create_asset_reminder(db, user, analysis, expiry)
 
         db.commit()
