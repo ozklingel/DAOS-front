@@ -10,9 +10,14 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     T Function(dynamic data)? parser,
+    Options? options,
   }) async {
     try {
-      final response = await _dio.get<dynamic>(path, queryParameters: queryParameters);
+      final response = await _dio.get<dynamic>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
       return _parse(response.data, parser);
     } on DioException catch (e) {
       throw _mapDioError(e);
@@ -56,9 +61,10 @@ class ApiClient {
     String path, {
     dynamic data,
     T Function(dynamic data)? parser,
+    Options? options,
   }) async {
     try {
-      final response = await _dio.put<dynamic>(path, data: data);
+      final response = await _dio.put<dynamic>(path, data: data, options: options);
       return _parse(response.data, parser);
     } on DioException catch (e) {
       throw _mapDioError(e);

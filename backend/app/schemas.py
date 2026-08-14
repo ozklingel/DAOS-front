@@ -88,6 +88,7 @@ class WhatsAppChatsOut(APIModel):
     chat_sync_available: bool
     synced_count: int = 0
     chats: list[WhatsAppChatOut] = Field(default_factory=list)
+    green_load_error: str | None = None
 
 
 class AuthTokensOut(APIModel):

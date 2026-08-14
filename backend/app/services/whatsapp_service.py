@@ -3,6 +3,7 @@ import hmac
 import io
 import logging
 import re
+import time
 import uuid
 
 import httpx
@@ -14,6 +15,10 @@ from app.services.ai_service import AIService
 from app.services.task_ingest_service import create_task_from_analysis
 
 logger = logging.getLogger(__name__)
+
+_GREEN_CHATS_CACHE: dict[str, tuple[float, list[dict]]] = {}
+_GREEN_CHATS_CACHE_TTL_SECONDS = 90
+_GREEN_CHATS_DEFAULT_COUNT = 100
 
 
 class WhatsAppService:
@@ -99,20 +104,33 @@ class WhatsAppService:
             .all()
         )
 
-    async def fetch_green_chats(self) -> list[dict]:
+    async def fetch_green_chats(self, *, count: int = _GREEN_CHATS_DEFAULT_COUNT) -> list[dict]:
         if not self.green_api_enabled:
             return []
         instance_id = settings.green_api_id_instance.strip()
         token = settings.green_api_token.strip()
+        cache_key = f"{instance_id}:{count}"
+        cached = _GREEN_CHATS_CACHE.get(cache_key)
+        if cached and (time.time() - cached[0]) < _GREEN_CHATS_CACHE_TTL_SECONDS:
+            return cached[1]
+
         url = f"{self.green_api_base}/waInstance{instance_id}/getChats/{token}"
+        timeout = httpx.Timeout(connect=8.0, read=18.0, write=10.0, pool=8.0)
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(url)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(url, params={"count": max(1, min(count, 300))})
                 response.raise_for_status()
                 data = response.json()
+        except httpx.TimeoutException as exc:
+            logger.warning("Green API getChats timed out")
+            raise ValueError(
+                "Green API timed out while loading chats. Try again in a moment."
+            ) from exc
         except Exception as exc:
             logger.warning("Green API getChats failed: %s", exc)
-            raise ValueError("Could not load WhatsApp chats. Check Green API configuration.") from exc
+            raise ValueError(
+                "Could not load WhatsApp chats. Check Green API instance and webhook."
+            ) from exc
 
         rows = data if isinstance(data, list) else []
         chats: list[dict] = []
@@ -137,30 +155,42 @@ class WhatsAppService:
                 }
             )
         chats.sort(key=lambda row: row["display_name"].lower())
+        _GREEN_CHATS_CACHE[cache_key] = (time.time(), chats)
         return chats
+
+    @staticmethod
+    def _synced_chat_dicts(synced_rows: dict[str, WhatsAppSyncedChat]) -> list[dict]:
+        return [
+            {
+                "chat_id": row.chat_id,
+                "display_name": row.display_name or row.chat_id,
+                "chat_type": row.chat_type,
+                "sync_enabled": row.sync_enabled,
+            }
+            for row in synced_rows.values()
+        ]
 
     async def list_chats_for_user(self, db: Session, user: User) -> dict:
         synced_rows = {
             row.chat_id: row for row in self.list_synced_chats(db, user)
         }
+        synced_only = self._synced_chat_dicts(synced_rows)
         synced_count = sum(1 for row in synced_rows.values() if row.sync_enabled)
 
         if not self.green_api_enabled:
             return {
                 "chat_sync_available": False,
                 "synced_count": synced_count,
-                "chats": [
-                    {
-                        "chat_id": row.chat_id,
-                        "display_name": row.display_name or row.chat_id,
-                        "chat_type": row.chat_type,
-                        "sync_enabled": row.sync_enabled,
-                    }
-                    for row in synced_rows.values()
-                ],
+                "chats": synced_only,
+                "green_load_error": None,
             }
 
-        available = await self.fetch_green_chats()
+        green_load_error = None
+        try:
+            available = await self.fetch_green_chats()
+        except ValueError as exc:
+            green_load_error = str(exc)
+            available = []
         merged: list[dict] = []
         seen: set[str] = set()
         for chat in available:
@@ -185,12 +215,15 @@ class WhatsAppService:
                     "sync_enabled": row.sync_enabled,
                 }
             )
+        if not merged and synced_only:
+            merged = synced_only
         merged.sort(key=lambda row: row["display_name"].lower())
         synced_count = sum(1 for row in merged if row["sync_enabled"])
         return {
             "chat_sync_available": True,
             "synced_count": synced_count,
             "chats": merged,
+            "green_load_error": green_load_error,
         }
 
     def update_synced_chats(self, db: Session, user: User, selections: list[dict]) -> dict:
@@ -251,6 +284,7 @@ class WhatsAppService:
                 for row in rows
                 if row.sync_enabled or row.chat_id in touched
             ],
+            "green_load_error": None,
         }
 
     def resolve_inbound_user(

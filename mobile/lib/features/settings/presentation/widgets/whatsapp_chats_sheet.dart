@@ -29,6 +29,7 @@ class _WhatsAppChatsSheetState extends ConsumerState<_WhatsAppChatsSheet> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
+  String? _loadWarning;
   bool _chatSyncAvailable = false;
   List<WhatsAppChatModel> _chats = const [];
   String _query = '';
@@ -50,6 +51,7 @@ class _WhatsAppChatsSheetState extends ConsumerState<_WhatsAppChatsSheet> {
       setState(() {
         _chatSyncAvailable = response.chatSyncAvailable;
         _chats = response.chats;
+        _loadWarning = response.greenLoadError;
         _loading = false;
       });
     } on AppException catch (e) {
@@ -139,6 +141,20 @@ class _WhatsAppChatsSheetState extends ConsumerState<_WhatsAppChatsSheet> {
               ),
             )
           else ...[
+            if (_loadWarning != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _loadWarning!,
+                  style: const TextStyle(fontSize: 12, height: 1.4),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               decoration: InputDecoration(
                 hintText: l.searchChatsHint,

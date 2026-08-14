@@ -48,11 +48,13 @@ class WhatsAppChatsResponseModel {
     required this.chatSyncAvailable,
     required this.syncedCount,
     required this.chats,
+    this.greenLoadError,
   });
 
   final bool chatSyncAvailable;
   final int syncedCount;
   final List<WhatsAppChatModel> chats;
+  final String? greenLoadError;
 
   factory WhatsAppChatsResponseModel.fromJson(Map<String, dynamic> json) {
     final rawChats = json['chats'] as List<dynamic>? ?? const [];
@@ -60,6 +62,8 @@ class WhatsAppChatsResponseModel {
       chatSyncAvailable:
           json['chat_sync_available'] as bool? ?? json['chatSyncAvailable'] as bool? ?? false,
       syncedCount: json['synced_count'] as int? ?? json['syncedCount'] as int? ?? 0,
+      greenLoadError:
+          json['green_load_error'] as String? ?? json['greenLoadError'] as String?,
       chats: rawChats
           .map((item) => WhatsAppChatModel.fromJson(item as Map<String, dynamic>))
           .toList(),

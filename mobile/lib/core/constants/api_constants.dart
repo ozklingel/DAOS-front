@@ -51,6 +51,7 @@ class ApiConstants {
   static const String outlookInboxPreview = '/emails/outlook/inbox-preview';
   static const String registerDevice = '/notifications/device';
 
-  static const Duration connectTimeout = Duration(seconds: 15);
+  static const Duration connectTimeout = Duration(seconds: 25);
   static const Duration receiveTimeout = Duration(seconds: 90);
+  static const Duration whatsAppChatsReceiveTimeout = Duration(seconds: 120);
 }

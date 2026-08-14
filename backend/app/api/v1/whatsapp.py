@@ -87,10 +87,7 @@ async def list_whatsapp_chats(
     db: Session = Depends(get_db),
 ):
     """List WhatsApp chats available for sync, merged with the user's selections."""
-    try:
-        data = await whatsapp_service.list_chats_for_user(db, user)
-    except ValueError as exc:
-        raise HTTPException(status_code=503, detail={"message": str(exc)}) from exc
+    data = await whatsapp_service.list_chats_for_user(db, user)
     return WhatsAppChatsOut.model_validate(data)
 
 
