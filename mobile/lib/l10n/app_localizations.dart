@@ -259,6 +259,16 @@ abstract class AppLocalizations {
   String get whatsappPhoneAlreadyLinked;
   String get whatsappVoiceHelpTitle;
   String get whatsappVoiceHelpBody;
+  String get whatsappSelectChatsButton;
+  String get whatsappSelectChatsTitle;
+  String get whatsappSelectChatsHint;
+  String get whatsappChatSyncUnavailable;
+  String get whatsappNoChatsFound;
+  String get whatsappChatTypeGroup;
+  String get whatsappChatTypeDirect;
+  String get searchChatsHint;
+  String get whatsappChatsSaveButton;
+  String whatsappChatsSaved(int count);
   String get openIntegrations;
   String get outlookNotConfigured;
 
@@ -793,7 +803,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsapp => 'WhatsApp';
   @override
   String get whatsappConnectHint =>
-      'Link your phone, then send Hebrew voice or text messages to create tasks.';
+      'Link your phone, then choose chats to sync or send Hebrew messages to the bot.';
   @override
   String get whatsappPhoneLabel => 'Mobile number';
   @override
@@ -809,7 +819,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsappVoiceHelpTitle => 'Voice tasks via WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
-      'Link your phone in Settings → Integrations, then send a Hebrew voice note or text to your DAOS WhatsApp bot.';
+      'Link your phone in Settings → Integrations, choose chats to sync, or send a Hebrew voice note or text to your DAOS WhatsApp bot.';
+  @override
+  String get whatsappSelectChatsButton => 'Choose chats to sync';
+  @override
+  String get whatsappSelectChatsTitle => 'WhatsApp chats';
+  @override
+  String get whatsappSelectChatsHint =>
+      'Turn on chats where you want DAOS to detect tasks from messages.';
+  @override
+  String get whatsappChatSyncUnavailable =>
+      'Chat sync requires Green API on the server. You can still send messages directly to the bot from your linked phone.';
+  @override
+  String get whatsappNoChatsFound => 'No chats found';
+  @override
+  String get whatsappChatTypeGroup => 'Group chat';
+  @override
+  String get whatsappChatTypeDirect => 'Direct chat';
+  @override
+  String get searchChatsHint => 'Search chats...';
+  @override
+  String get whatsappChatsSaveButton => 'Save selection';
+  @override
+  String whatsappChatsSaved(int count) =>
+      'Saved — $count chat${count == 1 ? '' : 's'} syncing tasks';
   @override
   String get openIntegrations => 'Open integrations';
   @override
@@ -1513,7 +1546,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get whatsapp => 'WhatsApp';
   @override
   String get whatsappConnectHint =>
-      'חברו את המספר, ואז שלחו הודעת קול או טקסט בעברית ליצירת משימות.';
+      'חברו את המספר, בחרו צ\'אטים לסנכרון, או שלחו הודעות בעברית לבוט.';
   @override
   String get whatsappPhoneLabel => 'מספר נייד';
   @override
@@ -1529,7 +1562,31 @@ class AppLocalizationsHe extends AppLocalizations {
   String get whatsappVoiceHelpTitle => 'משימות קוליות ב-WhatsApp';
   @override
   String get whatsappVoiceHelpBody =>
-      'חברו את המספר בהגדרות → אינטגרציות, ואז שלחו הודעת קול או טקסט בעברית לבוט DAOS.';
+      'חברו את המספר בהגדרות → אינטגרציות, בחרו צ\'אטים לסנכרון, או שלחו הודעת קול/טקסט בעברית לבוט DAOS.';
+  @override
+  String get whatsappSelectChatsButton => 'בחר צ\'אטים לסנכרון';
+  @override
+  String get whatsappSelectChatsTitle => 'צ\'אטים ב-WhatsApp';
+  @override
+  String get whatsappSelectChatsHint =>
+      'הפעילו צ\'אטים שמהם DAOS יזהה משימות מהודעות.';
+  @override
+  String get whatsappChatSyncUnavailable =>
+      'סנכרון צ\'אטים דורש Green API בשרת. עדיין אפשר לשלוח הודעות ישירות לבוט מהמספר המחובר.';
+  @override
+  String get whatsappNoChatsFound => 'לא נמצאו צ\'אטים';
+  @override
+  String get whatsappChatTypeGroup => 'קבוצה';
+  @override
+  String get whatsappChatTypeDirect => 'צ\'אט פרטי';
+  @override
+  String get searchChatsHint => 'חיפוש צ\'אטים...';
+  @override
+  String get whatsappChatsSaveButton => 'שמור בחירה';
+  @override
+  String whatsappChatsSaved(int count) => count == 1
+      ? 'נשמר — צ\'אט אחד מסנכרן משימות'
+      : 'נשמר — $count צ\'אטים מסנכרנים משימות';
   @override
   String get openIntegrations => 'פתח אינטגרציות';
   @override

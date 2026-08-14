@@ -118,6 +118,26 @@ class User(Base):
     whatsapp_inbound_logs: Mapped[list["WhatsAppInboundLog"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    whatsapp_synced_chats: Mapped[list["WhatsAppSyncedChat"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class WhatsAppSyncedChat(Base):
+    __tablename__ = "whatsapp_synced_chats"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    chat_id: Mapped[str] = mapped_column(String(128), index=True)
+    chat_type: Mapped[str] = mapped_column(String(20), default="direct")
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    sync_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="whatsapp_synced_chats")
 
 
 class WhatsAppInboundLog(Base):
@@ -126,6 +146,7 @@ class WhatsAppInboundLog(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True, nullable=True)
     from_phone: Mapped[str] = mapped_column(String(20), index=True)
+    chat_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     message_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     msg_type: Mapped[str] = mapped_column(String(20), default="text")
     body_text: Mapped[str | None] = mapped_column(Text, nullable=True)

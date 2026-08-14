@@ -166,6 +166,39 @@ WhatsApp webhook POST received (...)
 
 > **`WHATSAPP_APP_SECRET`:** אם עדיין `your-app-secret` — אימות חתימה מדולג (dev). ב-production שים את ה-App Secret האמיתי מ-Meta → App settings → Basic.
 
+## Sync specific chats (Green API)
+
+To create tasks from **selected WhatsApp chats** (private or group), configure [Green API](https://green-api.com) on the server. The Green instance must be logged into the WhatsApp account whose chats you want to monitor.
+
+### Backend `.env`
+
+```env
+GREEN_API_ID_INSTANCE=...
+GREEN_API_TOKEN=...
+```
+
+Webhook URL in Green API console:
+
+```
+https://YOUR_DOMAIN/webhooks/green-api
+```
+
+### App flow
+
+1. **Settings → Integrations → Link WhatsApp** (your mobile number)
+2. Tap **Choose chats to sync**
+3. Turn on the chats/groups where you want task detection
+4. Save — only messages from those chats create tasks
+
+### Behavior
+
+| Mode | What creates tasks |
+|------|-------------------|
+| No chats selected | Messages from your **linked phone** (legacy bot flow) |
+| Chats selected | Messages only from **enabled chats** (groups included) |
+
+Group messages are prefixed with the chat name for context, e.g. `[צוות פרויקט] תשלח את הדוח`.
+
 ## API
 
 | Method | Path | Auth |
@@ -174,6 +207,8 @@ WhatsApp webhook POST received (...)
 | POST | `/webhooks/whatsapp` | Meta signature |
 | POST | `/api/v1/auth/whatsapp/link` | JWT `{ "phone": "0501234567" }` |
 | POST | `/api/v1/auth/whatsapp/disconnect` | JWT |
+| GET | `/api/v1/whatsapp/chats` | JWT — list chats + sync state |
+| PUT | `/api/v1/whatsapp/chats/sync` | JWT `{ "chats": [{ "chat_id", "display_name", "chat_type", "sync_enabled" }] }` |
 | POST | `/api/v1/whatsapp/simulate` | JWT + DEBUG |
 
 ## Supported messages

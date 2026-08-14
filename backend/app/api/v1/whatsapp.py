@@ -7,6 +7,8 @@ from app.deps import get_current_user
 from app.models import User
 from app.schemas import (
     UserOut,
+    WhatsAppChatSyncIn,
+    WhatsAppChatsOut,
     WhatsAppDevInboundIn,
     WhatsAppInboundOut,
     WhatsAppInboundStatusOut,
@@ -77,3 +79,33 @@ def get_whatsapp_inbound_status(
     """Inbound WhatsApp debug: linked phone, latest message, and recent history."""
     limit = max(1, min(limit, 50))
     return _inbound_status_response(db, user, limit)
+
+
+@router.get("/chats", response_model=WhatsAppChatsOut)
+async def list_whatsapp_chats(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """List WhatsApp chats available for sync, merged with the user's selections."""
+    try:
+        data = await whatsapp_service.list_chats_for_user(db, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail={"message": str(exc)}) from exc
+    return WhatsAppChatsOut.model_validate(data)
+
+
+@router.put("/chats/sync", response_model=WhatsAppChatsOut)
+async def sync_whatsapp_chats(
+    body: WhatsAppChatSyncIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Save which WhatsApp chats should create tasks for this user."""
+    selections = [item.model_dump() for item in body.chats]
+    data = whatsapp_service.update_synced_chats(db, user, selections)
+    if whatsapp_service.green_api_enabled:
+        try:
+            data = await whatsapp_service.list_chats_for_user(db, user)
+        except ValueError:
+            pass
+    return WhatsAppChatsOut.model_validate(data)

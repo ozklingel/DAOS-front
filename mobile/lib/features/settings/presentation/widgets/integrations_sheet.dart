@@ -8,6 +8,7 @@ import 'package:daos/core/errors/app_exception.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
 import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
+import 'package:daos/features/settings/presentation/widgets/whatsapp_chats_sheet.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/route_names.dart';
 import 'package:daos/theme/app_colors.dart';
@@ -156,6 +157,14 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
               onConnect: () => _connectWhatsApp(l),
               onDisconnect: () => ref.read(authStateProvider.notifier).disconnectWhatsApp(),
             ),
+            if (whatsappConnected) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => showWhatsAppChatsSheet(context, ref),
+                icon: const Icon(Icons.forum_outlined),
+                label: Text(l.whatsappSelectChatsButton),
+              ),
+            ],
             const SizedBox(height: 12),
             _ConnectionCard(
               title: l.gmail,

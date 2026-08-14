@@ -61,6 +61,9 @@ def _migrate_schema() -> None:
         _add_column_if_missing("finance_transactions", "bank_account_id", "VARCHAR(36)")
         _add_column_if_missing("finance_transactions", "external_id", "VARCHAR(128)")
 
+    if "whatsapp_inbound_logs" in tables:
+        _add_column_if_missing("whatsapp_inbound_logs", "chat_id", "VARCHAR(128)")
+
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)

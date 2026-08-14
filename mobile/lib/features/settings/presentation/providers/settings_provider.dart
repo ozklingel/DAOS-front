@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/di/providers.dart';
 import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
+import 'package:daos/features/settings/data/models/whatsapp_chat_model.dart';
 import 'package:daos/features/settings/domain/entities/app_settings.dart';
 
 final settingsProvider =
@@ -27,5 +28,13 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
 
   Future<OutlookInboxPreviewModel> previewOutlookInbox() async {
     return ref.read(settingsRepositoryProvider).previewOutlookInbox();
+  }
+
+  Future<WhatsAppChatsResponseModel> getWhatsAppChats() async {
+    return ref.read(settingsRepositoryProvider).getWhatsAppChats();
+  }
+
+  Future<WhatsAppChatsResponseModel> syncWhatsAppChats(List<WhatsAppChatModel> chats) async {
+    return ref.read(settingsRepositoryProvider).syncWhatsAppChats(chats);
   }
 }

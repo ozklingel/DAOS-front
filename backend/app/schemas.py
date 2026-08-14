@@ -66,6 +66,30 @@ class WhatsAppInboundStatusOut(APIModel):
     recent: list[WhatsAppInboundOut] = Field(default_factory=list)
 
 
+class WhatsAppChatOut(APIModel):
+    chat_id: str
+    display_name: str
+    chat_type: str = "direct"
+    sync_enabled: bool = False
+
+
+class WhatsAppChatSelectionIn(APIModel):
+    chat_id: str
+    display_name: str | None = None
+    chat_type: str = "direct"
+    sync_enabled: bool = True
+
+
+class WhatsAppChatSyncIn(APIModel):
+    chats: list[WhatsAppChatSelectionIn] = Field(default_factory=list)
+
+
+class WhatsAppChatsOut(APIModel):
+    chat_sync_available: bool
+    synced_count: int = 0
+    chats: list[WhatsAppChatOut] = Field(default_factory=list)
+
+
 class AuthTokensOut(APIModel):
     access_token: str
     refresh_token: str

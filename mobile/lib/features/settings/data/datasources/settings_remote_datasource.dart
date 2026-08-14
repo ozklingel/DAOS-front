@@ -2,6 +2,7 @@ import 'package:daos/core/constants/api_constants.dart';
 import 'package:daos/core/network/api_client.dart';
 import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/data/models/settings_model.dart';
+import 'package:daos/features/settings/data/models/whatsapp_chat_model.dart';
 
 class SettingsRemoteDataSource {
   SettingsRemoteDataSource(this._client);
@@ -42,5 +43,24 @@ class SettingsRemoteDataSource {
       parser: (d) => d as Map<String, dynamic>,
     );
     return OutlookInboxPreviewModel.fromJson(data);
+  }
+
+  Future<WhatsAppChatsResponseModel> getWhatsAppChats() async {
+    final data = await _client.get<Map<String, dynamic>>(
+      ApiConstants.whatsAppChats,
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return WhatsAppChatsResponseModel.fromJson(data);
+  }
+
+  Future<WhatsAppChatsResponseModel> syncWhatsAppChats(
+    List<WhatsAppChatModel> chats,
+  ) async {
+    final data = await _client.put<Map<String, dynamic>>(
+      ApiConstants.whatsAppChatsSync,
+      data: {'chats': chats.map((c) => c.toJson()).toList()},
+      parser: (d) => d as Map<String, dynamic>,
+    );
+    return WhatsAppChatsResponseModel.fromJson(data);
   }
 }

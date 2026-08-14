@@ -9,7 +9,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import User, WhatsAppInboundLog
+from app.models import User, WhatsAppInboundLog, WhatsAppSyncedChat
 from app.services.ai_service import AIService
 from app.services.task_ingest_service import create_task_from_analysis
 
@@ -86,8 +86,206 @@ class WhatsAppService:
 
     def unlink_phone(self, db: Session, user: User) -> User:
         user.whatsapp_phone = None
+        db.query(WhatsAppSyncedChat).filter(WhatsAppSyncedChat.user_id == user.id).delete()
         db.commit()
         db.refresh(user)
+        return user
+
+    def list_synced_chats(self, db: Session, user: User) -> list[WhatsAppSyncedChat]:
+        return (
+            db.query(WhatsAppSyncedChat)
+            .filter(WhatsAppSyncedChat.user_id == user.id)
+            .order_by(WhatsAppSyncedChat.display_name.asc())
+            .all()
+        )
+
+    async def fetch_green_chats(self) -> list[dict]:
+        if not self.green_api_enabled:
+            return []
+        instance_id = settings.green_api_id_instance.strip()
+        token = settings.green_api_token.strip()
+        url = f"{self.green_api_base}/waInstance{instance_id}/getChats/{token}"
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+        except Exception as exc:
+            logger.warning("Green API getChats failed: %s", exc)
+            raise ValueError("Could not load WhatsApp chats. Check Green API configuration.") from exc
+
+        rows = data if isinstance(data, list) else []
+        chats: list[dict] = []
+        for item in rows:
+            if not isinstance(item, dict):
+                continue
+            chat_id = (item.get("id") or "").strip()
+            if not chat_id:
+                continue
+            name = (
+                item.get("name")
+                or item.get("contactName")
+                or item.get("chatName")
+                or self.phone_from_chat_id(chat_id)
+            )
+            chat_type = "group" if chat_id.endswith("@g.us") else "direct"
+            chats.append(
+                {
+                    "chat_id": chat_id,
+                    "display_name": str(name).strip()[:255] or chat_id,
+                    "chat_type": chat_type,
+                }
+            )
+        chats.sort(key=lambda row: row["display_name"].lower())
+        return chats
+
+    async def list_chats_for_user(self, db: Session, user: User) -> dict:
+        synced_rows = {
+            row.chat_id: row for row in self.list_synced_chats(db, user)
+        }
+        synced_count = sum(1 for row in synced_rows.values() if row.sync_enabled)
+
+        if not self.green_api_enabled:
+            return {
+                "chat_sync_available": False,
+                "synced_count": synced_count,
+                "chats": [
+                    {
+                        "chat_id": row.chat_id,
+                        "display_name": row.display_name or row.chat_id,
+                        "chat_type": row.chat_type,
+                        "sync_enabled": row.sync_enabled,
+                    }
+                    for row in synced_rows.values()
+                ],
+            }
+
+        available = await self.fetch_green_chats()
+        merged: list[dict] = []
+        seen: set[str] = set()
+        for chat in available:
+            seen.add(chat["chat_id"])
+            synced = synced_rows.get(chat["chat_id"])
+            merged.append(
+                {
+                    "chat_id": chat["chat_id"],
+                    "display_name": chat["display_name"],
+                    "chat_type": chat["chat_type"],
+                    "sync_enabled": bool(synced and synced.sync_enabled),
+                }
+            )
+        for chat_id, row in synced_rows.items():
+            if chat_id in seen:
+                continue
+            merged.append(
+                {
+                    "chat_id": row.chat_id,
+                    "display_name": row.display_name or row.chat_id,
+                    "chat_type": row.chat_type,
+                    "sync_enabled": row.sync_enabled,
+                }
+            )
+        merged.sort(key=lambda row: row["display_name"].lower())
+        synced_count = sum(1 for row in merged if row["sync_enabled"])
+        return {
+            "chat_sync_available": True,
+            "synced_count": synced_count,
+            "chats": merged,
+        }
+
+    def update_synced_chats(self, db: Session, user: User, selections: list[dict]) -> dict:
+        existing = {
+            row.chat_id: row
+            for row in db.query(WhatsAppSyncedChat)
+            .filter(WhatsAppSyncedChat.user_id == user.id)
+            .all()
+        }
+        touched: set[str] = set()
+        for sel in selections:
+            chat_id = (sel.get("chat_id") or "").strip()
+            if not chat_id:
+                continue
+            touched.add(chat_id)
+            display_name = (sel.get("display_name") or chat_id).strip()[:255]
+            chat_type = (sel.get("chat_type") or "direct").strip()[:20] or "direct"
+            sync_enabled = bool(sel.get("sync_enabled", True))
+            row = existing.get(chat_id)
+            if row:
+                row.display_name = display_name
+                row.chat_type = chat_type
+                row.sync_enabled = sync_enabled
+            else:
+                db.add(
+                    WhatsAppSyncedChat(
+                        id=str(uuid.uuid4()),
+                        user_id=user.id,
+                        chat_id=chat_id,
+                        chat_type=chat_type,
+                        display_name=display_name,
+                        sync_enabled=sync_enabled,
+                    )
+                )
+        for chat_id, row in existing.items():
+            if chat_id not in touched:
+                row.sync_enabled = False
+        db.commit()
+        synced_count = (
+            db.query(WhatsAppSyncedChat)
+            .filter(
+                WhatsAppSyncedChat.user_id == user.id,
+                WhatsAppSyncedChat.sync_enabled.is_(True),
+            )
+            .count()
+        )
+        rows = self.list_synced_chats(db, user)
+        return {
+            "chat_sync_available": self.green_api_enabled,
+            "synced_count": synced_count,
+            "chats": [
+                {
+                    "chat_id": row.chat_id,
+                    "display_name": row.display_name or row.chat_id,
+                    "chat_type": row.chat_type,
+                    "sync_enabled": row.sync_enabled,
+                }
+                for row in rows
+                if row.sync_enabled or row.chat_id in touched
+            ],
+        }
+
+    def resolve_inbound_user(
+        self, db: Session, *, phone: str, chat_id: str | None = None
+    ) -> User | None:
+        if chat_id:
+            rows = (
+                db.query(WhatsAppSyncedChat)
+                .filter(
+                    WhatsAppSyncedChat.chat_id == chat_id,
+                    WhatsAppSyncedChat.sync_enabled.is_(True),
+                )
+                .all()
+            )
+            if len(rows) == 1:
+                return rows[0].user
+            if len(rows) > 1:
+                logger.warning("WhatsApp: chat %s synced by multiple users — skipping", chat_id)
+                return None
+
+        user = self.find_user_by_phone(db, phone)
+        if not user:
+            return None
+
+        synced_ids = {
+            row.chat_id
+            for row in db.query(WhatsAppSyncedChat)
+            .filter(
+                WhatsAppSyncedChat.user_id == user.id,
+                WhatsAppSyncedChat.sync_enabled.is_(True),
+            )
+            .all()
+        }
+        if synced_ids and chat_id and chat_id not in synced_ids:
+            return None
         return user
 
     def find_user_by_phone(self, db: Session, phone: str) -> User | None:
@@ -121,6 +319,7 @@ class WhatsAppService:
         db: Session,
         *,
         from_phone: str,
+        chat_id: str | None = None,
         message_id: str | None,
         msg_type: str,
         body_text: str | None,
@@ -133,6 +332,7 @@ class WhatsAppService:
             id=str(uuid.uuid4()),
             user_id=user_id,
             from_phone=self.normalize_phone(from_phone),
+            chat_id=chat_id,
             message_id=message_id or None,
             msg_type=msg_type or "unknown",
             body_text=body_text,
@@ -191,8 +391,7 @@ class WhatsAppService:
 
         sender_data = payload.get("senderData") or {}
         chat_id = sender_data.get("chatId") or ""
-        if chat_id.endswith("@g.us"):
-            logger.info("Green API: ignoring group chatId=%s", chat_id)
+        if not chat_id:
             return None
 
         sender = sender_data.get("sender") or chat_id
@@ -200,6 +399,13 @@ class WhatsAppService:
         message_id = payload.get("idMessage") or f"green-{uuid.uuid4().hex[:12]}"
         message_data = payload.get("messageData") or {}
         type_message = message_data.get("typeMessage") or ""
+        chat_name = (
+            sender_data.get("chatName")
+            or sender_data.get("senderName")
+            or sender_data.get("senderContactName")
+            or ""
+        ).strip()
+        is_group = chat_id.endswith("@g.us")
 
         text = ""
         audio_url = None
@@ -222,6 +428,9 @@ class WhatsAppService:
                 "type": "unsupported",
                 "text": "",
                 "audio_url": None,
+                "chat_id": chat_id,
+                "chat_name": chat_name,
+                "is_group": is_group,
             }
 
         return {
@@ -230,6 +439,9 @@ class WhatsAppService:
             "type": msg_type,
             "text": text.strip(),
             "audio_url": audio_url,
+            "chat_id": chat_id,
+            "chat_name": chat_name,
+            "is_group": is_group,
         }
 
     async def handle_green_webhook(self, db: Session, payload: dict) -> None:
@@ -241,6 +453,9 @@ class WhatsAppService:
             "from": parsed["from"],
             "id": parsed["id"],
             "type": parsed["type"],
+            "chat_id": parsed.get("chat_id"),
+            "chat_name": parsed.get("chat_name"),
+            "is_group": parsed.get("is_group", False),
         }
         if parsed["type"] == "text":
             message["text"] = {"body": parsed["text"]}
@@ -270,28 +485,48 @@ class WhatsAppService:
         phone = message.get("from", "")
         message_id = message.get("id", "") or None
         msg_type = message.get("type", "") or "unknown"
-        logger.info("WhatsApp inbound from=%s type=%s id=%s", phone, msg_type, message_id)
+        chat_id = message.get("chat_id") or None
+        chat_name = (message.get("chat_name") or "").strip()
+        is_group = bool(message.get("is_group"))
+        logger.info(
+            "WhatsApp inbound from=%s chat=%s type=%s id=%s",
+            phone,
+            chat_id,
+            msg_type,
+            message_id,
+        )
 
-        user = self.find_user_by_phone(db, phone)
+        user = self.resolve_inbound_user(db, phone=phone, chat_id=chat_id)
         if not user:
-            logger.warning(
-                "WhatsApp: ignoring message from unregistered phone %s (normalized %s). "
-                "No reply sent. Link number in app: Settings -> Integrations -> WhatsApp",
-                phone,
-                self.normalize_phone(phone),
-            )
+            if chat_id:
+                status = "chat_not_synced"
+                logger.warning(
+                    "WhatsApp: no synced user for chat %s from %s. "
+                    "Select this chat in Settings -> Integrations -> WhatsApp.",
+                    chat_id,
+                    self.normalize_phone(phone),
+                )
+            else:
+                status = "no_user"
+                logger.warning(
+                    "WhatsApp: ignoring message from unregistered phone %s (normalized %s). "
+                    "No reply sent. Link number in app: Settings -> Integrations -> WhatsApp",
+                    phone,
+                    self.normalize_phone(phone),
+                )
             self._record_inbound(
                 db,
                 from_phone=phone,
+                chat_id=chat_id,
                 message_id=message_id,
                 msg_type=msg_type,
                 body_text=None,
                 user_id=None,
                 task_id=None,
                 bot_reply=None,
-                status="no_user",
+                status=status,
             )
-            return None, "", "no_user"
+            return None, "", status
 
         transcript = ""
         if msg_type == "text":
@@ -311,6 +546,7 @@ class WhatsAppService:
             self._record_inbound(
                 db,
                 from_phone=phone,
+                chat_id=chat_id,
                 message_id=message_id,
                 msg_type=msg_type,
                 body_text=None,
@@ -326,6 +562,7 @@ class WhatsAppService:
             self._record_inbound(
                 db,
                 from_phone=phone,
+                chat_id=chat_id,
                 message_id=message_id,
                 msg_type=msg_type,
                 body_text=None,
@@ -336,8 +573,15 @@ class WhatsAppService:
             )
             return None, "", "empty_transcript"
 
+        if is_group and chat_name:
+            transcript = f"[{chat_name}] {transcript}"
+
         task, reply, status = self._create_task_from_transcript(
-            db, user, transcript, whatsapp_message_id=message_id
+            db,
+            user,
+            transcript,
+            whatsapp_message_id=message_id,
+            sender_name=f"WhatsApp · {chat_name}" if chat_name else "WhatsApp",
         )
         # Outbound only when registered user + keyword משימה + task actually created
         send_reply = status == "task_created" and bool(reply.strip())
@@ -352,6 +596,7 @@ class WhatsAppService:
         self._record_inbound(
             db,
             from_phone=phone,
+            chat_id=chat_id,
             message_id=message_id,
             msg_type=msg_type,
             body_text=transcript,
@@ -369,6 +614,7 @@ class WhatsAppService:
         transcript: str,
         *,
         whatsapp_message_id: str | None = None,
+        sender_name: str = "WhatsApp",
     ) -> tuple[object | None, str, str]:
         analysis, source = self.ai.analyze_whatsapp_transcript(transcript)
         if not analysis:
@@ -393,7 +639,7 @@ class WhatsAppService:
             source_subject=transcript[:200],
             source_snippet=transcript,
             whatsapp_message_id=whatsapp_message_id,
-            sender_name="WhatsApp",
+            sender_name=sender_name,
             source_label=f"whatsapp_{source}",
         )
         if not task:
