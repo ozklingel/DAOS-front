@@ -52,6 +52,19 @@ class ApiClient {
     }
   }
 
+  Future<T> put<T>(
+    String path, {
+    dynamic data,
+    T Function(dynamic data)? parser,
+  }) async {
+    try {
+      final response = await _dio.put<dynamic>(path, data: data);
+      return _parse(response.data, parser);
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    }
+  }
+
   Future<void> delete(String path) async {
     try {
       await _dio.delete<dynamic>(path);
