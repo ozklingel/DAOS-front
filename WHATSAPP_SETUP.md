@@ -195,9 +195,22 @@ https://YOUR_DOMAIN/webhooks/green-api
 | Mode | What creates tasks |
 |------|-------------------|
 | No chats selected | Messages from your **linked phone** (legacy bot flow) |
-| Chats selected | Messages only from **enabled chats** (groups included) |
+| Chats selected | Messages from **enabled chats** — both incoming and **outgoing** (messages you send in the chat) |
 
 Group messages are prefixed with the chat name for context, e.g. `[צוות פרויקט] תשלח את הדוח`.
+
+### Outgoing messages (you send in a synced chat)
+
+Green API must receive **`outgoingMessageReceived`** webhooks (not only incoming). The backend enables this automatically when you open **Choose chats to sync**. You can also enable manually in Green API console: **Receive notifications about messages sent from the phone**.
+
+**Tip:** Include the word **משימה** or write clearly, e.g. `משימה: לקנות חלב מחר`.
+
+### Troubleshooting — no task created
+
+1. Confirm webhook URL in Green API: `https://daos-api.onrender.com/webhooks/green-api`
+2. Chat is toggled **on** in app → Choose chats to sync
+3. Message is in **Hebrew**
+4. Check Render logs for status: `chat_not_synced`, `no_task_detected`, `task_created`
 
 ## API
 

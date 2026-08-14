@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 _GREEN_CHATS_CACHE: dict[str, tuple[float, list[dict]]] = {}
 _GREEN_CHATS_CACHE_TTL_SECONDS = 90
 _GREEN_CHATS_DEFAULT_COUNT = 100
+_GREEN_WEBHOOK_TYPES = frozenset({"incomingMessageReceived", "outgoingMessageReceived"})
+_green_settings_applied = False
+
+GREEN_MESSAGE_WEBHOOK_TYPES = _GREEN_WEBHOOK_TYPES
 
 
 class WhatsAppService:
@@ -104,6 +108,29 @@ class WhatsAppService:
             .all()
         )
 
+    async def ensure_green_webhook_settings(self) -> None:
+        """Enable incoming + outgoing message webhooks on the Green API instance."""
+        global _green_settings_applied
+        if not self.green_api_enabled or _green_settings_applied:
+            return
+        _green_settings_applied = True
+
+        instance_id = settings.green_api_id_instance.strip()
+        token = settings.green_api_token.strip()
+        url = f"{self.green_api_base}/waInstance{instance_id}/setSettings/{token}"
+        payload = {
+            "incomingWebhook": "yes",
+            "outgoingMessageWebhook": "yes",
+            "outgoingWebhook": "yes",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+            logger.info("Green API webhook settings applied (incoming + outgoing messages)")
+        except Exception as exc:
+            logger.warning("Green API setSettings failed: %s", exc)
+
     async def fetch_green_chats(self, *, count: int = _GREEN_CHATS_DEFAULT_COUNT) -> list[dict]:
         if not self.green_api_enabled:
             return []
@@ -184,6 +211,8 @@ class WhatsAppService:
                 "chats": synced_only,
                 "green_load_error": None,
             }
+
+        await self.ensure_green_webhook_settings()
 
         green_load_error = None
         try:
@@ -420,7 +449,8 @@ class WhatsAppService:
         logger.info("WhatsApp webhook processed %d message(s)", message_count)
 
     def parse_green_inbound(self, payload: dict) -> dict | None:
-        if payload.get("typeWebhook") != "incomingMessageReceived":
+        webhook_type = payload.get("typeWebhook") or ""
+        if webhook_type not in _GREEN_WEBHOOK_TYPES:
             return None
 
         sender_data = payload.get("senderData") or {}
@@ -435,11 +465,12 @@ class WhatsAppService:
         type_message = message_data.get("typeMessage") or ""
         chat_name = (
             sender_data.get("chatName")
-            or sender_data.get("senderName")
             or sender_data.get("senderContactName")
+            or sender_data.get("senderName")
             or ""
         ).strip()
         is_group = chat_id.endswith("@g.us")
+        is_outgoing = webhook_type == "outgoingMessageReceived"
 
         text = ""
         audio_url = None
@@ -465,6 +496,7 @@ class WhatsAppService:
                 "chat_id": chat_id,
                 "chat_name": chat_name,
                 "is_group": is_group,
+                "is_outgoing": is_outgoing,
             }
 
         return {
@@ -476,6 +508,7 @@ class WhatsAppService:
             "chat_id": chat_id,
             "chat_name": chat_name,
             "is_group": is_group,
+            "is_outgoing": is_outgoing,
         }
 
     async def handle_green_webhook(self, db: Session, payload: dict) -> None:
@@ -490,6 +523,7 @@ class WhatsAppService:
             "chat_id": parsed.get("chat_id"),
             "chat_name": parsed.get("chat_name"),
             "is_group": parsed.get("is_group", False),
+            "is_outgoing": parsed.get("is_outgoing", False),
         }
         if parsed["type"] == "text":
             message["text"] = {"body": parsed["text"]}
@@ -523,10 +557,11 @@ class WhatsAppService:
         chat_name = (message.get("chat_name") or "").strip()
         is_group = bool(message.get("is_group"))
         logger.info(
-            "WhatsApp inbound from=%s chat=%s type=%s id=%s",
+            "WhatsApp inbound from=%s chat=%s type=%s outgoing=%s id=%s",
             phone,
             chat_id,
             msg_type,
+            message.get("is_outgoing"),
             message_id,
         )
 

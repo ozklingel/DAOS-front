@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Request
 
 from app.config import settings
 from app.database import SessionLocal
-from app.services.whatsapp_service import WhatsAppService
+from app.services.whatsapp_service import GREEN_MESSAGE_WEBHOOK_TYPES, WhatsAppService
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,7 @@ whatsapp_service = WhatsAppService()
 async def _process_green_payload(payload: dict) -> None:
     db = SessionLocal()
     try:
+        await whatsapp_service.ensure_green_webhook_settings()
         await whatsapp_service.handle_green_webhook(db, payload)
     except Exception as exc:
         logger.exception("Green API webhook error: %s", exc)
@@ -45,8 +46,8 @@ async def green_api_webhook(request: Request, background_tasks: BackgroundTasks)
     webhook_type = payload.get("typeWebhook", "")
     logger.info("Green API webhook type=%s", webhook_type)
 
-    if webhook_type != "incomingMessageReceived":
-        return {"status": "ignored", "reason": "not_incoming_message"}
+    if webhook_type not in GREEN_MESSAGE_WEBHOOK_TYPES:
+        return {"status": "ignored", "reason": "unsupported_webhook_type"}
 
     background_tasks.add_task(_process_green_payload, payload)
     return {"status": "ok"}

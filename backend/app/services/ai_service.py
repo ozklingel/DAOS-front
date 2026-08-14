@@ -257,12 +257,18 @@ class AIService:
                         analysis.get("title", subject)[:120],
                     )
                     return analysis, "openai"
+                if channel not in {"whatsapp", "voice"}:
+                    logger.info(
+                        "OpenAI judged not actionable (%s): %r",
+                        channel,
+                        subject[:120],
+                    )
+                    return None, "openai_not_actionable"
                 logger.info(
-                    "OpenAI judged not actionable (%s): %r",
+                    "OpenAI judged not actionable (%s), trying heuristics: %r",
                     channel,
                     subject[:120],
                 )
-                return None, "openai_not_actionable"
             except Exception as exc:
                 logger.warning("OpenAI analysis failed, using heuristics: %s", exc)
 
