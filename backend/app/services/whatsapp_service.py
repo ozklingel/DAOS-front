@@ -652,16 +652,10 @@ class WhatsAppService:
             whatsapp_message_id=message_id,
             sender_name=f"WhatsApp · {chat_name}" if chat_name else "WhatsApp",
         )
-        # Outbound only when registered user + keyword משימה + task actually created
-        send_reply = status == "task_created" and bool(reply.strip())
-        if send_reply:
-            await self.send_text(phone, reply)
-        else:
-            logger.info(
-                "WhatsApp: no outbound reply (status=%s) for %s",
-                status,
-                self.normalize_phone(phone),
-            )
+        logger.info(
+            "WhatsApp: no chat reply (status=%s); push notification if task created",
+            status,
+        )
         self._record_inbound(
             db,
             from_phone=phone,
@@ -671,10 +665,10 @@ class WhatsAppService:
             body_text=transcript,
             user_id=user.id,
             task_id=task.id if task else None,
-            bot_reply=reply if send_reply else None,
+            bot_reply=None,
             status=status,
         )
-        return task, reply if send_reply else "", status
+        return task, "", status
 
     def _create_task_from_transcript(
         self,

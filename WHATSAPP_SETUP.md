@@ -229,6 +229,25 @@ Green API must receive **`outgoingMessageReceived`** webhooks (not only incoming
 - **Text** — Hebrew task description
 - **Voice** — Transcribed via OpenAI Whisper (`language=he`)
 - Keyword **משימה** always creates a task (same as email)
+- **No WhatsApp reply** on task creation — user gets a **push notification** (Firebase) instead
+
+## Push notifications (Firebase)
+
+When a task is created from email, WhatsApp, or voice:
+
+1. Mobile registers FCM token via `POST /api/v1/notifications/device`
+2. Backend sends `משימה חדשה` + task title via Firebase
+3. Set `FIREBASE_CREDENTIALS_PATH` on Render to your service account JSON
+
+## Task vs conversation (LangGraph)
+
+All channels use a **LangGraph** pipeline (`USE_LANGGRAPH_CLASSIFIER=true`):
+
+1. **Classify** — task or casual chat?
+2. **Verify** — second pass if confidence &lt; 75%
+3. **Extract** — title, priority, deadline (only if task)
+
+Disable with `USE_LANGGRAPH_CLASSIFIER=false` to fall back to single-shot OpenAI.
 
 ## Notes
 

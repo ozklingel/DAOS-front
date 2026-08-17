@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.security import new_id
-from app.models import Task, User
+from app.models import Task, User, UserSettings
 from app.services.task_classifier import infer_category_and_energy
 
 logger = logging.getLogger(__name__)
@@ -86,4 +86,23 @@ def create_task_from_analysis(
         user.id,
         task.title[:120],
     )
+    _notify_task_created(db, user, task)
     return task
+
+
+def _notify_task_created(db: Session, user: User, task: Task) -> None:
+    try:
+        from app.services.support_services import NotificationService
+
+        settings_row = db.get(UserSettings, user.id)
+        if settings_row is not None and not settings_row.push_notifications_enabled:
+            return
+        NotificationService().send_task_notification(
+            db,
+            user.id,
+            task.id,
+            title="משימה חדשה",
+            body=task.title,
+        )
+    except Exception as exc:
+        logger.warning("Push notification failed for task %s: %s", task.id, exc)

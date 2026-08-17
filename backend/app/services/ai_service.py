@@ -243,20 +243,22 @@ class AIService:
 
         if self.client:
             try:
-                analysis = self._openai_analysis(
+                analysis = self._classify_with_ai(
                     subject, sender, snippet, channel=channel
                 )
                 if self.has_task_keyword(subject, snippet):
                     analysis = self._apply_task_keyword_override(subject, snippet, analysis)
                 analysis = self._enrich_deadline(subject, snippet, analysis)
                 if analysis.get("is_actionable", False):
+                    source = "langgraph" if settings.use_langgraph_classifier else "openai"
                     logger.info(
-                        "Task detected via OpenAI (%s/%s): %r",
+                        "Task detected via %s (%s/%s): %r",
+                        source,
                         channel,
                         settings.openai_model,
                         analysis.get("title", subject)[:120],
                     )
-                    return analysis, "openai"
+                    return analysis, source
                 if channel not in {"whatsapp", "voice"}:
                     logger.info(
                         "OpenAI judged not actionable (%s): %r",
@@ -541,6 +543,22 @@ Respond with valid JSON only."""
             extracted = extract_deadline_iso(text, reference=israel_today())
             analysis["deadline"] = extracted
         return analysis
+
+    def _classify_with_ai(
+        self, subject: str, sender: str, snippet: str, *, channel: str = "email"
+    ) -> dict:
+        if settings.use_langgraph_classifier and self.client:
+            from app.services.langgraph_task_classifier import classify_message_with_langgraph
+
+            return classify_message_with_langgraph(
+                subject=subject,
+                sender=sender,
+                snippet=snippet,
+                channel=channel,
+                client=self.client,
+                model=settings.openai_model,
+            )
+        return self._openai_analysis(subject, sender, snippet, channel=channel)
 
     def _openai_analysis(
         self, subject: str, sender: str, snippet: str, *, channel: str = "email"

@@ -1,9 +1,12 @@
 import json
+import logging
 
 from sqlalchemy.orm import Session
 
 from app.core.security import new_id
 from app.models import DailyBrief, DeviceToken, Task, UserSettings
+
+logger = logging.getLogger(__name__)
 
 
 class SettingsService:
@@ -44,17 +47,25 @@ class NotificationService:
             import firebase_admin
             from firebase_admin import credentials, messaging
 
-            if not firebase_admin._apps:
-                from app.config import settings
+            from app.config import settings
 
-                if settings.firebase_credentials_path:
-                    cred = credentials.Certificate(settings.firebase_credentials_path)
-                    firebase_admin.initialize_app(cred)
+            settings_row = db.get(UserSettings, user_id)
+            if settings_row is not None and not settings_row.push_notifications_enabled:
+                return
+
+            if not firebase_admin._apps:
+                if not settings.firebase_credentials_path:
+                    logger.debug("FCM skipped: FIREBASE_CREDENTIALS_PATH not set")
+                    return
+                cred = credentials.Certificate(settings.firebase_credentials_path)
+                firebase_admin.initialize_app(cred)
 
             tokens = db.query(DeviceToken).filter(DeviceToken.user_id == user_id).all()
             if not tokens:
+                logger.debug("FCM skipped: no device tokens for user %s", user_id)
                 return
 
+            sent = 0
             for token in tokens:
                 messaging.send(
                     messaging.Message(
@@ -63,8 +74,10 @@ class NotificationService:
                         token=token.fcm_token,
                     )
                 )
-        except Exception:
-            pass
+                sent += 1
+            logger.info("FCM sent task notification to %d device(s) for task %s", sent, task_id)
+        except Exception as exc:
+            logger.warning("FCM send failed for task %s: %s", task_id, exc)
 
 
 class DailyBriefService:
