@@ -134,6 +134,7 @@ async def outlook_inbox_preview(
         admin_consent_url = build_admin_consent_url(
             account_email=user.email,
             client_id=settings.microsoft_client_id,
+            tenant_id=settings.microsoft_tenant_id or None,
         )
     if not error and preview.get("has_mail_read_scope") is False:
         scopes = preview.get("token_scopes") or "(none)"

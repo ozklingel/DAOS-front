@@ -115,14 +115,23 @@ Personal `@outlook.com` accounts can approve `Mail.Read` themselves. **Organizat
 **Option B — Admin consent URL** (send to your Microsoft 365 admin):
 
 ```
-https://login.microsoftonline.com/{TENANT_DOMAIN}/adminconsent?client_id={MICROSOFT_CLIENT_ID}
+https://login.microsoftonline.com/organizations/adminconsent?client_id={MICROSOFT_CLIENT_ID}
 ```
 
-Example for `vikos-ltd.com`:
+The admin signs in with their **work admin account**; Microsoft applies consent to **their** tenant.
+
+> **Do not use the email domain** (e.g. `vikos-ltd.com`) in the URL — that causes  
+> `AADSTS90002: Tenant not found`. The Azure tenant ID is a **GUID**, not your `@domain`.
+
+Optional — if IT gives you the tenant GUID (Azure Portal → Microsoft Entra ID → Overview → **Tenant ID**):
 
 ```
-https://login.microsoftonline.com/vikos-ltd.com/adminconsent?client_id=<your Azure application client ID>
+https://login.microsoftonline.com/{TENANT_ID_GUID}/adminconsent?client_id={MICROSOFT_CLIENT_ID}
 ```
+
+Set on the server: `MICROSOFT_TENANT_ID=<guid>` (optional; default link uses `organizations`).
+
+**Option A (easiest for IT):** Azure Portal → App registrations → your app → API permissions → **Grant admin consent for Vikos**
 
 After the admin approves:
 
@@ -141,6 +150,8 @@ App registration → Overview → **Application (client) ID**
 ```env
 MICROSOFT_CLIENT_ID=<Azure application client ID>
 MICROSOFT_CLIENT_SECRET=<Azure client secret Value>
+# Optional: Azure tenant GUID for admin consent URL (not the email domain)
+MICROSOFT_TENANT_ID=
 ```
 
 Set the **same two variables** in Render → `daos-api` → Environment, then wait for redeploy.

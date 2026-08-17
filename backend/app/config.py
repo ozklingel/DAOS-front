@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     google_android_client_id: str = ""
     microsoft_client_id: str = ""
     microsoft_client_secret: str = ""
+    # Azure AD tenant ID (GUID) for admin consent URL — NOT the email domain
+    microsoft_tenant_id: str = ""
 
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"

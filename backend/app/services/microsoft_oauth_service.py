@@ -20,8 +20,17 @@ _PERSONAL_EMAIL_DOMAINS = frozenset(
 )
 
 
-def build_admin_consent_url(*, account_email: str, client_id: str) -> str | None:
-    """Tenant admin consent URL for work/school accounts (Option B for IT)."""
+def build_admin_consent_url(
+    *,
+    account_email: str,
+    client_id: str,
+    tenant_id: str | None = None,
+) -> str | None:
+    """Tenant admin consent URL for work/school accounts (Option B for IT).
+
+    Uses MICROSOFT_TENANT_ID (GUID) when set. Otherwise ``organizations`` so the
+    admin signs into their own tenant — never guess from email domain (AADSTS90002).
+    """
     cid = (client_id or "").strip()
     if not cid or cid in {"your-azure-app-client-id", "YOUR_OUTLOOK_CLIENT_ID"}:
         return None
@@ -31,7 +40,11 @@ def build_admin_consent_url(*, account_email: str, client_id: str) -> str | None
     domain = email.rsplit("@", 1)[-1]
     if not domain or domain in _PERSONAL_EMAIL_DOMAINS:
         return None
-    return f"https://login.microsoftonline.com/{domain}/adminconsent?client_id={cid}"
+
+    tenant = (tenant_id or "").strip()
+    if not tenant:
+        tenant = "organizations"
+    return f"https://login.microsoftonline.com/{tenant}/adminconsent?client_id={cid}"
 
 
 class MicrosoftOAuthService:
