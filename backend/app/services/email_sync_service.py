@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models import Task, User
 from app.services.ai_service import AIService
 from app.services.gmail_service import GmailService
+from app.services.info_document_service import InfoDocumentService
 from app.services.outlook_mail_service import OutlookMailService
 
 from app.services.task_ingest_service import create_task_from_analysis
@@ -19,75 +20,101 @@ class EmailSyncService:
         self.ai = AIService()
         self.gmail = GmailService()
         self.outlook = OutlookMailService()
+        self.info_docs = InfoDocumentService()
 
     async def sync_user_emails(self, db: Session, user: User) -> dict:
         emails, fetch_errors = await self._fetch_emails(db, user)
         created = 0
+        info_created = 0
         skipped_non_hebrew = 0
         skipped_no_signal = 0
         skipped_not_actionable = 0
         for email in emails:
-            exists = (
+            task_exists = (
                 db.query(Task)
                 .filter(Task.user_id == user.id, Task.email_message_id == email["message_id"])
                 .one_or_none()
             )
-            if exists:
+            if task_exists:
                 continue
 
             if not self.ai.is_hebrew_email(email["subject"], email["snippet"]):
                 skipped_non_hebrew += 1
                 continue
 
-            if not self.ai.looks_like_task_candidate(email["subject"], email["snippet"]):
-                skipped_no_signal += 1
-                continue
-
-            analysis, source = self.ai.analyze_email_detailed(
-                subject=email["subject"],
-                sender=email["sender"],
-                snippet=email["snippet"],
-                channel="email",
-            )
-            if not analysis or not analysis.get("is_actionable", True):
-                skipped_not_actionable += 1
-                continue
-
-            task = create_task_from_analysis(
-                db,
-                user,
-                analysis,
-                source_subject=email["subject"],
-                source_snippet=email["snippet"],
-                email_message_id=email["message_id"],
-                sender_name=email.get("sender_name"),
-                sender_email=email.get("sender_email"),
-                source_label=source,
-            )
-            if task:
-                created += 1
-                logger.info(
-                    "Created Hebrew task via %s for user %s: %r",
-                    source,
-                    user.id,
-                    task.title[:120],
+            task_created = False
+            if self.ai.looks_like_task_candidate(email["subject"], email["snippet"]):
+                analysis, source = self.ai.analyze_email_detailed(
+                    subject=email["subject"],
+                    sender=email["sender"],
+                    snippet=email["snippet"],
+                    channel="email",
                 )
+                if analysis and analysis.get("is_actionable", True):
+                    task = create_task_from_analysis(
+                        db,
+                        user,
+                        analysis,
+                        source_subject=email["subject"],
+                        source_snippet=email["snippet"],
+                        email_message_id=email["message_id"],
+                        sender_name=email.get("sender_name"),
+                        sender_email=email.get("sender_email"),
+                        source_label=source,
+                    )
+                    if task:
+                        created += 1
+                        task_created = True
+                        logger.info(
+                            "Created Hebrew task via %s for user %s: %r",
+                            source,
+                            user.id,
+                            task.title[:120],
+                        )
+                elif analysis is not None:
+                    skipped_not_actionable += 1
+            else:
+                skipped_no_signal += 1
 
-        if created:
+            if task_created:
+                continue
+
+            if self.ai.looks_like_info_candidate(email["subject"], email["snippet"]):
+                info_analysis = self.ai.analyze_message_for_info(
+                    subject=email["subject"],
+                    sender=email["sender"],
+                    snippet=email["snippet"],
+                    channel="email",
+                )
+                if info_analysis:
+                    doc = self.info_docs.create_from_message(
+                        db,
+                        user,
+                        info_analysis,
+                        source="email",
+                        source_message_id=email["message_id"],
+                        sender_label=email.get("sender_name") or email.get("sender"),
+                    )
+                    if doc:
+                        info_created += 1
+
+        if created or info_created:
             db.commit()
 
         logger.info(
-            "Email sync for user %s: scanned=%d created=%d skipped_non_hebrew=%d "
+            "Email sync for user %s: scanned=%d tasks=%d info_docs=%d skipped_non_hebrew=%d "
             "skipped_no_signal=%d skipped_not_actionable=%d",
             user.id,
             len(emails),
             created,
+            info_created,
             skipped_non_hebrew,
             skipped_no_signal,
             skipped_not_actionable,
         )
         return {
             "created": created,
+            "info_created": info_created,
             "scanned": len(emails),
             "skipped_non_hebrew": skipped_non_hebrew,
             "skipped_no_keyword": skipped_no_signal,

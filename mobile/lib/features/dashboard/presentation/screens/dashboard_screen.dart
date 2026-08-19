@@ -17,6 +17,7 @@ import 'package:daos/routes/route_names.dart';
 import 'package:daos/shared/models/task_enums.dart';
 import 'package:daos/shared/widgets/task_meta_chips.dart';
 import 'package:daos/features/info/presentation/screens/info_screen.dart';
+import 'package:daos/shared/widgets/daos_logo.dart';
 import 'package:daos/shared/widgets/loading_error_widgets.dart';
 import 'package:daos/theme/app_colors.dart';
 
@@ -34,7 +35,7 @@ class DashboardScreen extends ConsumerWidget {
       decoration: const BoxDecoration(gradient: AppColors.darkBackgroundGradient),
       child: SafeArea(
         child: dashboardAsync.when(
-          loading: () => const ShimmerLoading(itemCount: 4),
+          loading: () => const DashboardLoadingView(),
           error: (e, _) => ErrorView(
             error: e,
             onRetry: () => ref.read(dashboardProvider.notifier).refresh(),

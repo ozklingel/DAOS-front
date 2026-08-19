@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import User, WhatsAppInboundLog, WhatsAppSyncedChat
 from app.services.ai_service import AIService
+from app.services.info_document_service import InfoDocumentService
 from app.services.task_ingest_service import create_task_from_analysis
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ GREEN_MESSAGE_WEBHOOK_TYPES = _GREEN_WEBHOOK_TYPES
 class WhatsAppService:
     def __init__(self) -> None:
         self.ai = AIService()
+        self.info_docs = InfoDocumentService()
 
     @property
     def graph_api_base(self) -> str:
@@ -684,6 +686,15 @@ class WhatsAppService:
             if source == "skipped_not_hebrew":
                 return None, "רק הודעות בעברית נתמכות כרגע. שלחו משימה בעברית.", "not_hebrew"
             if source in {"openai_not_actionable", "no_task_detected", "skipped_no_task_signal"}:
+                info_doc = self._try_create_info_from_whatsapp(
+                    db,
+                    user,
+                    transcript,
+                    whatsapp_message_id=whatsapp_message_id,
+                    sender_name=sender_name,
+                )
+                if info_doc:
+                    return None, "", "info_document_created"
                 return (
                     None,
                     "",
@@ -709,6 +720,34 @@ class WhatsAppService:
             return None, "המשימה כבר קיימת.", "task_duplicate"
 
         return task, self._format_task_created_reply(task), "task_created"
+
+    def _try_create_info_from_whatsapp(
+        self,
+        db: Session,
+        user: User,
+        transcript: str,
+        *,
+        whatsapp_message_id: str | None,
+        sender_name: str,
+    ) -> dict | None:
+        if not whatsapp_message_id:
+            return None
+        info_analysis = self.ai.analyze_message_for_info(
+            subject=transcript[:200],
+            sender=sender_name,
+            snippet=transcript,
+            channel="whatsapp",
+        )
+        if not info_analysis:
+            return None
+        return self.info_docs.create_from_message(
+            db,
+            user,
+            info_analysis,
+            source="whatsapp",
+            source_message_id=whatsapp_message_id,
+            sender_label=sender_name,
+        )
 
     def _format_task_created_reply(self, task: object) -> str:
         priority_he = {

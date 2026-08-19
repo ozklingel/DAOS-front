@@ -87,6 +87,8 @@ class InfoDocumentService:
             extracted_text=analysis.get("extracted_text"),
             mime_type=mime,
             image_data=image_data,
+            source="camera",
+            source_message_id=None,
             expiry_date=expiry,
             confidence=float(analysis.get("confidence") or 0),
         )
@@ -120,6 +122,79 @@ class InfoDocumentService:
             user.id,
         )
         return self._to_dict(doc, include_image=True)
+
+    def create_from_message(
+        self,
+        db: Session,
+        user: User,
+        analysis: dict,
+        *,
+        source: str,
+        source_message_id: str,
+        sender_label: str | None = None,
+    ) -> dict | None:
+        """Persist a text document from email or WhatsApp (deduped by source_message_id)."""
+        if not source_message_id:
+            return None
+
+        exists = (
+            db.query(InfoDocument)
+            .filter(
+                InfoDocument.user_id == user.id,
+                InfoDocument.source_message_id == source_message_id,
+            )
+            .one_or_none()
+        )
+        if exists:
+            return None
+
+        expiry = self._parse_expiry(analysis.get("expiry_date"))
+        title = (analysis.get("title") or "").strip() or "מידע"
+        summary = analysis.get("summary")
+        if sender_label and summary:
+            summary = f"{summary} · {sender_label}"
+        elif sender_label:
+            summary = sender_label
+
+        doc = InfoDocument(
+            id=new_id(),
+            user_id=user.id,
+            category=analysis["category"],
+            title=title[:255],
+            summary=summary,
+            extracted_text=analysis.get("extracted_text"),
+            mime_type=None,
+            image_data=None,
+            source=source,
+            source_message_id=source_message_id,
+            expiry_date=expiry,
+            confidence=float(analysis.get("confidence") or 0),
+        )
+        db.add(doc)
+
+        if (
+            expiry
+            and analysis["category"] != InfoDocCategory.finance.value
+            and analysis["category"]
+            in {
+                InfoDocCategory.vehicle.value,
+                InfoDocCategory.insurance.value,
+                InfoDocCategory.personal_docs.value,
+            }
+        ):
+            self._maybe_create_asset_reminder(db, user, analysis, expiry)
+
+        db.commit()
+        db.refresh(doc)
+        logger.info(
+            "Created info document from %s %s category=%s title=%r user=%s",
+            source,
+            source_message_id[:40],
+            doc.category,
+            doc.title[:80],
+            user.id,
+        )
+        return self._to_dict(doc, include_image=False)
 
     def get_document(self, db: Session, user: User, document_id: str) -> dict:
         row = (
@@ -204,6 +279,7 @@ class InfoDocumentService:
             "icon": meta[1],
             "has_image": bool(row.image_data),
             "mime_type": row.mime_type or "image/jpeg",
+            "source": getattr(row, "source", None) or "camera",
             "created_at": row.created_at.isoformat() if row.created_at else None,
             "image_data_url": None,
         }

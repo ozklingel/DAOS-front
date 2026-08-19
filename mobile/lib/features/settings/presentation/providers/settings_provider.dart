@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/di/providers.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
 import 'package:daos/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:daos/features/hub/presentation/providers/hub_providers.dart';
 import 'package:daos/features/settings/data/models/outlook_inbox_preview_model.dart';
 import 'package:daos/features/settings/data/models/whatsapp_chat_model.dart';
 import 'package:daos/features/settings/domain/entities/app_settings.dart';
@@ -49,6 +50,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
       final result = await syncEmails();
       ref.invalidate(dashboardProvider);
       ref.invalidate(todayTasksProvider);
+      ref.invalidate(infoHubProvider);
       return result;
     } finally {
       ref.read(emailSyncInProgressProvider.notifier).state = false;

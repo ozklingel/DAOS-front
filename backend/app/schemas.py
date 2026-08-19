@@ -599,6 +599,7 @@ class InfoDocumentOut(APIModel):
     has_image: bool = False
     mime_type: str | None = None
     image_data_url: str | None = None
+    source: str = "camera"
     created_at: str | None = None
 
 

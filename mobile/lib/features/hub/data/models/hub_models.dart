@@ -484,6 +484,7 @@ class InfoDocumentData {
     this.mimeType,
     this.imageDataUrl,
     this.createdAt,
+    this.source = 'camera',
   });
 
   factory InfoDocumentData.fromJson(Map<String, dynamic> json) {
@@ -506,6 +507,7 @@ class InfoDocumentData {
       imageDataUrl:
           json['image_data_url'] as String? ?? json['imageDataUrl'] as String?,
       createdAt: json['created_at'] as String? ?? json['createdAt'] as String?,
+      source: json['source'] as String? ?? 'camera',
     );
   }
 
@@ -522,4 +524,5 @@ class InfoDocumentData {
   final String? mimeType;
   final String? imageDataUrl;
   final String? createdAt;
+  final String source;
 }

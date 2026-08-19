@@ -49,10 +49,17 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
           final categories = hub.categories.where((c) {
             if (_query.isEmpty) return true;
             if (c.title.toLowerCase().contains(_query)) return true;
-            return c.items.any((item) => item.toLowerCase().contains(_query));
+            return c.items.any((item) => item.toLowerCase().contains(_query)) ||
+                hub.documents.any(
+                  (d) => d.category == c.id && d.title.toLowerCase().contains(_query),
+                );
           }).toList();
 
-          return ListView(
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(infoHubProvider),
+            color: AppColors.primary,
+            backgroundColor: AppColors.darkSurface,
+            child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             children: [
               if (alerts.isEmpty && categories.isEmpty)
@@ -87,12 +94,22 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                 const SizedBox(height: 8),
               ],
               ...categories.map(
-                (category) => Padding(
+                (category) {
+                  final docsInCategory =
+                      hub.documents.where((d) => d.category == category.id).toList();
+                  final subtitleLines = docsInCategory.isEmpty
+                      ? category.items
+                      : [
+                          l.infoDocumentsCount(docsInCategory.length),
+                          ...docsInCategory.take(3).map((d) => d.title),
+                        ];
+
+                  return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: HubMenuCard(
                     title: category.title,
                     icon: hubIconForKey(category.icon),
-                    subtitleLines: category.items,
+                    subtitleLines: subtitleLines,
                     onTap: () {
                       final docsInCategory = hub.documents
                           .where((d) => d.category == category.id)
@@ -119,9 +136,11 @@ class _InfoScreenState extends ConsumerState<InfoScreen> {
                       }
                     },
                   ),
-                ),
+                );
+                },
               ),
             ],
+          ),
           );
         },
       ),

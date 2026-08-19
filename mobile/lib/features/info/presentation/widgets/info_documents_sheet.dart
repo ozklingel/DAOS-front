@@ -9,6 +9,17 @@ import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/shared/widgets/hub_menu_card.dart';
 import 'package:daos/theme/app_colors.dart';
 
+String infoSourceLabel(AppLocalizations l, String source) {
+  switch (source) {
+    case 'email':
+      return l.infoSourceEmail;
+    case 'whatsapp':
+      return l.infoSourceWhatsApp;
+    default:
+      return l.infoSourceCamera;
+  }
+}
+
 Future<void> showInfoCategorySheet(
   BuildContext context,
   WidgetRef ref, {
@@ -86,6 +97,7 @@ Future<void> showInfoCategorySheet(
                             final doc = docs[index];
                             return _InfoDocumentTile(
                               document: doc,
+                              sourceLabel: infoSourceLabel(l, doc.source),
                               onTap: () {
                                 Navigator.pop(ctx);
                                 showInfoDocumentDetail(context, ref, doc);
@@ -319,9 +331,14 @@ class _MissingImage extends StatelessWidget {
 }
 
 class _InfoDocumentTile extends StatelessWidget {
-  const _InfoDocumentTile({required this.document, required this.onTap});
+  const _InfoDocumentTile({
+    required this.document,
+    required this.sourceLabel,
+    required this.onTap,
+  });
 
   final InfoDocumentData document;
+  final String sourceLabel;
   final VoidCallback onTap;
 
   @override
@@ -368,6 +385,14 @@ class _InfoDocumentTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         color: AppColors.darkTextPrimary,
+                      ),
+                    ),
+                    Text(
+                      sourceLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (document.summary != null && document.summary!.isNotEmpty)

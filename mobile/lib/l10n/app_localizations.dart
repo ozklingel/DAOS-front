@@ -66,6 +66,9 @@ abstract class AppLocalizations {
   String get infoCategoryEmptyHint;
   String infoDocumentsCount(int count);
   String get infoDocumentDate;
+  String get infoSourceEmail;
+  String get infoSourceWhatsApp;
+  String get infoSourceCamera;
   String get infoDocumentExtracted;
   String get infoDocumentNoImage;
   String get deleteDocument;
@@ -92,6 +95,7 @@ abstract class AppLocalizations {
   String get googleWebOriginError;
   String get loginTerms;
   String get splashTagline;
+  String get loadingDashboard;
 
   String get dashboard;
   String get goodMorning;
@@ -428,6 +432,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get infoDocumentDate => 'Date';
   @override
+  String get infoSourceEmail => 'From email';
+  @override
+  String get infoSourceWhatsApp => 'From WhatsApp';
+  @override
+  String get infoSourceCamera => 'From photo';
+  @override
   String get infoDocumentExtracted => 'Extracted text';
   @override
   String get infoDocumentNoImage => 'No photo available for this document';
@@ -486,6 +496,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'By continuing, you agree to our Terms of Service\nand Privacy Policy';
   @override
   String get splashTagline => 'AI-powered email tasks';
+  @override
+  String get loadingDashboard => 'Loading your home…';
 
   @override
   String get dashboard => 'Dashboard';
@@ -1176,6 +1188,12 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get infoDocumentDate => 'תאריך';
   @override
+  String get infoSourceEmail => 'ממייל';
+  @override
+  String get infoSourceWhatsApp => 'מ-WhatsApp';
+  @override
+  String get infoSourceCamera => 'מצילום';
+  @override
   String get infoDocumentExtracted => 'טקסט שחולץ';
   @override
   String get infoDocumentNoImage => 'אין תמונה זמינה למסמך זה';
@@ -1234,6 +1252,8 @@ class AppLocalizationsHe extends AppLocalizations {
       'בהמשך השימוש, אתם מסכימים לתנאי השירות\nולמדיניות הפרטיות';
   @override
   String get splashTagline => 'משימות מייל מבוססות AI';
+  @override
+  String get loadingDashboard => 'טוען את דף הבית…';
 
   @override
   String get dashboard => 'לוח בקרה';

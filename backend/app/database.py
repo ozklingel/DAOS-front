@@ -61,8 +61,9 @@ def _migrate_schema() -> None:
         _add_column_if_missing("finance_transactions", "bank_account_id", "VARCHAR(36)")
         _add_column_if_missing("finance_transactions", "external_id", "VARCHAR(128)")
 
-    if "whatsapp_inbound_logs" in tables:
-        _add_column_if_missing("whatsapp_inbound_logs", "chat_id", "VARCHAR(128)")
+    if "info_documents" in tables:
+        _add_column_if_missing("info_documents", "source", "VARCHAR(20) DEFAULT 'camera'")
+        _add_column_if_missing("info_documents", "source_message_id", "VARCHAR(512)")
 
 
 def init_db() -> None:

@@ -503,6 +503,148 @@ Respond with valid JSON only."""
             "confidence": max(0.0, min(1.0, confidence)),
         }
 
+    _INFO_NOISE_MARKERS = (
+        "otp",
+        "verification code",
+        "קוד אימות",
+        "unsubscribe",
+        "הסרה מרשימת",
+        "newsletter",
+        "no-reply",
+        "noreply",
+        "do not reply",
+    )
+
+    _INFO_KEYWORDS = (
+        "ביטוח",
+        "פוליסה",
+        "דרכון",
+        "רישיון",
+        "טסט",
+        "רכב",
+        "קישור",
+        "סיכום",
+        "רעיון",
+        "מסמך",
+        "חשבונית",
+        "קבלה",
+        "אישור",
+        "פוליס",
+        "ביט",
+        "paybox",
+        "http",
+        "www.",
+    )
+
+    def looks_like_info_candidate(self, subject: str, snippet: str) -> bool:
+        text = f"{subject} {snippet}".strip()
+        if not text or not self.is_hebrew_email(subject, snippet):
+            return False
+        lower = text.lower()
+        if any(m in lower for m in self._INFO_NOISE_MARKERS):
+            return False
+        if re.search(r"https?://|www\.", lower):
+            return True
+        return any(k in text for k in self._INFO_KEYWORDS)
+
+    def analyze_message_for_info(
+        self,
+        *,
+        subject: str,
+        sender: str,
+        snippet: str,
+        channel: str = "email",
+    ) -> dict | None:
+        """Classify email/WhatsApp text into an Info hub category (non-task content)."""
+        if not self.is_hebrew_email(subject, snippet):
+            return None
+        if not self.looks_like_info_candidate(subject, snippet):
+            return None
+
+        if self.client:
+            try:
+                return self._openai_message_info_analysis(
+                    subject, sender, snippet, channel=channel
+                )
+            except Exception as exc:
+                logger.warning("OpenAI info message analysis failed: %s", exc)
+
+        return self._heuristic_message_info_analysis(subject, snippet)
+
+    def _openai_message_info_analysis(
+        self, subject: str, sender: str, snippet: str, *, channel: str
+    ) -> dict | None:
+        channel_label = {"email": "מייל", "whatsapp": "WhatsApp"}.get(channel, channel)
+        prompt = f"""Classify this Hebrew {channel_label} message for a personal info hub.
+Return JSON only:
+- is_info_worthy (boolean): true if it contains useful personal info (document, link, idea, summary, receipt, insurance, vehicle) — NOT casual chat or a task request
+- category: one of personal_docs, ideas, summaries, links, finance, vehicle, insurance, archive
+- title: short Hebrew title
+- summary: one Hebrew sentence or null
+- extracted_text: key details (URLs, dates, amounts) or null
+- expiry_date: ISO date YYYY-MM-DD if a document/policy expiry is mentioned, else null
+- confidence: 0-1
+
+NOT info-worthy: tasks ("צריך ל...", "תזכיר לי"), thanks, OTP, newsletters, ads.
+Payment confirmations / Bit receipts → finance. Insurance policies → insurance. URLs alone → links.
+
+From: {sender}
+Subject: {subject}
+Body: {snippet}
+"""
+        response = self.client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Classify Hebrew messages for an info hub. JSON only.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,
+            response_format={"type": "json_object"},
+        )
+        data = json.loads(response.choices[0].message.content or "{}")
+        if not data.get("is_info_worthy"):
+            return None
+        normalized = self._normalize_document_analysis(data)
+        normalized["confidence"] = float(data.get("confidence") or normalized.get("confidence") or 0.6)
+        return normalized
+
+    def _heuristic_message_info_analysis(self, subject: str, snippet: str) -> dict | None:
+        text = f"{subject}\n{snippet}".strip()
+        lower = text.lower()
+        category = InfoDocCategory.archive.value
+        title = subject[:200].strip() or "מידע ממייל"
+
+        if re.search(r"https?://|www\.", lower):
+            category = InfoDocCategory.links.value
+            title = subject[:120] or "קישור"
+        elif any(w in text for w in ("ביטוח", "פוליסה", "פוליס")):
+            category = InfoDocCategory.insurance.value
+            title = subject[:120] or "ביטוח"
+        elif any(w in text for w in ("טסט", "רכב", "רישיון נהיגה")):
+            category = InfoDocCategory.vehicle.value
+            title = subject[:120] or "רכב"
+        elif any(w in lower for w in ("bit", "paybox", "קבלה", "תשלום", "העברה")):
+            category = InfoDocCategory.finance.value
+            title = subject[:120] or "תשלום / קבלה"
+        elif any(w in text for w in ("רעיון", "פרויקט")):
+            category = InfoDocCategory.ideas.value
+        elif any(w in text for w in ("סיכום", "מחברת")):
+            category = InfoDocCategory.summaries.value
+        elif any(w in text for w in ("דרכון", "תעודת", "מסמך")):
+            category = InfoDocCategory.personal_docs.value
+
+        return {
+            "category": category,
+            "title": title[:255],
+            "summary": snippet[:300] if snippet else None,
+            "extracted_text": snippet[:2000] if snippet else None,
+            "expiry_date": None,
+            "confidence": 0.45,
+        }
+
     def _apply_task_keyword_override(
         self, subject: str, snippet: str, analysis: dict
     ) -> dict:
