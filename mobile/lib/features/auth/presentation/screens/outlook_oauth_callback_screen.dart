@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:daos/core/errors/app_exception.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/route_names.dart';
 import 'package:daos/theme/app_colors.dart';
@@ -53,8 +54,22 @@ class _OutlookOAuthCallbackScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.outlookConnectedSuccess)),
         );
+        try {
+          await ref.read(settingsProvider.future);
+          await ref
+              .read(settingsProvider.notifier)
+              .syncEmailsAndRefresh(ignoreEnabledFlag: true);
+        } catch (_) {}
+        if (!mounted) return;
         context.go(RouteNames.settings);
       } else {
+        try {
+          await ref.read(settingsProvider.future);
+          await ref
+              .read(settingsProvider.notifier)
+              .syncEmailsAndRefresh(ignoreEnabledFlag: true);
+        } catch (_) {}
+        if (!mounted) return;
         context.go(RouteNames.dashboard);
       }
     } on AppException catch (e) {

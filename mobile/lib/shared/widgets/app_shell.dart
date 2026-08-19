@@ -19,6 +19,12 @@ class AppShell extends StatelessWidget {
   }
 
   void _onTap(BuildContext context, int index) {
+    // Close pushed routes (e.g. profile) and modal sheets before switching tabs.
+    final navigator = Navigator.of(context);
+    while (navigator.canPop()) {
+      navigator.pop();
+    }
+
     switch (index) {
       case 0:
         context.go(RouteNames.dashboard);
@@ -38,7 +44,7 @@ class AppShell extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final index = _currentIndex(context);
     final isTaskDetail = GoRouterState.of(context).matchedLocation.contains('/home/tasks/');
-    final hideNav = isTaskDetail || GoRouterState.of(context).matchedLocation.startsWith('/home/profile');
+    final hideNav = isTaskDetail;
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,

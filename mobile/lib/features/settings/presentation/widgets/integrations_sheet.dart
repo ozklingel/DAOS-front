@@ -24,10 +24,43 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
   bool _isConnecting = false;
   bool _isLinkingWhatsApp = false;
   bool _isTestingOutlookInbox = false;
+  bool _isSyncingEmails = false;
 
   bool get _isDevAccount {
     final email = ref.read(authStateProvider).user?.email ?? '';
     return email.endsWith('@daos.local') || email.endsWith('@taskmail.local');
+  }
+
+  void _showSyncResult(AppLocalizations l, ({int created, int scanned}) result) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.created > 0
+              ? l.syncCompleteTasks(result.created)
+              : l.syncCompleteScanned(result.scanned),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _syncEmails(AppLocalizations l, {bool showSnackBar = true}) async {
+    if (_isSyncingEmails) return;
+    setState(() => _isSyncingEmails = true);
+    try {
+      final result = await ref
+          .read(settingsProvider.notifier)
+          .syncEmailsAndRefresh(ignoreEnabledFlag: true);
+      if (!mounted || result == null) return;
+      if (showSnackBar) _showSyncResult(l, result);
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.errorMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncingEmails = false);
+    }
   }
 
   Future<void> _connectGmail(AppLocalizations l) async {
@@ -46,6 +79,7 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.gmailConnectedSuccess)),
         );
+        await _syncEmails(l, showSnackBar: true);
       }
     } on AppException catch (e) {
       if (mounted) {
@@ -131,19 +165,11 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
     final outlookConnected = user?.outlookConnected ?? false;
     final whatsappConnected = user?.whatsappConnected ?? false;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l.integrations,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            _ConnectionCard(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ConnectionCard(
               title: l.whatsapp,
               connected: whatsappConnected,
               connectedLabel: l.connected,
@@ -214,6 +240,7 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l.outlookConnectedSuccess)),
                     );
+                    await _syncEmails(l, showSnackBar: true);
                   }
                 } on AppException catch (e) {
                   // Web redirects away; ignore redirect message
@@ -246,35 +273,18 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
             if (gmailConnected || outlookConnected) ...[
               const SizedBox(height: 16),
               FilledButton.icon(
-                onPressed: () async {
-                  try {
-                    final result = await ref.read(settingsProvider.notifier).syncEmails();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            result.created > 0
-                                ? l.syncCompleteTasks(result.created)
-                                : l.syncCompleteScanned(result.scanned),
-                          ),
-                        ),
-                      );
-                    }
-                  } on AppException catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l.errorMessage(e))),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.sync),
-                label: Text(l.syncEmailsNow),
+                onPressed: _isSyncingEmails ? null : () => _syncEmails(l),
+                icon: _isSyncingEmails
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.sync),
+                label: Text(_isSyncingEmails ? l.syncEmailsInProgress : l.syncEmailsNow),
               ),
             ],
           ],
-        ),
-      ),
     );
   }
 }

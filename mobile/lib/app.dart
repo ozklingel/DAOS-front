@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daos/core/locale/locale_provider.dart';
 import 'package:daos/features/auth/presentation/providers/auth_provider.dart';
+import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/app_router.dart';
 import 'package:daos/services/notification_service.dart';
@@ -35,6 +36,18 @@ class _DaosAppState extends ConsumerState<DaosApp> {
     if (!auth.isAuthenticated || auth.isLoading) return;
     try {
       await ref.read(notificationServiceProvider).registerDeviceToken();
+    } catch (_) {}
+    await _syncEmailsOnAppEntry();
+  }
+
+  Future<void> _syncEmailsOnAppEntry() async {
+    try {
+      await ref.read(settingsProvider.future);
+    } catch (_) {
+      return;
+    }
+    try {
+      await ref.read(settingsProvider.notifier).syncEmailsAndRefresh();
     } catch (_) {}
   }
 

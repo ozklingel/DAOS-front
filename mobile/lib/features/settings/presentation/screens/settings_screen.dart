@@ -7,6 +7,7 @@ import 'package:daos/features/dashboard/presentation/providers/dashboard_provide
 import 'package:daos/features/daily_brief/presentation/providers/daily_brief_provider.dart';
 import 'package:daos/features/settings/presentation/providers/settings_provider.dart';
 import 'package:daos/features/settings/presentation/widgets/integrations_sheet.dart';
+import 'package:daos/features/settings/presentation/widgets/settings_sheet_scaffold.dart';
 import 'package:daos/l10n/app_localizations.dart';
 import 'package:daos/routes/route_names.dart';
 import 'package:daos/shared/widgets/daos_page_scaffold.dart';
@@ -131,39 +132,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     String currentLocale,
   ) async {
     final l = AppLocalizations.of(context);
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l.language, style: Theme.of(ctx).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            SegmentedButton<String>(
-              segments: [
-                ButtonSegment(value: 'en', label: Text(l.english)),
-                ButtonSegment(value: 'he', label: Text(l.hebrew)),
-              ],
-              selected: {currentLocale},
-              onSelectionChanged: (selected) async {
-                final code = selected.first;
-                await ref.read(localeProvider.notifier).setLocale(code);
-                await ref.read(settingsProvider.notifier).saveSettings(
-                      settings.copyWith(language: code),
-                    );
-                ref.invalidate(dashboardProvider);
-                ref.invalidate(dailyBriefProvider);
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
+    await SettingsSheetScaffold.show(
+      context,
+      title: l.language,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'en', label: Text(l.english)),
+              ButtonSegment(value: 'he', label: Text(l.hebrew)),
+            ],
+            selected: {currentLocale},
+            onSelectionChanged: (selected) async {
+              final code = selected.first;
+              await ref.read(localeProvider.notifier).setLocale(code);
+              await ref.read(settingsProvider.notifier).saveSettings(
+                    settings.copyWith(language: code),
+                  );
+              ref.invalidate(dashboardProvider);
+              ref.invalidate(dailyBriefProvider);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -174,15 +167,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     dynamic settings,
   ) async {
     final l = AppLocalizations.of(context);
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.darkSurface,
+    await SettingsSheetScaffold.show(
+      context,
+      title: l.notifications,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -217,14 +206,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _showIntegrationsSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.darkBackgroundMid,
+    final l = AppLocalizations.of(context);
+    await SettingsSheetScaffold.show(
+      context,
+      title: l.integrations,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const IntegrationsSheet(),
+      child: const SingleChildScrollView(child: IntegrationsSheet()),
     );
   }
 
@@ -233,34 +220,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     WidgetRef ref,
     AppLocalizations l,
   ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l.appVersionLabel, style: Theme.of(ctx).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(l.termsOfUse),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () async {
-                await ref.read(authStateProvider.notifier).logout();
-                if (ctx.mounted) context.go(RouteNames.login);
-              },
-              icon: const Icon(Icons.logout, size: 18),
-              label: Text(l.signOut),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.critical,
-              ),
+    await SettingsSheetScaffold.show(
+      context,
+      title: l.aboutSection,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l.appVersionLabel, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(l.termsOfUse),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () async {
+              await ref.read(authStateProvider.notifier).logout();
+              if (context.mounted) context.go(RouteNames.login);
+            },
+            icon: const Icon(Icons.logout, size: 18),
+            label: Text(l.signOut),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.critical,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

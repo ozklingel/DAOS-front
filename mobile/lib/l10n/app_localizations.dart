@@ -167,6 +167,7 @@ abstract class AppLocalizations {
   String get searchInInfo;
   String get infoTitle;
   String get financeTitle;
+  String get financeComingSoonHint;
   String get calendarTitle;
   String get profileTitle;
   String get accountAndProfile;
@@ -235,6 +236,7 @@ abstract class AppLocalizations {
   String get connect;
   String get disconnect;
   String get syncEmailsNow;
+  String get syncEmailsInProgress;
   String get notifications;
   String get pushNotifications;
   String get pushNotificationsSubtitle;
@@ -631,6 +633,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get financeTitle => 'Your financial status';
   @override
+  String get financeComingSoonHint =>
+      'Budget tracking and bank connections will be added in a future update.';
+  @override
   String get calendarTitle => 'Your calendar';
   @override
   String get profileTitle => 'Profile';
@@ -770,6 +775,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnect => 'Disconnect';
   @override
   String get syncEmailsNow => 'Sync emails now';
+  @override
+  String get syncEmailsInProgress => 'Syncing emails…';
   @override
   String get notifications => 'Notifications';
   @override
@@ -1374,6 +1381,9 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get financeTitle => 'המצב הפיננסי שלך';
   @override
+  String get financeComingSoonHint =>
+      'מעקב תקציב וחיבור בנקים יתווספו בגרסה הבאה.';
+  @override
   String get calendarTitle => 'היומן שלך';
   @override
   String get profileTitle => 'פרופיל';
@@ -1513,6 +1523,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get disconnect => 'נתק';
   @override
   String get syncEmailsNow => 'סנכרן מיילים עכשיו';
+  @override
+  String get syncEmailsInProgress => 'מסנכרן מיילים…';
   @override
   String get notifications => 'התראות';
   @override
