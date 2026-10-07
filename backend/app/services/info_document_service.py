@@ -40,11 +40,25 @@ class InfoDocumentService:
         image_bytes: bytes,
         mime_type: str = "image/jpeg",
         filename: str | None = None,
-    ) -> dict:
+        source: str = "camera",
+        source_message_id: str | None = None,
+    ) -> dict | None:
         if not image_bytes:
             raise ValueError("Empty image")
         if len(image_bytes) > MAX_IMAGE_BYTES:
             raise ValueError("Image too large (max 8MB)")
+
+        if source_message_id:
+            exists = (
+                db.query(InfoDocument)
+                .filter(
+                    InfoDocument.user_id == user.id,
+                    InfoDocument.source_message_id == source_message_id,
+                )
+                .one_or_none()
+            )
+            if exists:
+                return None
 
         mime = mime_type or "image/jpeg"
         if not mime.startswith("image/"):
@@ -87,8 +101,8 @@ class InfoDocumentService:
             extracted_text=analysis.get("extracted_text"),
             mime_type=mime,
             image_data=image_data,
-            source="camera",
-            source_message_id=None,
+            source=source,
+            source_message_id=source_message_id,
             expiry_date=expiry,
             confidence=float(analysis.get("confidence") or 0),
         )

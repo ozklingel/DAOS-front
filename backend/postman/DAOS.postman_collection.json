@@ -2,11 +2,11 @@
   "info": {
     "_postman_id": "a1b2c3d4-daos-api-2026",
     "name": "DAOS API",
-    "description": "Postman collection for the DAOS FastAPI backend.\n\nQuick start:\n1. Set `baseUrl` (local: http://127.0.0.1:8080 or production: https://daos-api.onrender.com)\n2. Run **Auth → Dev Login** — scripts save `accessToken` / `refreshToken`\n3. Other requests use Bearer `{{accessToken}}` automatically",
+    "description": "Postman collection for the DAOS FastAPI backend.\n\nQuick start:\n1. Import **DAOS.local.postman_environment.json** (or Production)\n2. Set `baseUrl` (local: http://127.0.0.1:8000 or production: https://daos-api.onrender.com)\n3. Run **Auth → Dev Login** — scripts save `accessToken` / `refreshToken`\n4. Other requests use Bearer `{{accessToken}}` automatically\n\nSee backend/postman/README.md for full import steps.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://127.0.0.1:8080" },
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
     { "key": "apiPrefix", "value": "/api/v1" },
     { "key": "accessToken", "value": "" },
     { "key": "refreshToken", "value": "" },
@@ -430,6 +430,15 @@
             "header": [],
             "url": "{{baseUrl}}{{apiPrefix}}/emails/sync"
           }
+        },
+        {
+          "name": "Outlook Inbox Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/emails/outlook/inbox-preview",
+            "description": "Requires Outlook connected. Shows inbox diagnostics and latest message."
+          }
         }
       ]
     },
@@ -474,11 +483,32 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}{{apiPrefix}}/whatsapp/inbound?recent_limit=20",
+              "raw": "{{baseUrl}}{{apiPrefix}}/whatsapp/inbound?limit=20",
               "host": ["{{baseUrl}}{{apiPrefix}}"],
               "path": ["whatsapp", "inbound"],
-              "query": [{ "key": "recent_limit", "value": "20" }]
+              "query": [{ "key": "limit", "value": "20" }]
             }
+          }
+        },
+        {
+          "name": "List WhatsApp Chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{apiPrefix}}/whatsapp/chats",
+            "description": "Lists Green API chats merged with user sync selections."
+          }
+        },
+        {
+          "name": "Sync WhatsApp Chats",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chats\": [\n    {\n      \"chat_id\": \"972501234567@c.us\",\n      \"display_name\": \"Family\",\n      \"chat_type\": \"direct\",\n      \"sync_enabled\": true\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}{{apiPrefix}}/whatsapp/chats/sync"
           }
         }
       ]

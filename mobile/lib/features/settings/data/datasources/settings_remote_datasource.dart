@@ -27,13 +27,14 @@ class SettingsRemoteDataSource {
     return SettingsModel.fromJson(data);
   }
 
-  Future<({int created, int scanned})> syncEmails() async {
+  Future<({int created, int infoCreated, int scanned})> syncEmails() async {
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.syncEmails,
       parser: (d) => d as Map<String, dynamic>,
     );
     return (
       created: data['created'] as int? ?? 0,
+      infoCreated: data['info_created'] as int? ?? data['infoCreated'] as int? ?? 0,
       scanned: data['scanned'] as int? ?? 0,
     );
   }

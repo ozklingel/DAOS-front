@@ -331,6 +331,7 @@ abstract class AppLocalizations {
   String syncCompleteTasks(int count);
   String get syncCompleteNoTasks;
   String syncCompleteScanned(int scanned);
+  String syncCompleteSummary(int tasks, int infoDocs, int scanned);
 
   String get networkError;
   String get sessionExpired;
@@ -986,6 +987,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncCompleteScanned(int scanned) => scanned == 0
       ? 'Sync complete — no emails were fetched. Reconnect Outlook and try again.'
       : 'Sync complete — scanned $scanned email${scanned == 1 ? '' : 's'}, no new tasks.';
+  @override
+  String syncCompleteSummary(int tasks, int infoDocs, int scanned) {
+    final parts = <String>[];
+    if (tasks > 0) parts.add('$tasks task${tasks == 1 ? '' : 's'}');
+    if (infoDocs > 0) parts.add('$infoDocs doc${infoDocs == 1 ? '' : 's'}');
+    return 'Sync complete — ${parts.join(', ')} (scanned $scanned emails)';
+  }
 
   @override
   String get networkError => 'Network error. Please check your connection.';
@@ -1742,6 +1750,13 @@ class AppLocalizationsHe extends AppLocalizations {
   String syncCompleteScanned(int scanned) => scanned == 0
       ? 'סנכרון הושלם — לא נשלפו מיילים. נתקו וחברו מחדש את Outlook ונסו שוב.'
       : 'סנכרון הושלם — נסרקו $scanned מיילים, לא נוצרו משימות חדשות.';
+  @override
+  String syncCompleteSummary(int tasks, int infoDocs, int scanned) {
+    final parts = <String>[];
+    if (tasks > 0) parts.add('$tasks משימות');
+    if (infoDocs > 0) parts.add('$infoDocs מסמכים');
+    return 'סנכרון הושלם — ${parts.join(', ')} (נסרקו $scanned מיילים)';
+  }
 
   @override
   String get networkError => 'שגיאת רשת. בדקו את החיבור לאינטרנט.';

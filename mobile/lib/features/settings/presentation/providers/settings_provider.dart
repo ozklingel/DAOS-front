@@ -27,12 +27,12 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     );
   }
 
-  Future<({int created, int scanned})> syncEmails() async {
+  Future<({int created, int infoCreated, int scanned})> syncEmails() async {
     return ref.read(settingsRepositoryProvider).syncEmails();
   }
 
   /// Sync inbox when connected. Refreshes dashboard/tasks. Returns null if skipped.
-  Future<({int created, int scanned})?> syncEmailsAndRefresh({
+  Future<({int created, int infoCreated, int scanned})?> syncEmailsAndRefresh({
     bool ignoreEnabledFlag = false,
   }) async {
     final user = ref.read(authStateProvider).user;

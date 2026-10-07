@@ -31,15 +31,15 @@ class _IntegrationsSheetState extends ConsumerState<IntegrationsSheet> {
     return email.endsWith('@daos.local') || email.endsWith('@taskmail.local');
   }
 
-  void _showSyncResult(AppLocalizations l, ({int created, int scanned}) result) {
+  void _showSyncResult(
+    AppLocalizations l,
+    ({int created, int infoCreated, int scanned}) result,
+  ) {
+    final message = result.created > 0 || result.infoCreated > 0
+        ? l.syncCompleteSummary(result.created, result.infoCreated, result.scanned)
+        : l.syncCompleteScanned(result.scanned);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.created > 0
-              ? l.syncCompleteTasks(result.created)
-              : l.syncCompleteScanned(result.scanned),
-        ),
-      ),
+      SnackBar(content: Text(message)),
     );
   }
 

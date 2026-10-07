@@ -291,6 +291,7 @@ class DailyBriefOut(APIModel):
 
 class EmailSyncOut(APIModel):
     created: int = 0
+    info_created: int = 0
     scanned: int = 0
     skipped_non_hebrew: int = 0
     skipped_no_signal: int = 0

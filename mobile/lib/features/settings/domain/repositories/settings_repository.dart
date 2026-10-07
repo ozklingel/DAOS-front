@@ -5,7 +5,7 @@ import 'package:daos/features/settings/domain/entities/app_settings.dart';
 abstract class SettingsRepository {
   Future<AppSettings> getSettings();
   Future<AppSettings> updateSettings(AppSettings settings);
-  Future<({int created, int scanned})> syncEmails();
+  Future<({int created, int infoCreated, int scanned})> syncEmails();
   Future<OutlookInboxPreviewModel> previewOutlookInbox();
   Future<WhatsAppChatsResponseModel> getWhatsAppChats();
   Future<WhatsAppChatsResponseModel> syncWhatsAppChats(List<WhatsAppChatModel> chats);

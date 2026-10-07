@@ -28,7 +28,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
-  Future<({int created, int scanned})> syncEmails() => _remote.syncEmails();
+  Future<({int created, int infoCreated, int scanned})> syncEmails() =>
+      _remote.syncEmails();
 
   @override
   Future<OutlookInboxPreviewModel> previewOutlookInbox() => _remote.previewOutlookInbox();

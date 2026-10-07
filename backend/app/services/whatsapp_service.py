@@ -476,7 +476,12 @@ class WhatsAppService:
 
         text = ""
         audio_url = None
+        media_url = None
+        media_mime = None
+        media_filename = None
         msg_type = "text"
+
+        file_data = message_data.get("fileMessageData") or {}
 
         if type_message == "textMessage":
             text = (message_data.get("textMessageData") or {}).get("textMessage") or ""
@@ -486,7 +491,19 @@ class WhatsAppService:
             text = (message_data.get("extendedTextMessageData") or {}).get("text") or ""
         elif type_message == "audioMessage":
             msg_type = "audio"
-            audio_url = (message_data.get("fileMessageData") or {}).get("downloadUrl")
+            audio_url = file_data.get("downloadUrl")
+        elif type_message == "imageMessage":
+            msg_type = "image"
+            media_url = file_data.get("downloadUrl")
+            media_mime = file_data.get("mimeType") or "image/jpeg"
+            text = (message_data.get("imageMessageData") or {}).get("caption") or ""
+        elif type_message == "documentMessage":
+            msg_type = "document"
+            media_url = file_data.get("downloadUrl")
+            media_mime = file_data.get("mimeType") or "application/octet-stream"
+            doc_data = message_data.get("documentMessageData") or {}
+            media_filename = doc_data.get("fileName") or doc_data.get("filename")
+            text = doc_data.get("caption") or ""
         else:
             logger.info("Green API: unsupported typeMessage=%s", type_message)
             return {
@@ -495,6 +512,7 @@ class WhatsAppService:
                 "type": "unsupported",
                 "text": "",
                 "audio_url": None,
+                "media_url": None,
                 "chat_id": chat_id,
                 "chat_name": chat_name,
                 "is_group": is_group,
@@ -507,6 +525,9 @@ class WhatsAppService:
             "type": msg_type,
             "text": text.strip(),
             "audio_url": audio_url,
+            "media_url": media_url,
+            "media_mime": media_mime,
+            "media_filename": media_filename,
             "chat_id": chat_id,
             "chat_name": chat_name,
             "is_group": is_group,
@@ -531,6 +552,12 @@ class WhatsAppService:
             message["text"] = {"body": parsed["text"]}
         elif parsed["type"] == "audio" and parsed["audio_url"]:
             message["audio_url"] = parsed["audio_url"]
+        elif parsed["type"] in {"image", "document"} and parsed.get("media_url"):
+            message["media_url"] = parsed["media_url"]
+            message["media_mime"] = parsed.get("media_mime")
+            message["media_filename"] = parsed.get("media_filename")
+            if parsed["text"]:
+                message["text"] = {"body": parsed["text"]}
 
         await self._handle_inbound_message(db, message)
 
@@ -612,6 +639,18 @@ class WhatsAppService:
                     audio_bytes = await self._download_media(media_id)
             if audio_bytes:
                 transcript = self.ai.transcribe_audio(audio_bytes) or ""
+        elif msg_type in {"image", "document"}:
+            return await self._handle_inbound_media_message(
+                db,
+                user,
+                message,
+                phone=phone,
+                message_id=message_id,
+                chat_id=chat_id,
+                chat_name=chat_name,
+                is_group=is_group,
+                msg_type=msg_type,
+            )
         else:
             logger.info("WhatsApp: unsupported type=%s — no reply", msg_type)
             self._record_inbound(
@@ -671,6 +710,121 @@ class WhatsAppService:
             status=status,
         )
         return task, "", status
+
+    async def _handle_inbound_media_message(
+        self,
+        db: Session,
+        user: User,
+        message: dict,
+        *,
+        phone: str,
+        message_id: str | None,
+        chat_id: str | None,
+        chat_name: str,
+        is_group: bool,
+        msg_type: str,
+    ) -> tuple[object | None, str, str]:
+        """Image/document from Green API → task from caption or AI-classified info doc (invoice)."""
+        url = message.get("media_url")
+        if not url:
+            return None, "", "empty_media"
+
+        media_bytes = await self._download_green_media(url)
+        if not media_bytes:
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                chat_id=chat_id,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=None,
+                user_id=user.id,
+                task_id=None,
+                bot_reply=None,
+                status="media_download_failed",
+            )
+            return None, "", "media_download_failed"
+
+        caption = (message.get("text") or {}).get("body", "").strip()
+        sender_name = f"WhatsApp · {chat_name}" if chat_name else "WhatsApp"
+        if is_group and chat_name and caption:
+            caption = f"[{chat_name}] {caption}"
+
+        if caption:
+            task, reply, status = self._create_task_from_transcript(
+                db,
+                user,
+                caption,
+                whatsapp_message_id=message_id,
+                sender_name=sender_name,
+            )
+            if task or status in {"info_document_created", "task_created"}:
+                self._record_inbound(
+                    db,
+                    from_phone=phone,
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    msg_type=msg_type,
+                    body_text=caption,
+                    user_id=user.id,
+                    task_id=task.id if task else None,
+                    bot_reply=None,
+                    status=status,
+                )
+                return task, reply, status
+
+        mime = (message.get("media_mime") or "image/jpeg").split(";")[0].strip()
+        if not mime.startswith("image/"):
+            logger.info("WhatsApp: non-image document mime=%s — skipped", mime)
+            self._record_inbound(
+                db,
+                from_phone=phone,
+                chat_id=chat_id,
+                message_id=message_id,
+                msg_type=msg_type,
+                body_text=caption or None,
+                user_id=user.id,
+                task_id=None,
+                bot_reply=None,
+                status="unsupported_document_mime",
+            )
+            return None, "", "unsupported_document_mime"
+
+        filename = message.get("media_filename")
+        try:
+            doc = self.info_docs.create_from_image(
+                db,
+                user,
+                image_bytes=media_bytes,
+                mime_type=mime,
+                filename=filename,
+                source="whatsapp",
+                source_message_id=message_id,
+            )
+        except ValueError as exc:
+            logger.warning("WhatsApp image ingest failed: %s", exc)
+            doc = None
+
+        status = "info_document_created" if doc else "info_document_duplicate"
+        self._record_inbound(
+            db,
+            from_phone=phone,
+            chat_id=chat_id,
+            message_id=message_id,
+            msg_type=msg_type,
+            body_text=caption or (doc or {}).get("title"),
+            user_id=user.id,
+            task_id=None,
+            bot_reply=None,
+            status=status,
+        )
+        if doc:
+            logger.info(
+                "WhatsApp image classified as info doc category=%s title=%r",
+                doc.get("category"),
+                (doc.get("title") or "")[:80],
+            )
+        return None, "", status
 
     def _create_task_from_transcript(
         self,

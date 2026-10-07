@@ -196,6 +196,7 @@ async def sync_emails(user: User = Depends(get_current_user), db: Session = Depe
         )
     return EmailSyncOut(
         created=result.get("created", 0),
+        info_created=result.get("info_created", 0),
         scanned=result.get("scanned", 0),
         skipped_non_hebrew=result.get("skipped_non_hebrew", 0),
         skipped_no_signal=result.get("skipped_no_signal", 0),
