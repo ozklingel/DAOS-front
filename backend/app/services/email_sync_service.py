@@ -137,10 +137,16 @@ class EmailSyncService:
                 )
             except Exception as exc:
                 logger.warning("Gmail fetch failed for user %s: %s", user.id, exc)
-                fetch_errors.append(f"Gmail: {exc}")
-                if self._is_stale_google_token_error(exc):
+                if self._is_gmail_scope_error(exc):
+                    fetch_errors.append(
+                        "Gmail: inbox permission missing or expired. In Settings → Integrations, "
+                        "disconnect Gmail, then Connect Gmail again and approve mail access."
+                    )
+                else:
+                    fetch_errors.append(f"Gmail: {exc}")
+                if self._is_stale_google_token_error(exc) or self._is_gmail_scope_error(exc):
                     logger.info(
-                        "Clearing stale Gmail token for user %s — reconnect Gmail in settings",
+                        "Clearing Gmail connection for user %s — reconnect Gmail in settings",
                         user.id,
                     )
                     user.gmail_connected = False
@@ -166,6 +172,16 @@ class EmailSyncService:
             )
 
         return emails, fetch_errors
+
+    @staticmethod
+    def _is_gmail_scope_error(exc: Exception) -> bool:
+        text = str(exc).lower()
+        scope_markers = (
+            "insufficient authentication scopes",
+            "insufficientpermissions",
+            "insufficient permission",
+        )
+        return any(marker in text for marker in scope_markers)
 
     @staticmethod
     def _is_stale_google_token_error(exc: Exception) -> bool:

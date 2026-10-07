@@ -171,16 +171,8 @@ class AuthService:
             avatar_url=info.get("picture"),
         )
 
-        try:
-            await self._store_google_refresh_token(user, server_auth_code)
-        except ValueError:
-            pass
-
-        if user.google_refresh_token:
-            user.google_access_token = None
-        else:
-            self._store_google_access_token(user, access_token_str)
-        self._mark_gmail_connected(user)
+        # Login uses profile/email scopes only — do not exchange serverAuthCode here
+        # or we can overwrite a Gmail refresh token and leave gmail_connected=true.
         db.commit()
         db.refresh(user)
         return user, *self.issue_tokens(db, user)
