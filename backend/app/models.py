@@ -42,6 +42,11 @@ class TaskCategory(str, Enum):
     general = "general"
 
 
+class TaskCreationOrigin(str, Enum):
+    manual = "manual"
+    ai = "ai"
+
+
 class EnergyLevel(str, Enum):
     high = "high"
     medium = "medium"
@@ -189,6 +194,9 @@ class Task(Base):
     email_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     email_message_id: Mapped[str | None] = mapped_column(String(512), nullable=True, index=True)
     whatsapp_message_id: Mapped[str | None] = mapped_column(String(512), nullable=True, index=True)
+    creation_origin: Mapped[str] = mapped_column(
+        String(20), default=TaskCreationOrigin.manual.value, index=True
+    )
     deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     snoozed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

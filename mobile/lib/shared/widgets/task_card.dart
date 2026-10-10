@@ -70,6 +70,7 @@ class TaskCard extends StatelessWidget {
                   StatusBadge(status: task.status),
                   CategoryChip(category: task.category),
                   EnergyChip(level: task.energyLevel),
+                  CreationOriginChip(origin: task.creationOrigin),
                 ],
               ),
               const SizedBox(height: 8),

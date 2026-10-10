@@ -12,6 +12,7 @@ import 'package:daos/shared/models/task_enums.dart';
 import 'package:daos/shared/widgets/loading_error_widgets.dart';
 import 'package:daos/shared/widgets/priority_badge.dart';
 import 'package:daos/shared/widgets/status_badge.dart';
+import 'package:daos/shared/widgets/task_meta_chips.dart';
 import 'package:daos/theme/app_colors.dart';
 
 class TaskDetailsScreen extends ConsumerWidget {
@@ -141,6 +142,11 @@ class _TaskDetailsBodyState extends ConsumerState<_TaskDetailsBody> {
                 icon: Icons.calendar_today_outlined,
                 label: l.created,
                 value: DateFormatter.formatRelative(task.createdAt, l, locale: locale),
+              ),
+              _DetailRow(
+                icon: Icons.auto_awesome_outlined,
+                label: l.taskCreationOrigin,
+                value: l.taskCreationOriginLabel(task.creationOrigin),
               ),
               if (task.emailSubject != null) ...[
                 const SizedBox(height: 24),

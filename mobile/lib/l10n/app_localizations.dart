@@ -126,6 +126,7 @@ abstract class AppLocalizations {
   String get deadline;
   String get sender;
   String get created;
+  String get taskCreationOrigin;
   String get sourceEmail;
   String get dismiss;
   String get snooze;
@@ -351,6 +352,7 @@ abstract class AppLocalizations {
   String taskStatusLabel(TaskStatus status);
   String taskPriorityLabel(TaskPriority priority);
   String taskCategoryLabel(TaskCategory category);
+  String taskCreationOriginLabel(TaskCreationOrigin origin);
   String energyLevelLabel(EnergyLevel level);
   String taskSortLabel(TaskSortField field);
 
@@ -556,6 +558,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sender => 'Sender';
   @override
   String get created => 'Created';
+  @override
+  String get taskCreationOrigin => 'Created by';
   @override
   String get sourceEmail => 'Source Email';
   @override
@@ -1070,6 +1074,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String taskCreationOriginLabel(TaskCreationOrigin origin) {
+    switch (origin) {
+      case TaskCreationOrigin.manual:
+        return 'You (manual)';
+      case TaskCreationOrigin.ai:
+        return 'AI';
+    }
+  }
+
+  @override
   String energyLevelLabel(EnergyLevel level) {
     switch (level) {
       case EnergyLevel.high:
@@ -1319,6 +1333,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get sender => 'שולח';
   @override
   String get created => 'נוצר';
+  @override
+  String get taskCreationOrigin => 'נוצרה על ידי';
   @override
   String get sourceEmail => 'מייל מקור';
   @override
@@ -1829,6 +1845,16 @@ class AppLocalizationsHe extends AppLocalizations {
         return 'בריאות';
       case TaskCategory.general:
         return 'כללי';
+    }
+  }
+
+  @override
+  String taskCreationOriginLabel(TaskCreationOrigin origin) {
+    switch (origin) {
+      case TaskCreationOrigin.manual:
+        return 'את/ה (ידני)';
+      case TaskCreationOrigin.ai:
+        return 'AI';
     }
   }
 

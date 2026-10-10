@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.security import new_id
-from app.models import Task, User, UserSettings
+from app.models import Task, TaskCreationOrigin, User, UserSettings
 from app.services.task_classifier import infer_category_and_energy
 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,7 @@ def create_task_from_analysis(
         email_snippet=source_snippet[:2000] if has_external_source else None,
         email_message_id=email_message_id,
         whatsapp_message_id=whatsapp_message_id,
+        creation_origin=TaskCreationOrigin.ai.value,
         deadline=deadline,
     )
     db.add(task)

@@ -18,6 +18,7 @@ abstract class Task with _$Task {
     String? senderEmail,
     String? emailSubject,
     String? emailSnippet,
+    @Default(TaskCreationOrigin.manual) TaskCreationOrigin creationOrigin,
     DateTime? deadline,
     DateTime? snoozedUntil,
     DateTime? completedAt,

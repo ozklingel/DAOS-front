@@ -80,6 +80,11 @@ enum TaskAction {
   String get apiValue => name;
 }
 
+enum TaskCreationOrigin {
+  manual,
+  ai,
+}
+
 enum TaskCategory {
   work,
   errands,

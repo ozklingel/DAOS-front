@@ -21,6 +21,7 @@ abstract class TaskModel with _$TaskModel {
     String? senderEmail,
     String? emailSubject,
     String? emailSnippet,
+    @Default('manual') String creationOrigin,
     DateTime? deadline,
     DateTime? snoozedUntil,
     DateTime? completedAt,
@@ -48,6 +49,7 @@ abstract class TaskModel with _$TaskModel {
           json['email_subject'] as String? ?? json['emailSubject'] as String?,
       emailSnippet:
           json['email_snippet'] as String? ?? json['emailSnippet'] as String?,
+      creationOrigin: _parseCreationOrigin(json),
       deadline: json['deadline'] != null
           ? DateTime.parse(json['deadline'] as String)
           : null,
@@ -83,12 +85,35 @@ abstract class TaskModel with _$TaskModel {
         senderEmail: senderEmail,
         emailSubject: emailSubject,
         emailSnippet: emailSnippet,
+        creationOrigin: _parseCreationOriginEnum(creationOrigin, emailSubject: emailSubject),
         deadline: deadline,
         snoozedUntil: snoozedUntil,
         completedAt: completedAt,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
+
+  static String _parseCreationOrigin(Map<String, dynamic> json) {
+    final raw =
+        json['creation_origin'] as String? ?? json['creationOrigin'] as String?;
+    if (raw != null && raw.isNotEmpty) return raw;
+    final hasEmailSource = json['email_subject'] != null ||
+        json['emailSubject'] != null ||
+        json['email_message_id'] != null;
+    if (hasEmailSource) return 'ai';
+    return 'manual';
+  }
+
+  static TaskCreationOrigin _parseCreationOriginEnum(
+    String value, {
+    String? emailSubject,
+  }) {
+    if (value == 'ai') return TaskCreationOrigin.ai;
+    if (emailSubject != null && emailSubject.isNotEmpty) {
+      return TaskCreationOrigin.ai;
+    }
+    return TaskCreationOrigin.manual;
+  }
 
   static TaskStatus _parseStatus(String value) {
     return TaskStatus.values.firstWhere(

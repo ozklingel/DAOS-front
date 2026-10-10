@@ -6,7 +6,16 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_id
 from app.deps import start_of_week
-from app.models import DailyBrief, EnergyLevel, Task, TaskCategory, TaskPriority, TaskStatus, User
+from app.models import (
+    DailyBrief,
+    EnergyLevel,
+    Task,
+    TaskCategory,
+    TaskCreationOrigin,
+    TaskPriority,
+    TaskStatus,
+    User,
+)
 from app.services.support_services import SettingsService
 from app.services.task_classifier import DAILY_ENERGY_BUDGET, energy_cost, infer_category_and_energy
 
@@ -138,6 +147,7 @@ class TaskService:
             priority_score=priority_scores.get(priority_value, 50.0),
             category=category_value,
             energy_level=energy_value,
+            creation_origin=TaskCreationOrigin.manual.value,
             deadline=deadline,
             created_at=now,
             updated_at=now,

@@ -35,6 +35,31 @@ def _ensure_unique_index(table: str, column: str, index_name: str) -> None:
         )
 
 
+def _backfill_task_creation_origin() -> None:
+    inspector = inspect(engine)
+    if "tasks" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("tasks")}
+    if "creation_origin" not in columns:
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                UPDATE tasks
+                SET creation_origin = 'ai'
+                WHERE (creation_origin IS NULL OR creation_origin = 'manual')
+                  AND (
+                    email_message_id IS NOT NULL
+                    OR whatsapp_message_id IS NOT NULL
+                    OR email_subject IS NOT NULL
+                    OR sender_name = 'Voice'
+                  )
+                """
+            )
+        )
+
+
 def _migrate_schema() -> None:
     """Add columns introduced after initial create_all (SQLite + Postgres)."""
     inspector = inspect(engine)
@@ -56,6 +81,8 @@ def _migrate_schema() -> None:
         _add_column_if_missing("tasks", "category", "VARCHAR(20) DEFAULT 'general'")
         _add_column_if_missing("tasks", "energy_level", "VARCHAR(20) DEFAULT 'medium'")
         _add_column_if_missing("tasks", "whatsapp_message_id", "VARCHAR(512)")
+        _add_column_if_missing("tasks", "creation_origin", "VARCHAR(20) DEFAULT 'manual'")
+        _backfill_task_creation_origin()
 
     if "finance_transactions" in tables:
         _add_column_if_missing("finance_transactions", "bank_account_id", "VARCHAR(36)")

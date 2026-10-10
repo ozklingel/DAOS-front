@@ -18,6 +18,24 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
+class CreationOriginChip extends StatelessWidget {
+  const CreationOriginChip({super.key, required this.origin});
+
+  final TaskCreationOrigin origin;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final color = origin == TaskCreationOrigin.ai
+        ? AppColors.primary
+        : AppColors.textSecondary;
+    return _MetaChip(
+      label: l.taskCreationOriginLabel(origin),
+      color: color,
+    );
+  }
+}
+
 class EnergyChip extends StatelessWidget {
   const EnergyChip({super.key, required this.level});
 

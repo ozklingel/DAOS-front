@@ -195,6 +195,7 @@ class TaskOut(APIModel):
     sender_email: str | None = None
     email_subject: str | None = None
     email_snippet: str | None = None
+    creation_origin: str = "manual"
     deadline: datetime | None = None
     snoozed_until: datetime | None = None
     completed_at: datetime | None = None
